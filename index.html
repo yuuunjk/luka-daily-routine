@@ -1305,7 +1305,7 @@
   <div class="study" id="study">
     <div class="self-banner">
       <div class="self-ctrl" id="selfCtrl">
-        <button class="self-btn" id="selfBtn"><span class="box">✓</span><span>스스로 했어요!</span></button>
+        <button class="self-btn" id="selfBtn"><span class="box">✓</span><span>⚡ 강화 XP</span></button>
         <div class="self-prog">
           <div class="gauge" id="selfGauge" aria-hidden="true"></div>
           <div class="self-goal">
@@ -1506,7 +1506,7 @@
       <p class="btRSub" id="btRSub"></p>
       <div class="btRStats" id="btRStats"></div>
       <div class="btRBtns">
-        <button class="btGhost" id="btExit" type="button">닫기</button>
+        <button class="btGhost" id="btExit" type="button">배틀 종료</button>
       </div>
     </section>
   </div>
@@ -1587,7 +1587,7 @@
     <button class="pbtn" id="testXp">XP +50 테스트</button>
   </div>
   <div class="row">
-    <button class="pbtn" id="testSelf">스스로 했어요 +1</button>
+    <button class="pbtn" id="testSelf">⚡ 강화 XP +1</button>
     <button class="pbtn" id="testTicket">강화권 +1</button>
   </div>
   <div class="row">
@@ -1687,7 +1687,7 @@ function buildRoutineTable(){
       tasks: M.tasks, xp: M.xp,
     },
     /* 오후(하교) 루틴 — 아침 50 + 오후 50 = 100 경험치면 포켓몬 1마리 도감 등록.
-       '스스로 했어요'는 여기가 아니라 오늘의 공부 탭에만 있다. */
+       '⚡ 강화 XP'는 여기가 아니라 오늘의 공부 탭에만 있다. */
     after: M.hasAfter ? {
       key:'after', emoji:'🎒', stripLabel:'LUKA의 하교 루틴',
       bubble:'하교 후 정리 5가지! 다 하면 +50 XP!', bubbleDone:'하교 루틴 완료! +50 XP! 🎉',
@@ -2035,7 +2035,7 @@ function migrate(s){
   s.study.done = s.study.done || {};
   if(typeof s.study.selfCount !== 'number') s.study.selfCount = 0;
   if(typeof s.study.tickets !== 'number') s.study.tickets = 0;
-  // 강화권 규칙 v2 — 시작 강화권은 없다. '스스로 했어요' 5번 = 1장이 유일한 경로.
+  // 강화권 규칙 v2 — 시작 강화권은 없다. '⚡ 강화 XP' 5개 = 1장이 유일한 경로.
   if(!s.study.ticketRuleV2){
     s.study.tickets = 0;
     s.study.selfCount = 0;
@@ -3375,7 +3375,7 @@ function openPoke(id){
   document.getElementById('pAtk').textContent = st.atk;
   document.getElementById('pDef').textContent = st.def;
   document.getElementById('pokeMsg').textContent =
-    state.study.tickets > 0 ? `강화권 ${state.study.tickets}장을 쓸 수 있어요!` : '강화권이 없어요 · 스스로 했어요 5번을 모아요 🎯';
+    state.study.tickets > 0 ? `강화권 ${state.study.tickets}장을 쓸 수 있어요!` : '강화권이 없어요 · ⚡ 강화 XP 5개를 모아요 🎯';
   const btn = document.getElementById('pokeUp');
   btn.disabled = state.study.tickets <= 0;
   btn.textContent = state.study.tickets > 0 ? '강화하기 (능력치 UP!)' : '강화권이 없어요';
@@ -3433,7 +3433,7 @@ function todayDone(){
 function isSelfChecked(){ return state.study.selfDates.includes(todayKey()); }
 
 /* ---------- 강화권 5번 세기 (공통 저울) ----------
-   '오늘의 공부 · 스스로 했어요!' 와 '9:40 전 취침 루틴 완료' 가 같은 저울에 들어간다.
+   '오늘의 공부 · ⚡ 강화 XP' 와 '9:40 전 취침 루틴 완료' 가 같은 저울에 들어간다.
    selfCount 0~4 → 5가 되면 0으로 돌아가고 강화권 +1장. */
 let selfFlashUntil = 0, selfFlashTimer = null;
 /* 5칸을 다 채운 순간을 잠깐 보여 준다 — 게이지가 꽉 차고 강화권으로 바뀌는 게 눈에 보이게 */
@@ -3462,7 +3462,7 @@ function incrementSelfProgress(src, opts){
     blip();
     toast(fromNight
       ? `🌙 9:40 전 취침 완료! 강화권 별 ${state.study.selfCount}/5`
-      : `⭐ 스스로 했어요 ${state.study.selfCount}/5`);
+      : `⚡ 강화 XP ${state.study.selfCount}/5`);
   }
   return false;
 }
@@ -3476,7 +3476,7 @@ function decrementSelfProgress(src, opts){
       sad();
       toast(fromNight
         ? `취침 완료를 취소했어요 · ${state.study.selfCount}/5`
-        : `오늘의 스스로 했어요를 취소했어요 · ${state.study.selfCount}/5`);
+        : `오늘의 강화 XP를 취소했어요 · ${state.study.selfCount}/5`);
     }
   }else if(state.study.tickets > 0){
     state.study.tickets--;
@@ -3557,7 +3557,7 @@ function renderStudy(){
   const n = getNow();
   const d = n.getDay();
   document.getElementById('studyDate').textContent = `${n.getMonth()+1}월 ${n.getDate()}일 ${DAYS[n.getDay()]}`;
-  // self banner — 휴식이면 '스스로 했어요'는 화면에서 사라진다
+  // self banner — 휴식이면 '⚡ 강화 XP'는 화면에서 사라진다
   const rest = isRestToday();
   document.getElementById('selfCtrl').style.display = rest ? 'none' : '';
   document.getElementById('restNote').classList.toggle('show', rest);
@@ -4167,7 +4167,7 @@ document.getElementById('testXp').addEventListener('click', parentOnly(()=>{
 }));
 document.getElementById('testSelf').addEventListener('click', parentOnly(()=>{
   const k = todayKey();
-  if(state.study.selfDates.includes(k)){ toast('오늘은 이미 스스로 했어요를 모았어요!'); return; }
+  if(state.study.selfDates.includes(k)){ toast('오늘은 이미 ⚡ 강화 XP를 모았어요!'); return; }
   state.study.selfDates.push(k);
   incrementSelfProgress('study');
   save(); renderStudy(); renderDex();
@@ -5009,13 +5009,15 @@ document.getElementById('ballBtn').addEventListener('click', e => {
 });
 document.getElementById('btClose').addEventListener('click', btClose);
 document.getElementById('btExit').addEventListener('click', btClose);
-document.getElementById('btOverlay').addEventListener('click', e => { if(e.target.id === 'btOverlay') btClose(); });
+/* 배틀 창은 바깥 배경(backdrop)을 잘못 눌러도 절대 닫히지 않는다.
+   닫히는 길은 위의 ✕(btClose)와 결과 화면의 '배틀 종료'(btExit) 두 버튼뿐이다.
+   (배경 클릭·Esc 키로는 닫히지 않는다) */
+document.getElementById('btOverlay').addEventListener('click', e => {
+  if(e.target.id === 'btOverlay') e.stopPropagation();
+});
 document.getElementById('btAtk').addEventListener('click', () => btPlayerAct('atk'));
 document.getElementById('btDef').addEventListener('click', () => btPlayerAct('def'));
 document.getElementById('btGo').addEventListener('click', btStartBattle);
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape' && btState.phase !== 'closed') btClose();
-});
 
 </script>
 </body>
