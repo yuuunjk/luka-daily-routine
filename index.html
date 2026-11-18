@@ -17,7 +17,8 @@
   html,body{height:100%;}
   body{
     margin:0; overflow:hidden; color:var(--ink);
-    font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+    /* 기기(갤럭시 탭 등)에 설정된 기본 시스템 폰트를 그대로 쓴다 — 외부 폰트를 불러오지 않는다 */
+    font-family:system-ui,sans-serif;
     background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 60%,#f7f7e8 100%);
     user-select:none; -webkit-user-select:none; touch-action:manipulation;
   }
@@ -75,9 +76,13 @@
     border-radius:999px; padding:.18em .6em; white-space:nowrap; line-height:1.3; border:1.5px solid #fff;}
   header.sky .wakechip.show{display:inline-flex; align-items:center;}
 
-  /* --- 아랫줄: 브랜드 · 시계 · 날씨 카드 --- */
+  /* --- 아랫줄: 브랜드 · 시계 · XP 패널 · 날씨 카드 ---
+     날씨 카드는 가로 폭을 제한해 컴팩트하게 두고, 남는 폭은 시계와 XP 패널 사이
+     여백으로 균등하게 나눈다 (space-between). */
   header.sky .sky-body{position:relative; z-index:2; display:flex; align-items:center; gap:.55em;
-    min-width:0; flex:1 1 auto;}
+    justify-content:space-between; min-width:0; flex:1 1 auto;}
+  /* 포켓몬볼 + 시계는 한 덩어리 — 남는 폭을 나눌 때 둘이 벌어지지 않게 묶는다 */
+  header.sky .clockbox{display:flex; align-items:center; gap:.55em; min-width:0; flex:0 0 auto;}
   header.sky .brand{display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:.1em; flex:0 0 auto; padding-top:1.05em;}   /* 공 하나만 남아서 날짜줄(1.74em) 아래 시계 숫자 가운데에 맞춘다 */
   header.sky .pokeball{width:2.85em; height:2.85em; flex:0 0 auto; filter:drop-shadow(0 2px 2px rgba(20,60,90,.3));}
@@ -94,7 +99,7 @@
      gap 은 .clock(1em = --u) 기준이라 숫자(5.3em)에 비해 작아 보이므로
      시↔분 사이는 em 이 아니라 px 클램프로 넉넉히 준다 (1280에서 약 18px). */
   header.sky .clock{display:flex; align-items:baseline; gap:0; line-height:1; white-space:nowrap; font-size:1em;
-    font-family:'Roboto','Helvetica Neue','Liberation Sans','FreeSans',sans-serif;
+    font-family:inherit;   /* 숫자도 기기 기본 폰트로 (tabular-nums 는 그대로) */
     font-weight:900; letter-spacing:.01em;}
   header.sky .clock .grp{display:flex; align-items:baseline; gap:.04em;}
   /* 시 : 분 — 숫자와 같은 흰색 + 진한 외곽선의 콜론을 가운데에 또렷하게 (8 : 10) */
@@ -111,7 +116,8 @@
 
   /* --- 날씨 카드 (흰 카드 · 2px 테두리) --- */
   header.sky .weather{
-    flex:1 1 0; min-width:0; max-width:none; align-self:stretch;
+    /* 가로 폭 상한 — 남는 폭을 다 먹어 늘어나지 않게 한다 */
+    flex:1 1 30em; min-width:0; max-width:36em; align-self:stretch;
     background:#fff; border:2px solid #2b3445; border-radius:.8em;
     padding:.32em .4em .24em; display:flex; flex-direction:column; gap:.1em;
     justify-content:space-between;
@@ -176,11 +182,12 @@
   header.sky .w-tiprow .w-tip{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   header.sky .w-fallback{font-size:.7em; color:#94a3ae; font-weight:900;}
 
-  /* --- 날씨 카드 오른쪽: 루틴 XP + ⚡ 강화 XP (위아래 2줄) ---
-     날씨 카드와 나란히 오른쪽 끝에 놓고, 두 카드가 날씨 카드의 전체 높이를 정확히
-     반씩(사이 간격 포함) 나눠 채운다 — align-self:stretch 로 두 상자의 바깥 높이가 같아진다. */
+  /* --- 시계 오른쪽: 루틴 XP + ⚡ 강화 XP (위아래 2줄) ---
+     시계와 날씨 사이에 두고, 두 카드가 날씨 카드의 전체 높이를 정확히
+     반씩(사이 간격 포함) 나눠 채운다 — align-self:stretch 로 두 상자의 바깥 높이가 같아진다.
+     폭은 남는 공간을 받아 늘어나되 상한(17em)에서 멈춘다. */
   header.sky .hxp{position:relative; z-index:2; display:flex; flex-direction:column; align-items:stretch;
-    gap:.24em; flex:0 0 auto; min-width:11em; align-self:stretch; overflow:visible;}
+    gap:.24em; flex:1 1 0; min-width:11em; max-width:17em; align-self:stretch; overflow:visible;}
   header.sky .hxp-card{display:flex; align-items:center; gap:.3em; min-width:0; width:100%; flex:1 1 0; min-height:0;
     background:#fff; border:2px solid #2b3445; border-radius:.62em; padding:.16em .42em;
     box-shadow:0 .16em .34em rgba(20,60,90,.18); color:#152436;}
@@ -266,14 +273,18 @@
   .tasks.six{gap:10px;}
   .tasks.six .card{padding:34px 8px 8px;}
   .tasks.six .tname{font-size:clamp(12px,1.9vh,18px);line-height:1.15;text-align:center;
-    white-space:normal;word-break:keep-all;padding:0 2px 2px;}
+    white-space:normal;word-break:keep-all;padding:4px 2px 2px;}
   .tasks.six .num{width:22px;height:22px;font-size:12px;left:8px;top:6px;}
   .card{
     flex:1;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-    display:flex;flex-direction:column;align-items:center;padding:40px 10px 10px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 10px 10px;
     border:4px solid transparent;cursor:pointer;position:relative;min-width:0;overflow:hidden;
     transition:transform .12s, border-color .2s;
   }
+  /* 아침 타이머 카드 — 타이머는 카드 맨 아래(제목 아래)에 깔고, 그 자리를 모든 카드가
+     똑같이 비워 두어 그림·제목이 카드마다 같은 높이에 나란히 온다. */
+  .tasks.has-timer .card{padding-bottom:calc(var(--timer-h,96px) + 16px);}
+  .tasks.has-timer .timer{position:absolute;left:9px;right:9px;bottom:9px;width:auto;max-width:none;margin:0;}
   .card:active{transform:scale(.97);}
   .card.done{border-color:var(--green);background:#f3fbe9;}
   .num{
@@ -287,9 +298,13 @@
     opacity:0;transform:scale(.3);transition:all .25s cubic-bezier(.3,1.6,.6,1);z-index:3;
   }
   .card.done .checkmark{opacity:1;transform:scale(1);}
-  .card img{flex:1 1 0;min-height:0;max-height:100%;width:88%;object-fit:contain;pointer-events:none;}
-  .card .emoji-fallback{flex:1;display:flex;align-items:center;font-size:60px;}
-  .tname{font-size:clamp(14px,2.2vh,20px);font-weight:800;flex:0 0 auto;padding-top:2px;}
+  /* 그림 → 제목 순서 — 그림은 카드 폭 기준으로 비율을 지키며 줄어들고,
+     그림 바로 아래에 제목이 붙는다(겹침 없음). 그림·제목 묶음은 카드 가운데. */
+  .card img{flex:0 1 auto;min-height:0;width:94%;height:auto;max-height:100%;
+    object-fit:contain;object-position:center;pointer-events:none;}
+  .card .emoji-fallback{flex:0 1 auto;align-items:center;justify-content:center;
+    font-size:clamp(40px,7vh,64px);line-height:1;}
+  .tname{font-size:clamp(14px,2.2vh,20px);font-weight:800;flex:0 0 auto;padding-top:4px;}
   .stamp{
     position:absolute;left:50%;top:16%;transform:translate(-50%,-50%) rotate(-14deg);
     font-size:24px;font-weight:900;color:var(--green-dark);border:4px solid var(--green-dark);
@@ -300,7 +315,7 @@
   /* meal timer — 숫자를 크게, 버튼은 두 줄로 나눠 손가락으로 누르기 쉽게 */
   .timer{
     flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:5px;background:#fff7de;
-    border:2px solid #f2c53d;border-radius:14px;padding:6px 8px;margin:7px 0 3px;
+    border:2px solid #f2c53d;border-radius:14px;padding:6px 8px;margin:0;
     max-width:100%;width:100%;
   }
   .timer .tval{font-size:30px;font-weight:900;color:#7a5b00;font-variant-numeric:tabular-nums;
@@ -400,8 +415,27 @@
     font-size:18px;border-radius:999px;padding:12px 34px;cursor:pointer;box-shadow:var(--shadow);}
   .burst{position:fixed;inset:0;pointer-events:none;z-index:60;display:none;}
   .burst.show{display:block;}
-  .confetti{position:absolute;width:12px;height:18px;border-radius:3px;animation:fall 2.4s linear forwards;}
-  @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.4;}}
+  /* 미니 몬스터볼 컨페티 — 위 빨강 · 가운데 검은 띠 · 아래 흰색 + 가운데 버튼.
+     무늬는 background 두 겹(가운데 버튼 + 위아래 색 띠)으로 그려서 그림 파일이 필요 없다.
+     크기·드리프트·회전은 JS 가 --dx / --spin 과 width·height 로 매번 다르게 준다. */
+  .confetti{position:absolute;width:14px;height:14px;border-radius:50%;
+    border:1.5px solid #262c33;box-shadow:0 1px 2px rgba(20,40,60,.28);
+    background:
+      radial-gradient(circle at 50% 50%, #ffffff 0 17%, #262c33 17% 27%, rgba(38,44,51,0) 27%),
+      linear-gradient(180deg,#e8402f 0 44%, #262c33 44% 56%, #faf8f2 56% 100%);
+    animation:ballFall 2.6s linear forwards;}
+  /* 가끔 슈퍼볼(파랑) · 하이퍼볼(검정+노랑)을 섞는다 */
+  .confetti.great{background:
+      radial-gradient(circle at 50% 50%, #ffffff 0 17%, #262c33 17% 27%, rgba(38,44,51,0) 27%),
+      linear-gradient(180deg,#2f6bd8 0 44%, #262c33 44% 56%, #faf8f2 56% 100%);}
+  .confetti.ultra{background:
+      radial-gradient(circle at 50% 50%, #ffffff 0 17%, #e8b93a 17% 27%, rgba(38,44,51,0) 27%),
+      linear-gradient(180deg,#22262c 0 44%, #e8b93a 44% 56%, #22262c 56% 100%);}
+  @keyframes ballFall{
+    0%{transform:translate3d(0,-30px,0) rotate(0deg) scale(.6);opacity:0;}
+    8%{opacity:1;}
+    100%{transform:translate3d(var(--dx,0px),108vh,0) rotate(var(--spin,720deg)) scale(1);opacity:.9;}
+  }
 
   #toast{
     position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(30px);
@@ -625,9 +659,6 @@
   .center-head h2{margin:0;font-size:21px;font-weight:900;color:#54452f;line-height:1.2;}
   .center-head .sub{font-size:12.5px;font-weight:800;color:var(--ink2);white-space:nowrap;}
   .center-head .sub b{color:#b26a00;}
-  .center-head .cnt{font-size:12.5px;font-weight:900;color:#fff;background:#e0554d;border-radius:999px;
-    padding:3px 12px;margin-left:auto;white-space:nowrap;}
-  .center-head .cnt.done{background:var(--green-dark);}
   .center-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;min-height:0;}
   .mcard{
     position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;
@@ -673,15 +704,11 @@
   .mcard.done .m-chk{background:var(--green);border-color:var(--green-dark);color:#fff;transform:scale(1.04);}
   .mcard.done .m-name{color:#3f7a2a;}
   .mcard.done .m-xp{background:#e6f7dc;color:#3f7a2a;}
-  .center-foot{flex:0 0 auto;display:flex;align-items:center;gap:10px;}
-  .cf-bar{flex:1;height:12px;background:#eee7d2;border-radius:999px;overflow:hidden;}
-  .cf-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd97a,#ff8a4d);border-radius:999px;transition:width .3s;}
-  .center-foot .tx{font-size:12px;font-weight:800;color:var(--ink2);white-space:nowrap;}
+  .center-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;min-height:0;}
   @media (max-width:1120px){
     .center-main{padding:7px 10px 8px;}
     .center-head h2{font-size:17px;}
     .center-head .sub{font-size:11px;}
-    .center-head .cnt{font-size:11px;padding:2px 10px;}
     .center-grid{gap:8px;}
     .mcard{border-radius:16px;}
     .mcard .m-body{padding:16px 8px 22px;gap:6px;}
@@ -1286,7 +1313,23 @@
   .btRTitle.lose{color:#7a8ba3;}
   .btRSub{font-size:15px;font-weight:800;color:#6a5a44;margin:0;}
   .btRStats{display:flex;gap:8px;font-size:12.5px;font-weight:900;color:#7a6a52;flex-wrap:wrap;justify-content:center;}
+  /* 승리 보상 — 엔트리 포켓몬 강화 +1 안내 */
+  .btRBoost{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;min-width:0;}
+  .btRBoost[hidden]{display:none!important;}
+  .btRBoostLbl{font-size:13px;font-weight:900;color:#a8791a;background:#fff7de;border:2px solid #f0d992;
+    border-radius:999px;padding:2px 12px;white-space:nowrap;animation:btIn .45s cubic-bezier(.3,1.5,.6,1);}
+  .btRBoostList{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
   .btRStats span{background:#f4eeda;border-radius:999px;padding:3px 11px;}
+  .btRBI{display:flex;align-items:center;gap:7px;background:#fffdf6;border:2px solid #e7d9ae;border-radius:14px;
+    padding:3px 9px 3px 5px;box-shadow:0 2px 6px rgba(150,120,50,.14);}
+  .btRBI .bri-img{position:relative;width:34px;height:34px;flex:0 0 auto;display:flex;align-items:center;
+    justify-content:center;font-size:19px;line-height:1;}
+  .btRBI .bri-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .btRBI .bri-t{display:flex;flex-direction:column;line-height:1.15;text-align:left;min-width:0;}
+  .btRBI .bri-n{font-size:14px;font-weight:900;color:#3b3327;white-space:nowrap;}
+  .btRBI .bri-d{font-size:10.5px;font-weight:800;color:#8a7a66;white-space:nowrap;}
+  .btRBI .bri-up{font-size:12px;font-weight:900;color:#fff;background:#f0a11d;border-radius:999px;
+    padding:2px 8px;white-space:nowrap;box-shadow:0 2px 0 rgba(190,120,0,.28);}
   .btRBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
   .btRBtns .btAct{flex:0 1 auto;padding:12px 20px;font-size:17px;min-width:172px;}
   .btGhost{border:none;background:#efece2;color:#7a6a55;font-family:inherit;font-weight:900;font-size:15px;
@@ -1306,6 +1349,11 @@
     .btAct{padding:11px 10px;font-size:19px;}
     .btRTrophy{font-size:52px;}
     .btResult h3{font-size:27px;}
+    .btRBoost{gap:4px;}
+    .btRBoostLbl{font-size:12px;padding:1px 10px;}
+    .btRBI{padding:2px 8px 2px 4px;}
+    .btRBI .bri-img{width:28px;height:28px;font-size:16px;}
+    .btRBI .bri-n{font-size:12.5px;}
     .btGrid{min-height:96px;}
     .btCard{padding:5px 7px;}
     .btCard .btc-img,.btCard .btc-img img{width:40px;height:40px;}
@@ -1347,6 +1395,7 @@
     </div>
 
     <div class="sky-body">
+      <div class="clockbox">
       <div class="brand">
         <button class="ballbtn" id="ballBtn" type="button" aria-label="포켓몬볼">
           <svg class="pokeball" viewBox="0 0 100 100" aria-hidden="true">
@@ -1364,7 +1413,22 @@
           <div class="clock" id="clock"><span class="grp"><span class="dg">8</span></span><span class="cln" aria-hidden="true"><i></i><i></i></span><span class="grp"><span class="dg">1</span><span class="dg">0</span></span><span class="sec">:00</span></div>
         </div>
       </div>
+      </div>
 
+      <!-- 시계 오른쪽: 루틴 XP + ⚡ 강화 XP (위아래 2줄) — 그 오른쪽에 날씨 카드 -->
+      <div class="hxp" id="hxp">
+        <div class="hxp-card hxp-routine" title="이번 목표 포켓몬까지의 루틴 경험치">
+          <img class="hxp-art" id="wildArt" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" alt="다음 목표 포켓몬" onerror="this.style.display='none'">
+          <div class="hxp-col">
+            <div class="hxp-lab">다음 목표 <b id="wildName">이상해씨</b><span class="tchip tt0" id="wildTier">일반</span></div>
+            <div class="xpbar"><div class="xf" id="wildXpFill" style="width:0%"></div><div class="xt" id="wildXpText">0/100 XP</div></div>
+          </div>
+        </div>
+        <div class="hxp-card hxp-boost" id="hxpBoost" title="⚡ 강화 XP 8개를 모으면 포켓몬 강화권 1장">
+          <div class="hxp-lab"><span>⚡ 강화 XP</span><b id="hxpCnt">0/8</b><span class="hxp-tk" id="hxpTicket">🎟 0장</span></div>
+          <div class="hxp-gauge" id="hxpGauge" aria-hidden="true"></div>
+        </div>
+      </div>
       <!-- Weather -->
       <div class="weather" id="weather" role="link" tabindex="0" title="잠원동 구글 날씨 열기"
            onclick="openGoogleWeather(event)"
@@ -1390,20 +1454,6 @@
         <div class="w-tiprow"><b>나갈 때</b><span class="w-tip" id="wTip">🧥 오늘 코디 확인 중…</span></div>
       </div>
 
-      <!-- 날씨 오른쪽: 루틴 XP + ⚡ 강화 XP (위아래 2줄) -->
-      <div class="hxp" id="hxp">
-        <div class="hxp-card hxp-routine" title="이번 목표 포켓몬까지의 루틴 경험치">
-          <img class="hxp-art" id="wildArt" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" alt="다음 목표 포켓몬" onerror="this.style.display='none'">
-          <div class="hxp-col">
-            <div class="hxp-lab">다음 목표 <b id="wildName">이상해씨</b><span class="tchip tt0" id="wildTier">일반</span></div>
-            <div class="xpbar"><div class="xf" id="wildXpFill" style="width:0%"></div><div class="xt" id="wildXpText">0/100 XP</div></div>
-          </div>
-        </div>
-        <div class="hxp-card hxp-boost" id="hxpBoost" title="⚡ 강화 XP 8개를 모으면 포켓몬 강화권 1장">
-          <div class="hxp-lab"><span>⚡ 강화 XP</span><b id="hxpCnt">0/8</b><span class="hxp-tk" id="hxpTicket">🎟 0장</span></div>
-          <div class="hxp-gauge" id="hxpGauge" aria-hidden="true"></div>
-        </div>
-      </div>
 
     </div>
   </header>
@@ -1470,14 +1520,9 @@
     <div class="center-main">
       <div class="center-head">
         <h2>🏥 포켓몬센터 미션</h2>
-        <span class="sub">미션을 하나 끝낼 때마다 <b>⚡ 강화 XP +1</b> · 항목마다 하루 2번 · 8개를 모으면 🎟 강화권 1장</span>
-        <span class="cnt" id="centerCnt">0/6 완료</span>
+        <span class="sub">미션을 하나 끝낼 때마다 <b>⚡ 강화 XP +1</b> · 미션은 하루에 두 번까지 가능</span>
       </div>
       <div class="center-grid" id="centerGrid"></div>
-      <div class="center-foot">
-        <div class="cf-bar"><i id="centerFill"></i></div>
-        <span class="tx" id="centerFootTx">오늘의 미션 0/3 완료</span>
-      </div>
     </div>
   </div>
 
@@ -1640,6 +1685,10 @@
       <div class="btRTrophy" id="btRTrophy">🏆</div>
       <h3 class="btRTitle win" id="btRTitle">승리!</h3>
       <p class="btRSub" id="btRSub"></p>
+      <div class="btRBoost" id="btRBoost" hidden>
+        <div class="btRBoostLbl">⚡ 엔트리 포켓몬 강화 +1!</div>
+        <div class="btRBoostList" id="btRBoostList"></div>
+      </div>
       <div class="btRStats" id="btRStats"></div>
       <div class="btRBtns">
         <button class="btGhost" id="btExit" type="button">배틀 종료</button>
@@ -2566,6 +2615,7 @@ function buildTasks(){
       <div class="stamp">완료!</div>
       <img src="${t.img}" alt="${t.name}" onerror="this.style.display='none';this.parentElement.querySelector('.emoji-fallback').style.display='flex'">
       <div class="emoji-fallback" style="display:none">${t.emoji}</div>
+      <div class="tname">${t.name}</div>
       ${withTimer ? `
       <div class="timer" id="mealTimer">
         <span class="tval" id="tval">30:00</span>
@@ -2573,8 +2623,7 @@ function buildTasks(){
           <button class="tbtn start" id="tStart" type="button" title="30분 식사 타이머를 시작하거나 잠시 멈춰요">▶ 시작</button>
           <button class="tbtn end" id="tEnd" type="button" title="타이머를 30:00으로 되돌리고 아침 식사를 마쳐요">✓ 끝</button>
         </div>
-      </div>` : ''}
-      <div class="tname">${t.name}</div>`;
+      </div>` : ''}`;
     card.addEventListener('click', e=>{
       if(e.target.closest('#mealTimer')) return; // don't toggle when tapping timer buttons
       toggleTask(i);
@@ -2585,6 +2634,17 @@ function buildTasks(){
     document.getElementById('tStart').addEventListener('click', timerToggle);
     document.getElementById('tEnd').addEventListener('click', timerFinish);
     renderTimer();
+    /* 타이머가 차지하는 만큼 모든 카드의 아래를 비워 둔다 — 그림·제목이 카드마다 같은 높이에 온다 */
+    const tm = document.getElementById('mealTimer');
+    if(tm){
+      wrap.classList.add('has-timer');
+      const setH = () => wrap.style.setProperty('--timer-h', Math.round(tm.getBoundingClientRect().height) + 'px');
+      setH();
+      requestAnimationFrame(setH);          // 글꼴이 늦게 적용돼도 한 번 더 잰다
+    }
+  } else {
+    wrap.classList.remove('has-timer');
+    wrap.style.removeProperty('--timer-h');
   }
   renderTasks();
 }
@@ -3923,17 +3983,8 @@ function renderMission(){
     grid.appendChild(card);
   });
   const done = missionDone(arr);
-  const cnt = document.getElementById('centerCnt');
-  if(cnt){
-    cnt.textContent = `${done}/${MISSION_FULL} 완료`;
-    cnt.classList.toggle('done', done >= MISSION_FULL);
-  }
-  const fill = document.getElementById('centerFill');
-  if(fill) fill.style.width = (done / MISSION_FULL * 100) + '%';
-  const tx = document.getElementById('centerFootTx');
-  if(tx) tx.textContent = done >= MISSION_FULL
-    ? '오늘 미션 전부 끝! 🎉'
-    : `오늘의 미션 ${done}/${MISSION_FULL} 완료 · ${done ? '조금만 더!' : '하나씩 해 봐요!'}`;
+  /* 6회라는 숫자는 화면에 드러내지 않는다 — 카드마다의 0/2 · 1/2 · 2/2 만으로 읽힌다 */
+  void done;
 }
 
 /* =========================================================
@@ -4585,19 +4636,27 @@ soundBtn.addEventListener('click', ()=>{
 function confetti(){
   const b = document.getElementById('burst');
   b.innerHTML = '';
-  const colors = ['#ffd94d','#7ecb5f','#5bc2ff','#ff5a5a','#c792ea','#ffb74d'];
-  for(let i=0;i<50;i++){
+  /* 작은 몬스터볼이 회전하며 떨어진다 — 기본 몬스터볼 위주로 가끔 슈퍼볼·하이퍼볼 */
+  const kinds = ['', '', '', '', '', '', 'great', 'great', 'ultra'];
+  const rnd = (a, c) => a + Math.random() * (c - a);
+  for(let i=0;i<44;i++){
     const c = document.createElement('div');
-    c.className = 'confetti';
-    c.style.left = Math.random()*100 + 'vw';
-    c.style.top = '-20px';
-    c.style.background = colors[i % colors.length];
-    c.style.animationDelay = (Math.random()*0.5) + 's';
+    const k = kinds[Math.floor(Math.random() * kinds.length)];
+    c.className = 'confetti' + (k ? ' ' + k : '');
+    const size = Math.round(rnd(12, 18));            // 12~18px 미니 볼
+    c.style.width = size + 'px';
+    c.style.height = size + 'px';
+    c.style.left = (Math.random()*100) + 'vw';
+    c.style.top = '-24px';
+    c.style.setProperty('--dx', Math.round(rnd(-70, 70)) + 'px');
+    c.style.setProperty('--spin', Math.round(rnd(-540, 900)) + 'deg');
+    c.style.animationDelay = rnd(0, 0.6).toFixed(2) + 's';
+    c.style.animationDuration = rnd(2.1, 3.2).toFixed(2) + 's';
     b.appendChild(c);
   }
   b.classList.add('show');
   clearTimeout(b._h);
-  b._h = setTimeout(()=>{ b.classList.remove('show'); b.innerHTML=''; }, 3000);
+  b._h = setTimeout(()=>{ b.classList.remove('show'); b.innerHTML=''; }, 3600);
 }
 
 /* ---------- main tick ---------- */
@@ -4691,7 +4750,8 @@ document.addEventListener('pointerdown', function once(){ unlockAudio(); }, {onc
 
 /* =====================================================================
    숨은 포켓몬볼 → 3:3 포켓몬 배틀 (부모 비밀번호로 잠금 · 순수 미니게임)
-   승패는 XP·강화권·도감 저장값에 아무 영향도 주지 않는다.
+   승리하면 엔트리에 넣었던 내 포켓몬 모두 강화 +1 (도감의 '강화하기'와 같은 상승),
+   패배하면 아무것도 바뀌지 않는다. XP·강화권은 그대로다.
    ===================================================================== */
 const BT = {
   /* 상대 트레이너 계수 — 아이가 약 7:3 으로 이기도록 튜닝 (btSimBatch 로 검증) */
@@ -4711,7 +4771,7 @@ const BT = {
 };
 const btState = {
   phase:'closed', sel:[], need:0, pTeam:[], fTeam:[], pi:0, fi:0, turn:1,
-  pGuard:false, pBuff:1, busy:false, logLines:[], won:false
+  pGuard:false, pBuff:1, busy:false, logLines:[], won:false, boosted:false
 };
 let btGen = 0;
 const btSleep = ms => new Promise(r => setTimeout(r, ms));
@@ -5124,6 +5184,7 @@ function btStartBattle(){
   btState.fTeam = btFoeTeam(ids.length, btState.pTeam);
   btState.pi = 0; btState.fi = 0; btState.turn = 1;
   btState.pGuard = false; btState.pBuff = 1; btState.busy = false; btState.won = false;
+  btState.boosted = false;
   btState.logLines = [];
   btState.phase = 'battle';
   btGen++;
@@ -5253,6 +5314,47 @@ async function btPlayerDown(gen){
   btUpdateTurn();
   btState.busy = false; btSetButtons(true);
 }
+/* ---------- 승리 보상: 엔트리 포켓몬 강화 +1 ----------
+   엔트리에 넣었던 내 포켓몬(1~3마리)의 강화 레벨을 하나씩 올린다.
+   상승 규칙은 도감의 '강화하기'(upgradePoke)와 완전히 같다
+   — rec.lv +1 로 LV_UP[10,5,5] 만큼 HP·공격·방어가 오르고 전투력은 +30.
+   강화권은 쓰지 않고, 결과는 곧바로 localStorage 에 저장된다.
+   패배하면 아무것도 바꾸지 않는다. */
+function btApplyWinBoost(win){
+  const row = document.getElementById('btRBoost'), list = document.getElementById('btRBoostList');
+  if(!row || !list) return;
+  list.innerHTML = '';
+  row.hidden = true;
+  if(!win || btState.boosted) return;
+  btState.boosted = true;
+  const up = [];
+  btState.pTeam.forEach(u => {
+    const rec = state.caught[u.id];
+    if(!rec) return;
+    const before = statsOf(u.id, rec.lv || 0, rec.iv);
+    rec.lv = (rec.lv || 0) + 1;
+    const st = statsOf(u.id, rec.lv, rec.iv);
+    up.push({ id:u.id, name:u.name, lv:rec.lv, st,
+             dHp:st.hp-before.hp, dAtk:st.atk-before.atk, dDef:st.def-before.def, dPow:st.power-before.power });
+  });
+  if(!up.length) return;
+  save();
+  renderDex();
+  up.forEach(x => {
+    const el = document.createElement('span');
+    el.className = 'btRBI';
+    el.title = `${x.name} 강화 +${x.lv} — HP +${x.dHp} · 공격 +${x.dAtk} · 방어 +${x.dDef}`;
+    el.innerHTML = `<span class="bri-img">🐾<img alt=""></span>`
+      + `<span class="bri-t"><span class="bri-n">${x.name}</span>`
+      + `<span class="bri-d">전투력 ${x.st.power - x.dPow} → ${x.st.power}</span></span>`
+      + `<span class="bri-up">강화 +1!</span>`;
+    const im = el.querySelector('img');
+    im.addEventListener('error', () => im.remove());   // 오프라인·file:// 에서도 이름과 배지는 보인다
+    im.src = sprite(x.id);
+    list.appendChild(el);
+  });
+  row.hidden = false;
+}
 function btFinish(win){
   btState.phase = 'result';
   btState.won = win;
@@ -5280,6 +5382,7 @@ function btFinish(win){
   document.getElementById('btRStats').innerHTML =
     `<span>내 팀 ${alive}/${n}</span><span>상대 ${foeAlive}/${btState.fTeam.length}</span><span>${btState.turn}턴</span>`;
   if(win){ confetti(); btSfx('win'); } else { btSfx('lose'); }
+  btApplyWinBoost(win);
 }
 
 /* ---------- 열기 / 닫기 (열 때마다 부모 비밀번호 확인) ---------- */
@@ -5289,6 +5392,7 @@ function btOpen(){
   btState.pTeam = []; btState.fTeam = [];
   btState.pi = 0; btState.fi = 0; btState.turn = 1;
   btState.pGuard = false; btState.pBuff = 1; btState.busy = false;
+  btState.boosted = false;
   btState.sel = []; btState.logLines = [];
   btGuardTag('p', false); btGuardTag('f', false);
   btGuardFx('p', false); btGuardFx('f', false);
