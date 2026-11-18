@@ -111,7 +111,7 @@
 
   /* --- 날씨 카드 (흰 카드 · 2px 테두리) --- */
   header.sky .weather{
-    margin-left:auto; flex:1 1 auto; min-width:0; max-width:55%;
+    margin-left:auto; flex:1 1 auto; min-width:0; max-width:52%;
     background:#fff; border:2px solid #2b3445; border-radius:.8em;
     padding:.32em .4em .24em; display:flex; flex-direction:column; gap:.1em;
     color:#152436; cursor:pointer; box-shadow:0 .2em .45em rgba(20,60,90,.2);
@@ -174,6 +174,35 @@
   header.sky .w-tiprow b{flex:0 0 auto; color:#1f6fd4; font-weight:900; white-space:nowrap;}
   header.sky .w-tiprow .w-tip{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   header.sky .w-fallback{font-size:.7em; color:#94a3ae; font-weight:900;}
+
+  /* --- 시계와 날씨 사이: 루틴 XP + ⚡ 강화 XP (한눈에) ---
+     날씨 카드가 오른쪽을 차지하고, 남는 가운데 공간에 두 지표를 나란히 둔다. */
+  header.sky .hxp{position:relative; z-index:2; display:flex; align-items:center; justify-content:flex-start;
+    gap:.34em; flex:0 0 auto; min-width:0; overflow:hidden;}
+  header.sky .hxp-card{display:flex; align-items:center; gap:.3em; min-width:0;
+    background:#fff; border:2px solid #2b3445; border-radius:.62em; padding:.22em .42em;
+    box-shadow:0 .16em .34em rgba(20,60,90,.18); color:#152436;}
+  header.sky .hxp-art{width:2.7em; height:2.7em; object-fit:contain; flex:0 0 auto;
+    filter:drop-shadow(0 1px 1px rgba(20,50,80,.18));}
+  header.sky .hxp-col{display:flex; flex-direction:column; justify-content:center; gap:.18em; min-width:0;}
+  header.sky .hxp-lab{display:flex; align-items:baseline; gap:.24em; font-size:.76em; font-weight:900;
+    color:#6b7d68; white-space:nowrap; line-height:1.15; min-width:0;}
+  header.sky .hxp-lab b{font-size:1.12em; color:#7a5b00; max-width:6em; overflow:hidden; text-overflow:ellipsis;}
+  header.sky .hxp-lab .tchip{display:none;}
+  /* 미니 XP 바 — wildbox 의 .xpbar 를 그대로 쓰고 크기만 줄인다 */
+  header.sky .hxp-routine .xpbar{width:7em; height:1.35em; flex:0 0 auto;}
+  header.sky .hxp-routine .xpbar .xt{font-size:.68em; line-height:1.98em;}
+  header.sky .hxp-boost{flex-direction:column; align-items:stretch; justify-content:center; gap:.18em; flex:0 0 auto;}
+  header.sky .hxp-boost .hxp-lab{justify-content:flex-start; gap:.3em;}
+  header.sky .hxp-boost .hxp-lab b{color:#a8791a;}
+  header.sky .hxp-tk{color:#7a5b00; font-size:.96em;}
+  header.sky .hxp-gauge{display:flex; gap:.18em;}
+  header.sky .hxp-gauge i{display:block; width:1.1em; height:1.1em; border-radius:.26em;
+    background:#fffdf6; border:2px solid #cdba88; box-shadow:inset 0 1px 2px rgba(150,125,70,.12);
+    transition:background .18s,border-color .18s;}
+  header.sky .hxp-gauge i.on{background:linear-gradient(180deg,#ffd95a,#f5b400); border-color:#d79a00;
+    box-shadow:0 1px 3px rgba(190,130,0,.4);}
+  header.sky .hxp-boost.hot{background:#fffbe8; border-color:#e0a800;}
 
   /* ===== 오늘 모드 (등교 / 방과후 / 방학) ===== */
   .modes{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;justify-content:center;}
@@ -466,6 +495,8 @@
     border-radius:14px;padding:7px 16px;
   }
   .rest-note.show{display:flex;}
+  /* 오늘의 공부 제목 옆에 붙는 작은 칩 — 큰 배너 대신 */
+  .study-main h2 .rest-note{font-size:12.5px;font-weight:900;padding:2px 11px;border-radius:999px;line-height:1.4;}
   .sheet-btn.rest-btn{background:#fff0f6;color:#b5397b;}
   .sheet-btn.rest-btn.on{background:#ffe1ee;color:#96285f;box-shadow:0 0 0 3px #ffd0e3;} 
   .study-grid.resting{display:flex;align-items:center;justify-content:center;overflow:hidden;}
@@ -487,6 +518,22 @@
   }
   .self-btn.on{background:#f3fbe9;color:#2e7d32;}
   .self-btn.on .box{background:var(--green);border-color:var(--green-dark);color:#fff;}
+  /* '오늘의 공부' 제목 옆의 작은 체크 칩 — 예전 강화 XP 배너 자리 */
+  .self-chip{
+    display:inline-flex;align-items:center;gap:6px;border:2px solid #e6d9b0;border-radius:999px;
+    background:#fff;color:#7a5b00;font-family:inherit;font-weight:900;font-size:12.5px;
+    padding:2px 9px 2px 3px;cursor:pointer;line-height:1.2;flex:0 0 auto;
+    box-shadow:0 1px 3px rgba(120,100,50,.12);transition:background .15s,border-color .15s,transform .12s;
+  }
+  .self-chip:active{transform:scale(.97);}
+  .self-chip .box{
+    width:21px;height:21px;border-radius:7px;border:2px solid #d9c98f;background:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;flex:0 0 auto;
+  }
+  .self-chip.on{background:#f3fbe9;border-color:#bfe3ab;color:#2e7d32;}
+  .self-chip.on .box{background:var(--green);border-color:var(--green-dark);color:#fff;}
+  .self-chip .add{font-size:10.5px;font-weight:900;color:#a8791a;background:#fff7de;border-radius:999px;padding:1px 6px;}
+  .self-chip.on .add{background:#e6f7dc;color:#3f7a2a;}
   .self-prog{display:flex;align-items:center;gap:10px;min-width:0;}
   /* 5칸 게이지 — 다 채우면 ⚡강화권 1장. 설명 문구 없이 칸과 숫자만으로 읽힌다. */
   .gauge{display:flex;gap:4px;}
@@ -563,6 +610,64 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .tom-list li.none{color:#b9b09d;background:transparent;font-weight:700;}
+
+  /* ===== 🏥 포켓몬센터 미션 ===== */
+  .center{flex:1;display:none;flex-direction:column;gap:10px;min-height:0;}
+  .center.show{display:flex;}
+  .center-main{
+    flex:1;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:9px 14px 10px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden;
+  }
+  .center-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;row-gap:3px;}
+  .center-head h2{margin:0;font-size:21px;font-weight:900;color:#54452f;line-height:1.2;}
+  .center-head .sub{font-size:12.5px;font-weight:800;color:var(--ink2);white-space:nowrap;}
+  .center-head .sub b{color:#b26a00;}
+  .center-head .cnt{font-size:12.5px;font-weight:900;color:#fff;background:#e0554d;border-radius:999px;
+    padding:3px 12px;margin-left:auto;white-space:nowrap;}
+  .center-head .cnt.done{background:var(--green-dark);}
+  .center-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;min-height:0;}
+  .mcard{
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+    background:linear-gradient(180deg,#fffdf7,#fff6f3);border:4px solid #f3d9d2;border-radius:20px;
+    cursor:pointer;font-family:inherit;padding:18px 10px;min-width:0;overflow:hidden;
+    box-shadow:0 4px 12px rgba(120,80,70,.08);transition:transform .12s,border-color .2s,background .2s;
+  }
+  .mcard:active{transform:scale(.98);}
+  .mcard .m-ico{font-size:clamp(44px,10.5vh,92px);line-height:1;filter:drop-shadow(0 3px 4px rgba(120,80,70,.18));}
+  .mcard .m-name{font-size:clamp(17px,3vh,28px);font-weight:900;color:#54452f;line-height:1.15;white-space:nowrap;}
+  .mcard .m-tip{font-size:clamp(11px,1.9vh,16px);font-weight:800;color:#a2937c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .mcard .m-xp{font-size:clamp(11px,1.8vh,15px);font-weight:900;color:#b26a00;background:#fff3c9;
+    border-radius:999px;padding:4px 13px;white-space:nowrap;}
+  .mcard .m-chk{
+    position:absolute;left:12px;top:10px;width:30px;height:30px;border-radius:50%;
+    border:3px solid #e3d6c3;background:#fff;display:flex;align-items:center;justify-content:center;
+    color:transparent;font-size:17px;font-weight:900;box-shadow:inset 0 1px 2px rgba(150,125,70,.12);
+    transition:background .2s,border-color .2s,color .2s,transform .2s;
+  }
+  .mcard .m-done{
+    position:absolute;right:10px;top:12px;font-size:11px;font-weight:900;color:#fff;
+    background:var(--green-dark);border-radius:999px;padding:3px 9px;white-space:nowrap;
+    opacity:0;transform:scale(.6);transition:all .2s cubic-bezier(.3,1.6,.6,1);
+  }
+  .mcard.done{border-color:var(--green);background:#f3fbe9;}
+  .mcard.done .m-chk{background:var(--green);border-color:var(--green-dark);color:#fff;transform:scale(1.04);}
+  .mcard.done .m-done{opacity:1;transform:scale(1);}
+  .mcard.done .m-name{color:#3f7a2a;}
+  .mcard.done .m-xp{background:#e6f7dc;color:#3f7a2a;}
+  .center-foot{flex:0 0 auto;display:flex;align-items:center;gap:10px;}
+  .cf-bar{flex:1;height:12px;background:#eee7d2;border-radius:999px;overflow:hidden;}
+  .cf-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd97a,#ff8a4d);border-radius:999px;transition:width .3s;}
+  .center-foot .tx{font-size:12px;font-weight:800;color:var(--ink2);white-space:nowrap;}
+  @media (max-width:1120px){
+    .center-main{padding:7px 10px 8px;}
+    .center-head h2{font-size:17px;}
+    .center-head .sub{font-size:11px;}
+    .center-head .cnt{font-size:11px;padding:2px 10px;}
+    .center-grid{gap:8px;}
+    .mcard{padding:12px 8px;border-radius:16px;}
+    .mcard .m-chk{width:25px;height:25px;font-size:14px;left:9px;top:8px;}
+    .mcard .m-done{font-size:10px;padding:2px 7px;right:8px;top:10px;}
+  }
 
   /* ===== 구글 시트 연동 상태 (오늘의 공부) ===== */
   .sheet-sync{
@@ -1211,6 +1316,7 @@
       <div class="tabs" role="tablist">
         <button class="tab active" id="tabDash">🏠 루틴</button>
         <button class="tab" id="tabStudy">📚 오늘의 공부</button>
+        <button class="tab" id="tabCenter">🏥 포켓몬센터 미션</button>
         <button class="tab" id="tabDex">📕 도감<span class="tbadge" id="dexBadge">0</span></button>
       </div>
       <div class="spacer"></div>
@@ -1235,6 +1341,21 @@
         <div class="cclock">
           <span class="ampm" id="ampmTx">오전</span>
           <div class="clock" id="clock"><span class="grp"><span class="dg">8</span></span><span class="cln" aria-hidden="true"><i></i><i></i></span><span class="grp"><span class="dg">1</span><span class="dg">0</span></span><span class="sec">:00</span></div>
+        </div>
+      </div>
+
+      <!-- 시계 ↔ 날씨 사이: 루틴 XP + ⚡ 강화 XP -->
+      <div class="hxp" id="hxp">
+        <div class="hxp-card hxp-routine" title="이번 목표 포켓몬까지의 루틴 경험치">
+          <img class="hxp-art" id="wildArt" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" alt="다음 목표 포켓몬" onerror="this.style.display='none'">
+          <div class="hxp-col">
+            <div class="hxp-lab">다음 목표 <b id="wildName">이상해씨</b><span class="tchip tt0" id="wildTier">일반</span></div>
+            <div class="xpbar"><div class="xf" id="wildXpFill" style="width:0%"></div><div class="xt" id="wildXpText">0/100 XP</div></div>
+          </div>
+        </div>
+        <div class="hxp-card hxp-boost" id="hxpBoost" title="⚡ 강화 XP 5개를 모으면 포켓몬 강화권 1장">
+          <div class="hxp-lab"><span>⚡ 강화 XP</span><b id="hxpCnt">0/5</b><span class="hxp-tk" id="hxpTicket">🎟 0장</span></div>
+          <div class="hxp-gauge" id="hxpGauge" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -1288,14 +1409,6 @@
       </div>
       <div class="depart" id="departLabel">출발 오전 8:35</div>
     </div>
-    <div class="wildbox">
-      <img id="wildArt" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" alt="포켓몬" onerror="this.style.display='none';this.parentElement.querySelector('.we').style.display='block'">
-      <div class="we" style="display:none">❓</div>
-      <div>
-        <div class="wild-name">다음 목표: <b id="wildName">이상해씨</b> <span class="tchip tt0" id="wildTier">일반</span></div>
-        <div class="xpbar"><div class="xf" id="wildXpFill" style="width:0%"></div><div class="xt" id="wildXpText">0/100 XP</div></div>
-      </div>
-    </div>
   </div>
 
   <!-- ======= TASKS ======= -->
@@ -1303,28 +1416,13 @@
 
   <!-- ======= TODAY'S STUDY ======= -->
   <div class="study" id="study">
-    <div class="self-banner">
-      <div class="self-ctrl" id="selfCtrl">
-        <button class="self-btn" id="selfBtn"><span class="box">✓</span><span>⚡ 강화 XP</span></button>
-        <div class="self-prog">
-          <div class="gauge" id="selfGauge" aria-hidden="true"></div>
-          <div class="self-goal">
-            <b class="n" id="selfNum">0/5</b>
-            <span class="arw" aria-hidden="true">→</span>
-            <span class="tp"><span class="tick" aria-hidden="true">🎟</span>강화권 1</span>
-          </div>
-        </div>
-      </div>
-      <div class="rest-note" id="restNote">🌙 오늘은 쉬는 날</div>
-      <div class="ticket-box" id="ticketBox">
-        <span class="ic">🎟</span>
-        <div><div class="tx">포켓몬 강화권</div><div class="nn" id="ticketNum">0장</div></div>
-      </div>
-    </div>
-
     <div class="study-body">
       <div class="study-main">
         <h2>📚 오늘의 공부 <span class="d" id="studyDate"></span>
+          <button class="self-chip" id="selfBtn" type="button" title="오늘의 공부를 스스로 했어요 — ⚡ 강화 XP +1">
+            <span class="box">✓</span><span>스스로 했어요</span><span class="add">+1 ⚡</span>
+          </button>
+          <span class="rest-note" id="restNote">🌙 오늘은 쉬는 날</span>
           <span class="sheet-sync" id="sheetSync">
             <span id="sheetTx">📊 시트 연결 중…</span>
             <button class="sheet-btn rest-btn" id="restBtn" type="button" title="부모님 비밀번호를 누르면 오늘 하루 공부를 쉽니다">🛋️ 휴식</button>
@@ -1342,6 +1440,22 @@
         <div class="sub" id="tomSub"></div>
         <ul class="tom-list" id="tomList"></ul>
       </aside>
+    </div>
+  </div>
+
+  <!-- ======= 🏥 POKÉMON CENTER MISSION ======= -->
+  <div class="center" id="center">
+    <div class="center-main">
+      <div class="center-head">
+        <h2>🏥 포켓몬센터 미션</h2>
+        <span class="sub">미션을 하나 끝낼 때마다 <b>⚡ 강화 XP +1</b> · 5개를 모으면 🎟 강화권 1장</span>
+        <span class="cnt" id="centerCnt">0/3 완료</span>
+      </div>
+      <div class="center-grid" id="centerGrid"></div>
+      <div class="center-foot">
+        <div class="cf-bar"><i id="centerFill"></i></div>
+        <span class="tx" id="centerFootTx">오늘의 미션 0/3 완료</span>
+      </div>
     </div>
   </div>
 
@@ -1580,6 +1694,10 @@
   <div class="row">
     <a class="sheet-link" id="sheetOpenLink" target="_blank" rel="noopener">📊 오늘의 공부 시트 열기 ↗</a>
     <button class="pbtn" id="panelSheetRefresh">🔄 지금 불러오기</button>
+  </div>
+  <div class="row">
+    <button class="pbtn" id="webReloadBtn" type="button" title="캐시를 건너뛰고 최신 배포본으로 다시 열어요">🔄 웹앱 새로고침</button>
+    <span class="pin-src">최신 버전으로 새로 열기 · 기록은 그대로</span>
   </div>
   <div class="row"><span class="pin-src">🔑 부모 비밀번호는 시트에서 바꿔요</span></div>
   <div class="row">
@@ -2043,6 +2161,9 @@ function migrate(s){
     s.__resetTickets = true;
   }
   if(!Array.isArray(s.study.selfDates)) s.study.selfDates = [];
+  /* 🏥 포켓몬센터 미션 — 날짜별 체크만 저장한다 (강화 XP·강화권은 그대로 유지) */
+  if(!s.mission || typeof s.mission !== 'object') s.mission = {};
+  if(!s.mission.done || typeof s.mission.done !== 'object') s.mission.done = {};
   if(!Array.isArray(s.study.nightDates)) s.study.nightDates = [];   // 9:40 전에 취침 루틴을 끝낸 날
   if(!Array.isArray(s.study.restDates)) s.study.restDates = [];
   if(typeof s.xpDate !== 'string'){   // 하루 단위 경험치 기준일 (여기선 getNow를 쓰지 않는다)
@@ -2597,15 +2718,19 @@ function renderWild(){
   // current wild target + XP
   const pk = DEX[state.wildIndex];
   const wa = document.getElementById('wildArt');
-  wa.style.display='';
-  wa.src = art(pk.id);
-  wa.onerror = ()=>{ wa.style.display='none'; wa.parentElement.querySelector('.we').style.display='block'; };
-  document.getElementById('wildName').textContent = pk.name;
+  if(wa){
+    wa.style.display = '';
+    wa.src = art(pk.id);
+    wa.onerror = function(){ wa.style.display = 'none'; };   // 그림이 안 오면 자리만 비운다
+  }
+  const wn = document.getElementById('wildName');
+  if(wn) wn.textContent = pk.name;
   const chip = document.getElementById('wildTier');
-  chip.textContent = tierName(tierOf(pk));
-  chip.className = 'tchip tt' + tierOf(pk);
-  document.getElementById('wildXpFill').style.width = Math.min(100, state.xp) + '%';
-  document.getElementById('wildXpText').textContent = `${state.xp}/100 XP`;
+  if(chip){ chip.textContent = tierName(tierOf(pk)); chip.className = 'tchip tt' + tierOf(pk); }
+  const xf = document.getElementById('wildXpFill');
+  if(xf) xf.style.width = Math.min(100, state.xp) + '%';
+  const xnum = document.getElementById('wildXpText');
+  if(xnum) xnum.textContent = `${state.xp}/100 XP`;
 }
 
 /* ---------- meal timer ---------- */
@@ -3445,6 +3570,7 @@ function flashSelfFull(){
 function incrementSelfProgress(src, opts){
   opts = opts || {};
   const fromNight = src === 'night';
+  const fromMission = src === 'mission';
   state.study.selfCount = (state.study.selfCount || 0) + 1;
   if(state.study.selfCount >= 5){
     state.study.selfCount = 0;
@@ -3454,7 +3580,9 @@ function incrementSelfProgress(src, opts){
       playMissionSfx(()=>{ chime(); powerSfx(); }); confetti();
       toast(fromNight
         ? '🎟 9:40 전 취침 완료로 별을 다 모았어요! 포켓몬 강화권 1장!'
-        : '🎟 포켓몬 강화권 1장을 받았어요! 도감에서 강화해요!');
+        : fromMission
+          ? '🎟 미션으로 별을 다 모았어요! 포켓몬 강화권 1장!'
+          : '🎟 포켓몬 강화권 1장을 받았어요! 도감에서 강화해요!');
     }
     return true;             // 강화권을 받았다
   }
@@ -3462,7 +3590,9 @@ function incrementSelfProgress(src, opts){
     blip();
     toast(fromNight
       ? `🌙 9:40 전 취침 완료! 강화권 별 ${state.study.selfCount}/5`
-      : `⚡ 강화 XP ${state.study.selfCount}/5`);
+      : fromMission
+        ? `🏥 미션 완료! ⚡ 강화 XP ${state.study.selfCount}/5`
+        : `⚡ 강화 XP ${state.study.selfCount}/5`);
   }
   return false;
 }
@@ -3470,13 +3600,16 @@ function incrementSelfProgress(src, opts){
 function decrementSelfProgress(src, opts){
   opts = opts || {};
   const fromNight = src === 'night';
+  const fromMission = src === 'mission';
   if(state.study.selfCount > 0){
     state.study.selfCount--;
     if(!opts.silent){
       sad();
       toast(fromNight
         ? `취침 완료를 취소했어요 · ${state.study.selfCount}/5`
-        : `오늘의 강화 XP를 취소했어요 · ${state.study.selfCount}/5`);
+        : fromMission
+          ? `🏥 미션 체크를 풀었어요 · ${state.study.selfCount}/5`
+          : `오늘의 강화 XP를 취소했어요 · ${state.study.selfCount}/5`);
     }
   }else if(state.study.tickets > 0){
     state.study.tickets--;
@@ -3557,29 +3690,17 @@ function renderStudy(){
   const n = getNow();
   const d = n.getDay();
   document.getElementById('studyDate').textContent = `${n.getMonth()+1}월 ${n.getDate()}일 ${DAYS[n.getDay()]}`;
-  // self banner — 휴식이면 '⚡ 강화 XP'는 화면에서 사라진다
+  /* 제목 옆 '스스로 했어요' 칩 — 휴식이면 숨는다 (⋯강화 XP 5칸은 상단 배너에 있다) */
   const rest = isRestToday();
-  document.getElementById('selfCtrl').style.display = rest ? 'none' : '';
+  const selfBtn = document.getElementById('selfBtn');
+  selfBtn.style.display = rest ? 'none' : '';
   document.getElementById('restNote').classList.toggle('show', rest);
   const restBtn = document.getElementById('restBtn');
   restBtn.classList.toggle('on', rest);
   restBtn.textContent = rest ? '🛋️ 휴식 중 (해제)' : '🛋️ 휴식';
   const on = isSelfChecked();
-  document.getElementById('selfBtn').classList.toggle('on', on);
-  /* 5칸 게이지 — 채운 칸은 금색 ✓, 빈 칸은 빈 네모. 옆에 '2/5 → ⚡강화권 1' 만 둔다. */
-  const flash = selfFlashUntil > Date.now();
-  const cnt = flash ? 5 : Math.max(0, Math.min(5, state.study.selfCount || 0));
-  const gauge = document.getElementById('selfGauge');
-  gauge.innerHTML = '';
-  for(let i=0;i<5;i++){
-    const s = document.createElement('span');
-    s.className = 'gseg' + (i < cnt ? ' on' : '');
-    s.textContent = '✓';
-    gauge.appendChild(s);
-  }
-  document.getElementById('selfNum').textContent = `${cnt}/5`;
-  document.getElementById('ticketNum').textContent = `${state.study.tickets}장`;
-  document.getElementById('ticketBox').classList.toggle('hot', state.study.tickets > 0);
+  selfBtn.classList.toggle('on', on);
+  renderHeaderXp();
   const grid = document.getElementById('studyList');
   grid.classList.toggle('resting', rest);
   grid.innerHTML = '';
@@ -3652,6 +3773,99 @@ function todayAllDone(){
   return idx.length > 0 && idx.every(i=>done[i]);
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- 상단 시계·날씨 사이 XP 패널 ----------
+   '루틴 XP'(다음 목표 포켓몬 진행)는 renderWild 가 그리고,
+   '⚡ 강화 XP' 5칸과 강화권 장수는 여기서 그린다. */
+function renderHeaderXp(){
+  const flash = selfFlashUntil > Date.now();
+  const cnt = flash ? 5 : Math.max(0, Math.min(5, state.study.selfCount || 0));
+  const g = document.getElementById('hxpGauge');
+  if(g){
+    g.innerHTML = '';
+    for(let i=0;i<5;i++){
+      const s = document.createElement('i');
+      if(i < cnt) s.className = 'on';
+      g.appendChild(s);
+    }
+  }
+  const n = document.getElementById('hxpCnt');
+  if(n) n.textContent = `${cnt}/5`;
+  const tk = document.getElementById('hxpTicket');
+  if(tk) tk.textContent = `🎟 ${state.study.tickets || 0}장`;
+  const card = document.getElementById('hxpBoost');
+  if(card) card.classList.toggle('hot', (state.study.tickets || 0) > 0);
+}
+
+/* =========================================================
+   🏥 포켓몬센터 미션 — 매일 같은 3가지 (빨래 정리 · 신발 정리 · 분리수거)
+   체크할 때마다 ⚡ 강화 XP +1 (오늘의 공부·취침과 같은 5칸 저울에 합산)
+   날짜가 바뀌면 체크만 새로 시작하고, 누적 강화 XP·강화권은 그대로 둔다.
+   ========================================================= */
+const MISSIONS = [
+  { name:'빨래 정리', icon:'🧺', tip:'빨래를 개서 제자리에 넣어요' },
+  { name:'신발 정리', icon:'👟', tip:'신발을 가지런히 신발장에' },
+  { name:'분리수거', icon:'♻️', tip:'종이·플라스틱·캔을 나눠요' },
+];
+function missionToday(){
+  state.mission = state.mission || {};
+  const m = state.mission;
+  if(!m.done || typeof m.done !== 'object') m.done = {};
+  const k = todayKey();
+  let arr = m.done[k];
+  if(!Array.isArray(arr)) arr = m.done[k] = [];
+  for(let i=0;i<MISSIONS.length;i++) if(typeof arr[i] !== 'boolean') arr[i] = false;
+  arr.length = MISSIONS.length;
+  /* 지난 날짜는 20일치만 남긴다 (날짜가 바뀌면 오늘 미션은 자동으로 새로 시작) */
+  const keys = Object.keys(m.done).sort();
+  if(keys.length > 20) keys.slice(0, keys.length - 20).forEach(x => { delete m.done[x]; });
+  return arr;
+}
+function missionToggle(i){
+  const arr = missionToday();
+  const wasAll = arr.every(Boolean);
+  arr[i] = !arr[i];
+  let gotTicket = false;
+  if(arr[i]) gotTicket = incrementSelfProgress('mission');
+  else decrementSelfProgress('mission');
+  save();
+  renderMission();
+  renderStudy();
+  if(!wasAll && !gotTicket && arr.every(Boolean)){
+    setTimeout(()=>{ playMissionSfx(()=>{ chime(); pokeFanfare(); }); confetti();
+      toast('🏥 포켓몬센터 미션 3개 완벽! 정말 멋져요!'); }, 260);
+  }
+}
+function renderMission(){
+  const grid = document.getElementById('centerGrid');
+  if(!grid) return;
+  const arr = missionToday();
+  grid.innerHTML = '';
+  MISSIONS.forEach((m, i)=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mcard' + (arr[i] ? ' done' : '');
+    b.setAttribute('aria-pressed', arr[i] ? 'true' : 'false');
+    b.title = arr[i] ? '한 번 더 누르면 취소돼요 (−1 ⚡)' : '다 했으면 눌러요 (+1 ⚡)';
+    b.innerHTML = `<span class="m-chk">✓</span><span class="m-done">완료!</span>`
+      + `<span class="m-ico">${m.icon}</span><span class="m-name">${m.name}</span>`
+      + `<span class="m-tip">${m.tip}</span><span class="m-xp">+1 ⚡ 강화 XP</span>`;
+    b.addEventListener('click', ()=> missionToggle(i));
+    grid.appendChild(b);
+  });
+  const done = arr.filter(Boolean).length;
+  const cnt = document.getElementById('centerCnt');
+  if(cnt){
+    cnt.textContent = `${done}/${MISSIONS.length} 완료`;
+    cnt.classList.toggle('done', done === MISSIONS.length);
+  }
+  const fill = document.getElementById('centerFill');
+  if(fill) fill.style.width = (done / MISSIONS.length * 100) + '%';
+  const tx = document.getElementById('centerFootTx');
+  if(tx) tx.textContent = done === MISSIONS.length
+    ? '오늘 미션 전부 끝! 🎉'
+    : `오늘의 미션 ${done}/${MISSIONS.length} 완료 · ${done ? '조금만 더!' : '하나씩 해 봐요!'}`;
+}
 
 /* =========================================================
    구글 시트 연동 — '오늘의 공부 리스트'
@@ -3915,7 +4129,7 @@ function renderSheetChip(){
 })();
 
 /* ---------- tabs ---------- */
-const TAB_IDS = { dash:'tabDash', dex:'tabDex', study:'tabStudy' };
+const TAB_IDS = { dash:'tabDash', study:'tabStudy', center:'tabCenter', dex:'tabDex' };
 let curTab = 'dash';
 function showTab(key){
   curTab = key;
@@ -3923,8 +4137,10 @@ function showTab(key){
   document.getElementById('tasks').style.display = key === 'dash' ? 'flex' : 'none';
   document.getElementById('dex').classList.toggle('show', key === 'dex');
   document.getElementById('study').classList.toggle('show', key === 'study');
+  document.getElementById('center').classList.toggle('show', key === 'center');
   if(key === 'dex') renderDex();
   if(key === 'study'){ renderStudy(); sheetFetch('tab'); }
+  if(key === 'center'){ renderMission(); renderHeaderXp(); }
 }
 Object.keys(TAB_IDS).forEach(k => document.getElementById(TAB_IDS[k]).addEventListener('click', ()=>showTab(k)));
 document.getElementById('selfBtn').addEventListener('click', selfToggle);
@@ -3934,6 +4150,26 @@ document.getElementById('restBtn').addEventListener('click', ()=>{
   askPin(()=> setRestToday(!isRestToday()));
 });
 document.getElementById('panelSheetRefresh').addEventListener('click', parentOnly(()=>{ sheetFetch('panel'); toast('📊 시트에서 공부 목록을 다시 불러와요'); }));
+/* ---------- 🔄 웹앱 새로고침 (부모 설정) ----------
+   삼성 인터넷 같은 웹앱 모드에는 주소창이 없어 새로고침이 어렵다.
+   http(s) 에서는 캐시를 건너뛴 주소(?v=시각)로 다시 열어 최신 배포본을 받고,
+   file:// 에서는 그냥 새로고침한다. localStorage 의 루틴·도감·강화권 기록은 건드리지 않는다. */
+function reloadWebApp(){
+  const btn = document.getElementById('webReloadBtn');
+  const was = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ 최신 버전 확인 중…'; }
+  try{
+    if(location.protocol === 'http:' || location.protocol === 'https:'){
+      const url = location.pathname + '?v=' + Date.now();   // pathname 기준 — 파라미터가 쌓이지 않는다
+      try{ fetch(url, { cache:'reload' }).catch(()=>{}); }catch(e){}
+      setTimeout(()=> location.replace(url), 150);          // 받아 둔 뒤 그 주소로 다시 연다
+      return;
+    }
+  }catch(e){}
+  if(btn){ btn.disabled = false; btn.textContent = was || '🔄 웹앱 새로고침'; }
+  location.reload();                                       // file:// · 앱 내부 문서
+}
+document.getElementById('webReloadBtn').addEventListener('click', reloadWebApp);
 document.getElementById('pokeClose').addEventListener('click', closePoke);
 document.getElementById('pokeUp').addEventListener('click', upgradePoke);
 document.getElementById('pokeOverlay').addEventListener('click', e=>{ if(e.target.id === 'pokeOverlay') closePoke(); });
@@ -4228,7 +4464,7 @@ function restoreData(file){
       buildRoutineTable();
       renderModePills();
       save();
-      curRKey = null; syncRoutine(); renderTasks(); renderWild(); renderDex(); renderStudy();
+      curRKey = null; syncRoutine(); renderTasks(); renderWild(); renderDex(); renderStudy(); renderMission();
       tick(true);
       toast('✅ 백업을 불러왔어요');
     }catch(e){
@@ -4259,7 +4495,7 @@ document.getElementById('resetAll').addEventListener('click', parentOnly(()=>{
     buildRoutineTable();
     renderModePills();
     curRKey = null;
-    renderTasks(); renderWild(); renderDex(); renderStudy(); tick(true);
+    renderTasks(); renderWild(); renderDex(); renderStudy(); renderMission(); tick(true);
     toast('전체 초기화 완료');
   }
 }));
@@ -4306,10 +4542,15 @@ function syncRoutine(){
   return true;
 }
 let wakeAcc = 0;
+let curMissionDay = todayKey();
 function tick(force){
   renderClock();
   syncRoutine();
   if(rollXpDay()) renderWild();      // 자정을 넘기면 경험치가 0으로
+  if(curMissionDay !== todayKey()){  // 자정을 넘기면 오늘의 미션 체크도 새로 시작
+    curMissionDay = todayKey();
+    if(curTab === 'center') renderMission();
+  }
   const now = renderProgress();
   /* 아침 마감 알림 — 방과후 모드는 8:45에 대기 화면으로 넘어가지만 알림은 그대로 울린다 */
   if(now < DEPART + 15) checkDepartAlert(now);
@@ -4329,6 +4570,8 @@ window.addEventListener('resize', ()=>{});
 /* 도감 200마리는 대시보드 첫 그림 이후에 조용히 준비한다 (첫 로딩을 가볍게) */
 updateDexReward();
 renderStudy();
+renderMission();
+renderHeaderXp();
 renderClock(); renderProgress();
 updateSoundBtn();
 /* ---------- 구글 시트 동기화 — 처음 한 번, 탭에 들어올 때마다, 30초마다 ---------- */
