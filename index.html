@@ -17,11 +17,15 @@
   html,body{height:100%;}
   body{
     margin:0; overflow:hidden; color:var(--ink);
-    /* 기기(갤럭시 탭 등)에 설정된 기본 시스템 폰트를 그대로 쓴다 — 외부 폰트를 불러오지 않는다 */
-    font-family:system-ui,sans-serif;
+    /* 기기(갤럭시 탭 등)에 설정된 사용자 지정 폰트를 그대로 쓴다 — 외부 폰트를 불러오지 않는다.
+       브라우저의 ‘시스템 UI’ 폰트 별칭은 안드로이드 Chromium·삼성 인터넷에서 기기 설정 폰트가
+       아니라 Roboto 로 고정되는 경우가 많아 쓰지 않고, 일반 sans-serif 로 두어 기기 글꼴 설정을 따른다. */
+    font-family:sans-serif;
     background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 60%,#f7f7e8 100%);
     user-select:none; -webkit-user-select:none; touch-action:manipulation;
   }
+  /* 폼 컨트롤은 브라우저 기본 UI 폰트로 바뀌지 않게 body 글꼴을 물려받는다 */
+  button,input,textarea,select{font-family:inherit;}
   #app{height:100vh; height:100dvh; display:flex; flex-direction:column; padding:10px 14px 12px; gap:10px;}
 
   /* ===== Header — Pokémon sky banner =====
@@ -77,10 +81,12 @@
   header.sky .wakechip.show{display:inline-flex; align-items:center;}
 
   /* --- 아랫줄: 브랜드 · 시계 · XP 패널 · 날씨 카드 ---
-     날씨 카드는 가로 폭을 제한해 컴팩트하게 두고, 남는 폭은 시계와 XP 패널 사이
-     여백으로 균등하게 나눈다 (space-between). */
-  header.sky .sky-body{position:relative; z-index:2; display:flex; align-items:center; gap:.55em;
-    justify-content:space-between; min-width:0; flex:1 1 auto;}
+     시계는 왼쪽에 두고, XP 패널과 날씨 카드는 서로 붙여 오른쪽에 나란히 둔다.
+     XP 패널의 margin-left:auto 가 남는 폭을 전부 시계 쪽으로 밀어내므로
+     두 카드 사이에는 아래 gap(8~12px)만 남는다. */
+  header.sky .sky-body{position:relative; z-index:2; display:flex; align-items:center;
+    gap:clamp(8px,.72em,12px);
+    justify-content:flex-start; min-width:0; flex:1 1 auto;}
   /* 포켓몬볼 + 시계는 한 덩어리 — 남는 폭을 나눌 때 둘이 벌어지지 않게 묶는다 */
   header.sky .clockbox{display:flex; align-items:center; gap:.55em; min-width:0; flex:0 0 auto;}
   header.sky .brand{display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -187,7 +193,8 @@
      반씩(사이 간격 포함) 나눠 채운다 — align-self:stretch 로 두 상자의 바깥 높이가 같아진다.
      폭은 남는 공간을 받아 늘어나되 상한(17em)에서 멈춘다. */
   header.sky .hxp{position:relative; z-index:2; display:flex; flex-direction:column; align-items:stretch;
-    gap:.24em; flex:1 1 0; min-width:11em; max-width:17em; align-self:stretch; overflow:visible;}
+    gap:.24em; flex:1 1 0; min-width:11em; max-width:17em; align-self:stretch; overflow:visible;
+    margin-left:auto;}   /* 남는 폭은 시계↔XP 사이로 → XP+날씨는 오른쪽에 나란히 */
   header.sky .hxp-card{display:flex; align-items:center; gap:.3em; min-width:0; width:100%; flex:1 1 0; min-height:0;
     background:#fff; border:2px solid #2b3445; border-radius:.62em; padding:.16em .42em;
     box-shadow:0 .16em .34em rgba(20,60,90,.18); color:#152436;}
@@ -417,13 +424,15 @@
   .burst.show{display:block;}
   /* 미니 몬스터볼 컨페티 — 위 빨강 · 가운데 검은 띠 · 아래 흰색 + 가운데 버튼.
      무늬는 background 두 겹(가운데 버튼 + 위아래 색 띠)으로 그려서 그림 파일이 필요 없다.
-     크기·드리프트·회전은 JS 가 --dx / --spin 과 width·height 로 매번 다르게 준다. */
+     크기·방향·거리·회전은 JS 가 left/top 시작점과 --ux/--uy/--r/--spin 으로 매번 다르게 준다.
+     폭죽처럼 중심에서 사방으로 빠르게 퍼졌다가(0~26%) 감속하며 살짝 떨어져 사라진다. */
   .confetti{position:absolute;width:14px;height:14px;border-radius:50%;
     border:1.5px solid #262c33;box-shadow:0 1px 2px rgba(20,40,60,.28);
+    will-change:transform,opacity;
     background:
       radial-gradient(circle at 50% 50%, #ffffff 0 17%, #262c33 17% 27%, rgba(38,44,51,0) 27%),
       linear-gradient(180deg,#e8402f 0 44%, #262c33 44% 56%, #faf8f2 56% 100%);
-    animation:ballFall 2.6s linear forwards;}
+    animation:ballBurst 1.5s linear forwards;}
   /* 가끔 슈퍼볼(파랑) · 하이퍼볼(검정+노랑)을 섞는다 */
   .confetti.great{background:
       radial-gradient(circle at 50% 50%, #ffffff 0 17%, #262c33 17% 27%, rgba(38,44,51,0) 27%),
@@ -431,11 +440,36 @@
   .confetti.ultra{background:
       radial-gradient(circle at 50% 50%, #ffffff 0 17%, #e8b93a 17% 27%, rgba(38,44,51,0) 27%),
       linear-gradient(180deg,#22262c 0 44%, #e8b93a 44% 56%, #22262c 56% 100%);}
-  @keyframes ballFall{
-    0%{transform:translate3d(0,-30px,0) rotate(0deg) scale(.6);opacity:0;}
-    8%{opacity:1;}
-    100%{transform:translate3d(var(--dx,0px),108vh,0) rotate(var(--spin,720deg)) scale(1);opacity:.9;}
+  /* 폭죽 연출: 중심에서 사방으로 --r 만큼 퍼졌다가 중력에 살짝 떨어져 사라진다.
+     --ux/--uy 는 단위방향(cos/sin), --r 은 퍼지는 거리(px) — 방향마다 거리·속도가 다르다.
+     0~22%에서 빠르게 팡 터지고, 그 뒤로는 거의 제자리에서 살짝 떨어지며 사라진다. */
+  @keyframes ballBurst{
+    0%{opacity:0; transform:translate(-50%,-50%) translate3d(0,0,0) rotate(0deg) scale(.3);}
+    4%{opacity:1; transform:translate(-50%,-50%)
+        translate3d(calc(var(--ux) * var(--r) * .22), calc(var(--uy) * var(--r) * .22), 0)
+        rotate(calc(var(--spin) * .12)) scale(1.3);}
+    12%{opacity:1; transform:translate(-50%,-50%)
+        translate3d(calc(var(--ux) * var(--r) * .58), calc(var(--uy) * var(--r) * .58), 0)
+        rotate(calc(var(--spin) * .38)) scale(1.12);}
+    22%{opacity:1; transform:translate(-50%,-50%)
+        translate3d(calc(var(--ux) * var(--r) * .92), calc(var(--uy) * var(--r) * .92), 0)
+        rotate(calc(var(--spin) * .6)) scale(1);}
+    40%{opacity:1; transform:translate(-50%,-50%)
+        translate3d(calc(var(--ux) * var(--r)), calc(var(--uy) * var(--r) + 12px), 0)
+        rotate(calc(var(--spin) * .8)) scale(.99);}
+    70%{opacity:.85; transform:translate(-50%,-50%)
+        translate3d(calc(var(--ux) * var(--r) * 1.02), calc(var(--uy) * var(--r) + 55px), 0)
+        rotate(calc(var(--spin) + 60deg)) scale(.95);}
+    100%{opacity:0; transform:translate(-50%,-50%)
+        translate3d(calc(var(--ux) * var(--r) * 1.05), calc(var(--uy) * var(--r) + 112px), 0)
+        rotate(calc(var(--spin) + 150deg)) scale(.9);}
   }
+  /* 터지는 순간의 하얀 섬팡 */
+  .burst .flash{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+    pointer-events:none;background:radial-gradient(circle,
+      rgba(255,255,255,.95) 0 18%, rgba(255,244,190,.7) 38%, rgba(255,255,255,0) 70%);
+    animation:burstFlash .46s ease-out forwards;}
+  @keyframes burstFlash{0%{transform:scale(.2);opacity:1;}100%{transform:scale(3.6);opacity:0;}}
 
   #toast{
     position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(30px);
@@ -1312,14 +1346,12 @@
   .btRTitle.win{color:#e08a00;}
   .btRTitle.lose{color:#7a8ba3;}
   .btRSub{font-size:15px;font-weight:800;color:#6a5a44;margin:0;}
-  .btRStats{display:flex;gap:8px;font-size:12.5px;font-weight:900;color:#7a6a52;flex-wrap:wrap;justify-content:center;}
   /* 승리 보상 — 엔트리 포켓몬 강화 +1 안내 */
   .btRBoost{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;min-width:0;}
   .btRBoost[hidden]{display:none!important;}
   .btRBoostLbl{font-size:13px;font-weight:900;color:#a8791a;background:#fff7de;border:2px solid #f0d992;
     border-radius:999px;padding:2px 12px;white-space:nowrap;animation:btIn .45s cubic-bezier(.3,1.5,.6,1);}
   .btRBoostList{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
-  .btRStats span{background:#f4eeda;border-radius:999px;padding:3px 11px;}
   .btRBI{display:flex;align-items:center;gap:7px;background:#fffdf6;border:2px solid #e7d9ae;border-radius:14px;
     padding:3px 9px 3px 5px;box-shadow:0 2px 6px rgba(150,120,50,.14);}
   .btRBI .bri-img{position:relative;width:34px;height:34px;flex:0 0 auto;display:flex;align-items:center;
@@ -1689,7 +1721,6 @@
         <div class="btRBoostLbl">⚡ 엔트리 포켓몬 강화 +1!</div>
         <div class="btRBoostList" id="btRBoostList"></div>
       </div>
-      <div class="btRStats" id="btRStats"></div>
       <div class="btRBtns">
         <button class="btGhost" id="btExit" type="button">배틀 종료</button>
       </div>
@@ -4633,30 +4664,53 @@ soundBtn.addEventListener('click', ()=>{
 });
 
 /* ---------- confetti ---------- */
+/* 폭죽: 화면 중앙(크게) · 좌·우 두 곳(작게)에서 몬스터볼이 사방으로 팡 터진다 */
 function confetti(){
   const b = document.getElementById('burst');
   b.innerHTML = '';
-  /* 작은 몬스터볼이 회전하며 떨어진다 — 기본 몬스터볼 위주로 가끔 슈퍼볼·하이퍼볼 */
-  const kinds = ['', '', '', '', '', '', 'great', 'great', 'ultra'];
+  const kinds = ['', '', '', '', '', '', 'great', 'great', 'ultra'];  // 기본 몬스터볼 위주로 가끔 슈퍼볼·하이퍼볼
   const rnd = (a, c) => a + Math.random() * (c - a);
-  for(let i=0;i<44;i++){
-    const c = document.createElement('div');
-    const k = kinds[Math.floor(Math.random() * kinds.length)];
-    c.className = 'confetti' + (k ? ' ' + k : '');
-    const size = Math.round(rnd(12, 18));            // 12~18px 미니 볼
-    c.style.width = size + 'px';
-    c.style.height = size + 'px';
-    c.style.left = (Math.random()*100) + 'vw';
-    c.style.top = '-24px';
-    c.style.setProperty('--dx', Math.round(rnd(-70, 70)) + 'px');
-    c.style.setProperty('--spin', Math.round(rnd(-540, 900)) + 'deg');
-    c.style.animationDelay = rnd(0, 0.6).toFixed(2) + 's';
-    c.style.animationDuration = rnd(2.1, 3.2).toFixed(2) + 's';
-    b.appendChild(c);
+  const W = window.innerWidth, H = window.innerHeight;
+  const minSide = Math.min(W, H);
+  /* 터지는 자리: [x비율, y비율, 볼 개수, 퍼지는 거리 비율, 시작 지연(ms)] */
+  const spots = [
+    [.50, .44, 28, rnd(.26, .42), 0],
+    [.25, .54, 13, rnd(.17, .28), 110],
+    [.75, .54, 13, rnd(.17, .28), 190],
+  ];
+  for(const [ox, oy, count, reach, delay] of spots){
+    const cx = W * ox, cy = H * oy, base = minSide * reach;
+    /* 섬팡 한 번 */
+    const fl = document.createElement('div');
+    fl.className = 'flash';
+    fl.style.left = Math.round(cx) + 'px';
+    fl.style.top = Math.round(cy) + 'px';
+    fl.style.animationDelay = delay + 'ms';
+    b.appendChild(fl);
+    /* 방향은 360° 고르게 갈라지지 않게 조금씩 흔들어 자연스럽게 */
+    const turn = Math.random() * Math.PI * 2;
+    for(let i = 0; i < count; i++){
+      const c = document.createElement('div');
+      const k = kinds[Math.floor(Math.random() * kinds.length)];
+      c.className = 'confetti' + (k ? ' ' + k : '');
+      const size = Math.round(rnd(12, 20));                    // 12~20px 미니 볼
+      c.style.width = size + 'px';
+      c.style.height = size + 'px';
+      c.style.left = Math.round(cx) + 'px';
+      c.style.top = Math.round(cy) + 'px';
+      const ang = turn + (i / count) * Math.PI * 2 + rnd(-.16, .16);
+      c.style.setProperty('--ux', Math.cos(ang).toFixed(4));
+      c.style.setProperty('--uy', Math.sin(ang).toFixed(4));
+      c.style.setProperty('--r', Math.round(base * rnd(.55, 1.15)) + 'px');   // 거리·속도 제각각
+      c.style.setProperty('--spin', Math.round(rnd(-720, 720)) + 'deg');
+      c.style.animationDelay = (delay + rnd(0, 120)).toFixed(0) + 'ms';
+      c.style.animationDuration = rnd(1.25, 1.85).toFixed(2) + 's';
+      b.appendChild(c);
+    }
   }
   b.classList.add('show');
   clearTimeout(b._h);
-  b._h = setTimeout(()=>{ b.classList.remove('show'); b.innerHTML=''; }, 3600);
+  b._h = setTimeout(()=>{ b.classList.remove('show'); b.innerHTML=''; }, 2400);
 }
 
 /* ---------- main tick ---------- */
@@ -4771,7 +4825,8 @@ const BT = {
 };
 const btState = {
   phase:'closed', sel:[], need:0, pTeam:[], fTeam:[], pi:0, fi:0, turn:1,
-  pGuard:false, pBuff:1, busy:false, logLines:[], won:false, boosted:false
+  pGuard:false, pBuff:1, busy:false, logLines:[], won:false, boosted:false,
+  entryIds:[]   /* 배틀에 출전한 엔트리(쓰러진 포켓몬 포함) — 승리 보상은 이 목록 전체에 준다 */
 };
 let btGen = 0;
 const btSleep = ms => new Promise(r => setTimeout(r, ms));
@@ -5180,6 +5235,7 @@ function btGuardFx(side, on){
 function btStartBattle(){
   if(btState.sel.length < btState.need) return;
   const ids = btState.sel.slice(0, 3);
+  btState.entryIds = ids.slice();          // 결과 화면의 강화 보상은 이 엔트리 전체(쓰러진 포켓몬 포함)
   btState.pTeam = ids.map(btStatsMine);
   btState.fTeam = btFoeTeam(ids.length, btState.pTeam);
   btState.pi = 0; btState.fi = 0; btState.turn = 1;
@@ -5327,14 +5383,20 @@ function btApplyWinBoost(win){
   row.hidden = true;
   if(!win || btState.boosted) return;
   btState.boosted = true;
+  /* 엔트리에 넣었던 포켓몬 전부 — hp 가 0 인(쓰러진) 포켓몬도 빠지지 않게
+     pTeam 의 현재 hp 와 상관없이 출전 엔트리 id 목록 전체를 돈다. */
+  const ids = (btState.entryIds && btState.entryIds.length)
+    ? btState.entryIds.slice()
+    : btState.pTeam.map(u => u.id);
   const up = [];
-  btState.pTeam.forEach(u => {
-    const rec = state.caught[u.id];
+  [...new Set(ids)].forEach(id => {
+    const rec = state.caught[id];
+    const u = btState.pTeam.find(x => x.id === id) || { id, name:(DEX.find(d => d.id === id) || {}).name || '포켓몬' };
     if(!rec) return;
-    const before = statsOf(u.id, rec.lv || 0, rec.iv);
+    const before = statsOf(id, rec.lv || 0, rec.iv);
     rec.lv = (rec.lv || 0) + 1;
-    const st = statsOf(u.id, rec.lv, rec.iv);
-    up.push({ id:u.id, name:u.name, lv:rec.lv, st,
+    const st = statsOf(id, rec.lv, rec.iv);
+    up.push({ id, name:u.name, lv:rec.lv, st,
              dHp:st.hp-before.hp, dAtk:st.atk-before.atk, dDef:st.def-before.def, dPow:st.power-before.power });
   });
   if(!up.length) return;
@@ -5368,19 +5430,15 @@ function btFinish(win){
   document.getElementById('btArena').hidden = true;
   document.getElementById('btEntry').hidden = true;
   document.getElementById('btResult').hidden = false;
-  const n = btState.pTeam.length;
-  const alive = btState.pTeam.filter(u => u.hp > 0).length;
-  const foeAlive = btState.fTeam.filter(u => u.hp > 0).length;
   document.getElementById('btTurn').textContent = win ? '승리!' : '패배…';
   document.getElementById('btRTrophy').textContent = win ? '🏆' : '😢';
   const title = document.getElementById('btRTitle');
   title.textContent = win ? '승리!' : '패배…';
   title.className = 'btRTitle ' + (win ? 'win' : 'lose');
+  /* 몇 마리가 남았는지·팀 점수·턴 수는 결과 화면에 보여 주지 않는다 */
   document.getElementById('btRSub').textContent = win
-    ? `${n}마리 중 ${alive}마리가 남았어요! 정말 멋진 배틀이었어요 🎉`
-    : '상대가 조금 더 강했어요. 다음에는 이길 수 있을 거예요!';
-  document.getElementById('btRStats').innerHTML =
-    `<span>내 팀 ${alive}/${n}</span><span>상대 ${foeAlive}/${btState.fTeam.length}</span><span>${btState.turn}턴</span>`;
+    ? '정말 멋진 배틀이었어요! 🎉'
+    : '아쉽지만 다음엔 꼭 이길 수 있어요!';
   if(win){ confetti(); btSfx('win'); } else { btSfx('lose'); }
   btApplyWinBoost(win);
 }
@@ -5389,7 +5447,7 @@ function btFinish(win){
 function btOpen(){
   btGen++;
   btState.phase = 'entry';
-  btState.pTeam = []; btState.fTeam = [];
+  btState.pTeam = []; btState.fTeam = []; btState.entryIds = [];
   btState.pi = 0; btState.fi = 0; btState.turn = 1;
   btState.pGuard = false; btState.pBuff = 1; btState.busy = false;
   btState.boosted = false;
