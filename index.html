@@ -111,7 +111,7 @@
 
   /* --- 날씨 카드 (흰 카드 · 2px 테두리) --- */
   header.sky .weather{
-    margin-left:auto; flex:1 1 auto; min-width:0; max-width:52%;
+    margin-left:auto; flex:1 1 auto; min-width:0; max-width:56%;
     background:#fff; border:2px solid #2b3445; border-radius:.8em;
     padding:.32em .4em .24em; display:flex; flex-direction:column; gap:.1em;
     color:#152436; cursor:pointer; box-shadow:0 .2em .45em rgba(20,60,90,.2);
@@ -175,29 +175,31 @@
   header.sky .w-tiprow .w-tip{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   header.sky .w-fallback{font-size:.7em; color:#94a3ae; font-weight:900;}
 
-  /* --- 시계와 날씨 사이: 루틴 XP + ⚡ 강화 XP (한눈에) ---
-     날씨 카드가 오른쪽을 차지하고, 남는 가운데 공간에 두 지표를 나란히 둔다. */
-  header.sky .hxp{position:relative; z-index:2; display:flex; align-items:center; justify-content:flex-start;
-    gap:.34em; flex:0 0 auto; min-width:0; overflow:hidden;}
-  header.sky .hxp-card{display:flex; align-items:center; gap:.3em; min-width:0;
-    background:#fff; border:2px solid #2b3445; border-radius:.62em; padding:.22em .42em;
+  /* --- 시계와 날씨 사이: 루틴 XP + ⚡ 강화 XP (위아래 2줄) ---
+     날씨 카드가 오른쪽을 차지하고, 남는 가운데 공간에 두 지표를 위아래로 쌓는다.
+     두 카드는 같은 폭으로 늘어나 한 덩어리로 보이고, 높이는 시계 카드 안에 들어간다. */
+  header.sky .hxp{position:relative; z-index:2; display:flex; flex-direction:column; align-items:stretch;
+    justify-content:center; gap:.24em; flex:0 0 auto; min-width:11em; overflow:visible;}
+  header.sky .hxp-card{display:flex; align-items:center; gap:.3em; min-width:0; width:100%;
+    background:#fff; border:2px solid #2b3445; border-radius:.62em; padding:.16em .42em;
     box-shadow:0 .16em .34em rgba(20,60,90,.18); color:#152436;}
-  header.sky .hxp-art{width:2.7em; height:2.7em; object-fit:contain; flex:0 0 auto;
+  header.sky .hxp-art{width:2.3em; height:2.3em; object-fit:contain; flex:0 0 auto;
     filter:drop-shadow(0 1px 1px rgba(20,50,80,.18));}
-  header.sky .hxp-col{display:flex; flex-direction:column; justify-content:center; gap:.18em; min-width:0;}
+  header.sky .hxp-col{display:flex; flex-direction:column; justify-content:center; gap:.14em; min-width:0;
+    flex:1 1 auto;}
   header.sky .hxp-lab{display:flex; align-items:baseline; gap:.24em; font-size:.76em; font-weight:900;
     color:#6b7d68; white-space:nowrap; line-height:1.15; min-width:0;}
   header.sky .hxp-lab b{font-size:1.12em; color:#7a5b00; max-width:6em; overflow:hidden; text-overflow:ellipsis;}
   header.sky .hxp-lab .tchip{display:none;}
   /* 미니 XP 바 — wildbox 의 .xpbar 를 그대로 쓰고 크기만 줄인다 */
-  header.sky .hxp-routine .xpbar{width:7em; height:1.35em; flex:0 0 auto;}
-  header.sky .hxp-routine .xpbar .xt{font-size:.68em; line-height:1.98em;}
-  header.sky .hxp-boost{flex-direction:column; align-items:stretch; justify-content:center; gap:.18em; flex:0 0 auto;}
+  header.sky .hxp-routine .xpbar{flex:1 1 auto; width:auto; min-width:5em; height:1.24em;}
+  header.sky .hxp-routine .xpbar .xt{font-size:.68em; line-height:1.82em;}
+  header.sky .hxp-boost{flex-direction:column; align-items:stretch; justify-content:center; gap:.14em; flex:0 0 auto;}
   header.sky .hxp-boost .hxp-lab{justify-content:flex-start; gap:.3em;}
   header.sky .hxp-boost .hxp-lab b{color:#a8791a;}
-  header.sky .hxp-tk{color:#7a5b00; font-size:.96em;}
-  header.sky .hxp-gauge{display:flex; gap:.18em;}
-  header.sky .hxp-gauge i{display:block; width:1.1em; height:1.1em; border-radius:.26em;
+  header.sky .hxp-tk{color:#7a5b00; font-size:.96em; margin-left:auto;}
+  header.sky .hxp-gauge{display:flex; gap:.16em;}
+  header.sky .hxp-gauge i{display:block; flex:1 1 0; min-width:0; height:1.02em; border-radius:.24em;
     background:#fffdf6; border:2px solid #cdba88; box-shadow:inset 0 1px 2px rgba(150,125,70,.12);
     transition:background .18s,border-color .18s;}
   header.sky .hxp-gauge i.on{background:linear-gradient(180deg,#ffd95a,#f5b400); border-color:#d79a00;
@@ -635,7 +637,6 @@
   .mcard:active{transform:scale(.98);}
   .mcard .m-ico{font-size:clamp(44px,10.5vh,92px);line-height:1;filter:drop-shadow(0 3px 4px rgba(120,80,70,.18));}
   .mcard .m-name{font-size:clamp(17px,3vh,28px);font-weight:900;color:#54452f;line-height:1.15;white-space:nowrap;}
-  .mcard .m-tip{font-size:clamp(11px,1.9vh,16px);font-weight:800;color:#a2937c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
   .mcard .m-xp{font-size:clamp(11px,1.8vh,15px);font-weight:900;color:#b26a00;background:#fff3c9;
     border-radius:999px;padding:4px 13px;white-space:nowrap;}
   .mcard .m-chk{
@@ -3803,6 +3804,7 @@ function renderHeaderXp(){
    날짜가 바뀌면 체크만 새로 시작하고, 누적 강화 XP·강화권은 그대로 둔다.
    ========================================================= */
 const MISSIONS = [
+  /* tip 은 화면에 그리지 않고 aria-label(읽어주기)로만 쓴다 — 카드는 아이콘·제목만 깔끔하게 */
   { name:'빨래 정리', icon:'🧺', tip:'빨래를 개서 제자리에 넣어요' },
   { name:'신발 정리', icon:'👟', tip:'신발을 가지런히 신발장에' },
   { name:'분리수거', icon:'♻️', tip:'종이·플라스틱·캔을 나눠요' },
@@ -3847,9 +3849,10 @@ function renderMission(){
     b.className = 'mcard' + (arr[i] ? ' done' : '');
     b.setAttribute('aria-pressed', arr[i] ? 'true' : 'false');
     b.title = arr[i] ? '한 번 더 누르면 취소돼요 (−1 ⚡)' : '다 했으면 눌러요 (+1 ⚡)';
+    b.setAttribute('aria-label', `${m.name} — ${m.tip}`);
     b.innerHTML = `<span class="m-chk">✓</span><span class="m-done">완료!</span>`
       + `<span class="m-ico">${m.icon}</span><span class="m-name">${m.name}</span>`
-      + `<span class="m-tip">${m.tip}</span><span class="m-xp">+1 ⚡ 강화 XP</span>`;
+      + `<span class="m-xp">+1 ⚡ 강화 XP</span>`;
     b.addEventListener('click', ()=> missionToggle(i));
     grid.appendChild(b);
   });
@@ -4402,9 +4405,8 @@ document.getElementById('testXp').addEventListener('click', parentOnly(()=>{
   maybeCatch();
 }));
 document.getElementById('testSelf').addEventListener('click', parentOnly(()=>{
-  const k = todayKey();
-  if(state.study.selfDates.includes(k)){ toast('오늘은 이미 ⚡ 강화 XP를 모았어요!'); return; }
-  state.study.selfDates.push(k);
+  /* 부모 테스트 — 오늘 이미 모았는지와 상관없이 누를 때마다 ⚡ 강화 XP +1.
+     5개가 되면 강화권 1장을 주고 0/5 로 돌아간다 (아이가 잘못 풀었을 때 부모가 복구) */
   incrementSelfProgress('study');
   save(); renderStudy(); renderDex();
 }));
