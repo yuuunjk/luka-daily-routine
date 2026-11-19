@@ -520,24 +520,69 @@
   }
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  /* ===== Settings panel ===== */
+  /* ===== Settings panel — 카테고리 탭 (시간·모드 / 확언·미션 / 보상·도감 / 데이터·앱) ===== */
   .panel{
     position:fixed;right:18px;top:64px;background:#fffdf7;border-radius:18px;
-    box-shadow:0 10px 30px rgba(0,0,0,.25);padding:14px;z-index:55;display:none;width:280px;
-    /* 버튼이 늘어도 낮은 화면(1024x600)에서 잘리지 않게 스크롤 */
-    max-height:calc(100vh - 80px);overflow-y:auto;overscroll-behavior:contain;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);padding:12px 12px 0;z-index:55;display:none;
+    width:min(400px, calc(100vw - 24px));
+    /* 제목·탭은 고정, 내용만 안에서 스크롤 — 낮은 화면(1024x600)에서도 잘리지 않는다 */
+    max-height:calc(100vh - 80px);overflow:hidden;overscroll-behavior:contain;
   }
-  .panel.show{display:block;}
+  .panel.show{display:flex;flex-direction:column;}
   .panel h4{margin:2px 0 8px;font-size:14px;font-weight:900;color:var(--ink2);}
   .panel .row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
   .pbtn{border:none;border-radius:10px;background:#eef3ea;color:#4a5a44;font-weight:800;
-    font-size:13px;padding:7px 10px;cursor:pointer;}
+    font-size:12.5px;padding:7px 9px;cursor:pointer;min-width:0;
+    display:inline-flex;align-items:center;justify-content:center;gap:3px;
+    line-height:1.2;text-align:center;text-decoration:none;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;}
   .pbtn.warn{background:#fdeceb;color:#c0392b;}
   .pin-src{font-size:11.5px;font-weight:800;color:#9a8d78;}
-  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;flex:0 0 auto;}
   .panel-head h4{margin:0;}
   .pclose{border:none;background:#f2efe4;color:#8a7a66;font-family:inherit;font-weight:900;
     border-radius:9px;width:28px;height:28px;font-size:13px;line-height:1;cursor:pointer;flex:0 0 auto;}
+  /* 탭 줄 — 한눈에 보이는 4칸 */
+  .ptabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:0 0 9px;flex:0 0 auto;}
+  .ptab{font-family:inherit;font-weight:900;font-size:11px;letter-spacing:-.4px;color:#7a8570;
+    background:#f2f5ec;border:2px solid #e2e7d8;border-radius:10px;padding:7px 1px;cursor:pointer;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .12s,color .12s,border-color .12s;}
+  .ptab.on{background:#fff3c9;border-color:#e8c46a;color:#7a5b00;box-shadow:0 2px 0 rgba(120,90,20,.12);}
+  .ptab:active{transform:translateY(1px);}
+  .setbody{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 2px 10px;}
+  .ppane{display:none;}
+  .ppane.show{display:block;}
+  .psec{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+    font-size:12px;font-weight:900;color:#8a7a66;margin:12px 0 6px;line-height:1.3;}
+  .psec.first{margin-top:0;}
+  .pstat{font-size:11.5px;font-weight:800;color:#7a6a52;background:#f4f7ee;border-radius:9px;
+    padding:6px 9px;margin:0 0 9px;line-height:1.4;}
+  .pstat b{color:#b26a00;}
+  .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+  .pgrid3{grid-template-columns:1fr 1fr 1fr;}
+  .pgrid .wide{grid-column:1 / -1;}
+  .ptime{flex-direction:column;align-items:center;gap:1px;line-height:1.15;padding:6px 4px;}
+  .ptime b{font-size:12.5px;font-weight:900;}
+  .ptime span{font-size:10px;font-weight:800;color:#8f927f;}
+  .pmode.on{background:#fff3c9;color:#7a5b00;box-shadow:inset 0 0 0 2px #e8c46a;}
+  .pbadge{font-size:10.5px;font-weight:900;border-radius:999px;padding:2px 8px;background:#eef3ea;
+    color:#5a6a50;white-space:nowrap;}
+  .pbadge.manual{background:#fff0cf;color:#a86a00;}
+  .pnow{font-size:11.5px;font-weight:800;color:#6b5a3e;background:#fffdf0;
+    border:1.5px dashed #e6dcc0;border-radius:9px;padding:6px 9px;margin-bottom:6px;line-height:1.35;}
+  .ptext{width:100%;font-family:inherit;font-size:12.5px;font-weight:800;color:#4a5a44;background:#fff;
+    border:2px solid #dfe5d4;border-radius:10px;padding:7px 9px;resize:none;line-height:1.35;}
+  .ptext:focus{outline:3px solid rgba(255,217,77,.5);outline-offset:-1px;}
+  .phint{display:block;font-size:10.5px;font-weight:800;color:#9a8d78;line-height:1.4;margin:4px 0 0;}
+  .mrow{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+  .mrow .mico{flex:0 0 auto;width:24px;text-align:center;font-size:16px;line-height:1;}
+  .mrow input{flex:1 1 auto;min-width:0;font-family:inherit;font-size:12.5px;font-weight:800;color:#4a5a44;
+    border:2px solid #dfe5d4;border-radius:9px;padding:6px 8px;background:#fff;}
+  .mrow input:focus{outline:3px solid rgba(255,217,77,.5);outline-offset:-1px;}
+  .mrow .mdel{flex:0 0 auto;width:26px;height:26px;border:none;border-radius:8px;background:#fdeceb;
+    color:#c0392b;font-family:inherit;font-weight:900;font-size:12px;line-height:1;cursor:pointer;}
+  .mrow .mdel:disabled{opacity:.35;cursor:default;}
+  .mrow .mdel:active{transform:scale(.94);}
 
   /* ===== 부모 확인 (비밀번호는 구글 시트에서 온다) ===== */
   .pinoverlay{z-index:56;background:rgba(40,60,50,.62);}
@@ -803,7 +848,13 @@
   .mcard.done .m-chk{background:var(--green);border-color:var(--green-dark);color:#fff;transform:scale(1.04);}
   .mcard.done .m-name{color:#3f7a2a;}
   .mcard.done .m-xp{background:#e6f7dc;color:#3f7a2a;}
-  .center-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;min-height:0;}
+  /* 미션이 4개 이상이면 두 줄이 된다 — 작은 카드에서도 글자가 넘치지 않게 함께 줄인다 */
+  .center-grid.many .m-body{padding:14px 8px 20px;gap:4px;}
+  .center-grid.many .m-ico{font-size:clamp(26px,5.6vh,52px);}
+  .center-grid.many .m-name{font-size:clamp(13px,2.2vh,20px);}
+  .center-grid.many .m-xp{font-size:clamp(9.5px,1.5vh,12px);padding:3px 9px;}
+  .center-grid.many .m-chk{width:24px;height:24px;font-size:13px;}
+  .center-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(0,1fr);gap:12px;min-height:0;}
   @media (max-width:1120px){
     .center-main{padding:7px 10px 8px;}
     .center-head h2{font-size:17px;}
@@ -2208,53 +2259,94 @@
 </div>
 
 <!-- settings -->
+<!-- 부모 설정 / 테스트 — 카테고리 탭 (시간·모드 / 확언·미션 / 보상·도감 / 데이터·앱) -->
 <div class="panel" id="panel">
   <div class="panel-head">
     <h4>🛠 부모 설정 / 테스트</h4>
     <button class="pclose" id="panelClose" type="button" aria-label="부모 설정 닫기" title="닫기">✕</button>
   </div>
-  <div class="row">
-    <button class="pbtn" data-time="real">실제 시간</button>
-    <button class="pbtn" data-time="08:00">08:00 아침</button>
-    <button class="pbtn" data-time="08:34:55">08:34:55 출발 5초 전</button>
+  <div class="ptabs" role="tablist" aria-label="설정 카테고리">
+    <button class="ptab on" type="button" role="tab" data-ptab="time" aria-selected="true">🕒 시간·모드</button>
+    <button class="ptab" type="button" role="tab" data-ptab="say" aria-selected="false" tabindex="-1">💬 확언·미션</button>
+    <button class="ptab" type="button" role="tab" data-ptab="reward" aria-selected="false" tabindex="-1">🎁 보상·도감</button>
+    <button class="ptab" type="button" role="tab" data-ptab="data" aria-selected="false" tabindex="-1">💾 데이터·앱</button>
   </div>
-  <div class="row">
-    <button class="pbtn" data-time="16:10">16:10 오후</button>
-    <button class="pbtn" data-time="20:59:55">20:59:55 취침 5초 전</button>
-  </div>
-  <div class="row">
-    <button class="pbtn" data-time="21:20">21:20 취침</button>
-    <button class="pbtn" data-time="21:39:55">21:39:55 마감 5초 전</button>
-  </div>
-  <div class="row">
-    <button class="pbtn" id="backupBtn">💾 데이터 백업</button>
-    <button class="pbtn" id="restoreBtn">📂 데이터 불러오기</button>
-    <input type="file" id="restoreFile" accept=".json,application/json" hidden>
-  </div>
-  <div class="row">
-    <a class="sheet-link" id="sheetOpenLink" target="_blank" rel="noopener">📊 오늘의 공부 시트 열기 ↗</a>
-    <button class="pbtn" id="panelSheetRefresh">🔄 지금 불러오기</button>
-  </div>
-  <div class="row">
-    <button class="pbtn" id="webReloadBtn" type="button" title="캐시를 건너뛰고 최신 배포본으로 다시 열어요">🔄 웹앱 새로고침</button>
-    <span class="pin-src">최신 버전으로 새로 열기 · 기록은 그대로</span>
-  </div>
-  <div class="row"><span class="pin-src">🔑 부모 비밀번호는 시트에서 바꿔요</span></div>
-  <div class="row">
-    <button class="pbtn" id="resetTasks">오늘 할 일 리셋</button>
-    <button class="pbtn" id="testXp">XP +50 테스트</button>
-  </div>
-  <div class="row">
-    <button class="pbtn" id="testSelf">⚡ 강화 XP +1</button>
-    <button class="pbtn" id="testTicket">강화권 +1</button>
-  </div>
-  <div class="row">
-    <button class="pbtn" id="testPoke1">🔴 도감 포켓몬 +1</button>
-    <button class="pbtn" id="testPoke3">🔴 도감 포켓몬 +3</button>
-  </div>
-  <div class="row">
-    <button class="pbtn" id="toggleSoundSetting">소리 켜기/끄기</button>
-    <button class="pbtn warn" id="resetAll">전체 초기화</button>
+  <div class="setbody" id="setBody">
+    <!-- 탭 1: 시간 · 모드 -->
+    <div class="ppane show" data-ppane="time" role="tabpanel" aria-label="시간·모드">
+      <div class="pstat" id="pStat">지금 상태를 확인하는 중…</div>
+      <div class="psec first">테스트 시간</div>
+      <div class="pgrid">
+        <button class="pbtn ptime wide" data-time="real"><b>실제 시간</b><span>지금 시각으로 돌아가기</span></button>
+        <button class="pbtn ptime" data-time="08:00"><b>08:00</b><span>아침 시작</span></button>
+        <button class="pbtn ptime" data-time="08:34:55"><b>08:34:55</b><span>출발 5초 전</span></button>
+        <button class="pbtn ptime" data-time="16:10"><b>16:10</b><span>오후 루틴</span></button>
+        <button class="pbtn ptime" data-time="20:59:55"><b>20:59:55</b><span>취침 5초 전</span></button>
+        <button class="pbtn ptime" data-time="21:20"><b>21:20</b><span>취침 시작</span></button>
+        <button class="pbtn ptime" data-time="21:39:55"><b>21:39:55</b><span>마감 5초 전</span></button>
+      </div>
+      <div class="psec">오늘 모드</div>
+      <div class="pgrid pgrid3">
+        <button class="pbtn pmode" type="button" data-set-mode="school" aria-pressed="false">🏫 등교</button>
+        <button class="pbtn pmode" type="button" data-set-mode="afterschool" aria-pressed="false">🎒 방과후</button>
+        <button class="pbtn pmode" type="button" data-set-mode="vacation" aria-pressed="false">🏖️ 방학</button>
+      </div>
+      <span class="phint">테스트 시간은 화면을 미리 보는 값이에요. 아이가 한 기록·보상은 그대로 남습니다.</span>
+    </div>
+
+    <!-- 탭 2: 확언 · 미션 -->
+    <div class="ppane" data-ppane="say" role="tabpanel" aria-label="확언·미션">
+      <div class="psec first">💬 오늘의 긍정 확언 <span class="pbadge" id="affirmMode">🤖 자동 (매일 랜덤)</span></div>
+      <div class="pnow" id="affirmNow"></div>
+      <textarea class="ptext" id="affirmInput" rows="2" maxlength="40" placeholder="문장을 입력하세요" aria-label="오늘의 긍정 확언 직접 입력"></textarea>
+      <div class="pgrid" style="margin-top:6px">
+        <button class="pbtn" id="affirmApply" type="button">적용(수동)</button>
+        <button class="pbtn" id="affirmAuto" type="button">자동으로(매일 랜덤)</button>
+      </div>
+      <span class="phint">수동은 내가 쓴 문장이 매일 그대로 나오고, 자동은 날짜마다 46문장 중 하나가 나와요. (40자 이내)</span>
+
+      <div class="psec">🏥 포켓몬센터 미션 (집안일) <span class="pbadge" id="missionCount">3개</span></div>
+      <div id="missionRows"></div>
+      <div class="pgrid">
+        <button class="pbtn" id="missionAdd" type="button">＋ 미션 추가</button>
+        <button class="pbtn" id="missionReset" type="button">기본값으로 복원</button>
+      </div>
+      <span class="phint">이름을 고치면 '포켓몬센터 미션' 탭 카드에 바로 반영돼요. 항목마다 하루 2번까지 · 취소 −1.</span>
+    </div>
+
+    <!-- 탭 3: 보상 · 도감 -->
+    <div class="ppane" data-ppane="reward" role="tabpanel" aria-label="보상·도감">
+      <div class="pgrid" style="margin-top:2px">
+        <button class="pbtn wide" id="resetTasks">🔄 오늘 할 일·경험치 리셋</button>
+        <button class="pbtn" id="testXp">XP +50 테스트</button>
+        <button class="pbtn" id="testSelf">⚡ 강화 XP +1</button>
+        <button class="pbtn" id="testTicket">🎟 강화권 +1</button>
+        <button class="pbtn" id="testPoke1">🔴 도감 포켓몬 +1</button>
+        <button class="pbtn" id="testPoke3">🔴 도감 포켓몬 +3</button>
+        <button class="pbtn" id="toggleSoundSetting">🔊 소리 켜기/끄기</button>
+      </div>
+      <span class="phint">도감 +1/+3은 아직 잡지 않은 포켓몬을 등록해요 (배틀·카드 확인용).</span>
+    </div>
+
+    <!-- 탭 4: 데이터 · 앱 -->
+    <div class="ppane" data-ppane="data" role="tabpanel" aria-label="데이터·앱">
+      <div class="pgrid" style="margin-top:2px">
+        <button class="pbtn" id="backupBtn" type="button">💾 데이터 백업</button>
+        <button class="pbtn" id="restoreBtn" type="button">📂 데이터 불러오기</button>
+        <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+        <button class="pbtn wide" id="webReloadBtn" type="button" title="캐시를 건너뛰고 최신 배포본으로 다시 열어요">🔄 웹앱 새로고침</button>
+      </div>
+      <span class="phint">백업 파일(.json)은 이 기기에만 저장돼요. 기록은 브라우저(localStorage)에 남습니다.</span>
+      <div class="psec">오늘의 공부 시트</div>
+      <div class="pgrid">
+        <a class="pbtn wide" id="sheetOpenLink" target="_blank" rel="noopener">📊 오늘의 공부 시트 열기 ↗</a>
+        <button class="pbtn wide" id="panelSheetRefresh">🔄 시트에서 지금 불러오기</button>
+      </div>
+      <div class="psec">부모 비밀번호</div>
+      <span class="phint">🔑 비밀번호는 구글 시트의 '비밀번호' 칸에서 바꿔요.</span>
+      <div class="psec">위험</div>
+      <div class="pgrid"><button class="pbtn warn wide" id="resetAll">🗑 전체 초기화</button></div>
+    </div>
   </div>
 </div>
 
@@ -2635,7 +2727,59 @@ const DAY_ORDER = [1,2,3,4,5,6,0];                          // 월 → 일
 const MIN_STUDY_ROWS = 8;                                    // 화면이 비어 보이지 않게 최소 8칸
 const BOOST_MAX = 8;                                          // ⚡ 강화 XP 8개 = 🎟 강화권 1장
 const MISSION_MAX = 2;                                        // 집안일 미션은 항목마다 하루 2번까지
-const MISSION_FULL = MISSION_MAX * 3;                         // 빨래·신발·분리수거 × 2 = 하루 6번
+const MISSION_MAX_ITEMS = 6;                                   // 설정에서 늘릴 수 있는 최대 개수
+/* 🏥 포켓몬센터 미션 기본값 — 부모 설정(💬 확언·미션 탭)에서 이름을 고치거나 늘리고 줄일 수 있다.
+   tip 은 화면에 그리지 않고 aria-label(읽어주기)로만 쓴다 — 카드는 아이콘·제목만 깔끔하게 */
+const MISSION_DEFAULTS = [
+  { name:'빨래 정리', icon:'🧺', tip:'빨래를 개서 제자리에 넣어요' },
+  { name:'신발 정리', icon:'👟', tip:'신발을 가지런히 신발장에' },
+  { name:'분리수거', icon:'♻️', tip:'종이·플라스틱·캔을 나눠요' },
+];
+/* 이름에 어울리는 아이콘 — 새 미션을 넣거나 이름을 고칠 때 자동으로 골라 준다 */
+const MISSION_ICON_WORDS = [
+  [/빨래|세탁|수건/, '🧺'], [/신발/, '👟'], [/분리수거|재활용|쓰레기/, '♻️'],
+  [/청소|쓸기|먼지|걸레/, '🧹'], [/설거지|그릇|식탁/, '🍽️'], [/욕실|양치|세면/, '🪥'],
+  [/이불|침대|베개/, '🛏️'], [/장남감|인형/, '🧸'], [/책상|서랍/, '🗄️'],
+  [/물|화분|식물/, '🪴'], [/빗질|머리/, '🧼'], [/옷|옷장/, '👕'],
+  [/책|가방|필통/, '📚'], [/찬장|냉장고/, '🧊'],
+];
+const MISSION_ICON_POOL = ['🧺','👟','♻️','🧹','🍽️','🛏️','🧸','🗄️','🪴','🪥'];
+function missionIconFor(name){
+  const s = String(name == null ? '' : name);
+  for(const [re, ic] of MISSION_ICON_WORDS) if(re.test(s)) return ic;
+  return null;
+}
+function missionTipFor(name){
+  const s = String(name == null ? '' : name).replace(/\s+/g, ' ').trim() || '집안일';
+  const hit = MISSION_DEFAULTS.find(d => d.name === s);
+  return hit ? hit.tip : `${s} 미션을 해요`;
+}
+/* 저장값을 항상 [{name, icon, tip}] 로 맞춘다 — 예전에 이름만 저장한 값도 읽는다 */
+function normalizeMissionItems(list){
+  const raw = Array.isArray(list) ? list : [];
+  const arr = raw.map((it, i)=>{
+    if(typeof it === 'string'){
+      const name = it.replace(/\s+/g, ' ').trim().slice(0, 10);
+      return { name, icon: missionIconFor(name) || MISSION_ICON_POOL[i % MISSION_ICON_POOL.length], tip: missionTipFor(name) };
+    }
+    if(it && typeof it === 'object'){
+      const name = String(it.name == null ? '' : it.name).replace(/\s+/g, ' ').trim().slice(0, 10);
+      const icon = typeof it.icon === 'string' && it.icon.trim()
+        ? it.icon.trim() : (missionIconFor(name) || MISSION_ICON_POOL[i % MISSION_ICON_POOL.length]);
+      const tip = typeof it.tip === 'string' && it.tip.trim() ? it.tip.trim() : missionTipFor(name);
+      return { name, icon, tip };
+    }
+    return null;
+  }).filter(it => it && it.name);
+  if(!arr.length) return MISSION_DEFAULTS.map(d => ({ ...d }));
+  return arr.slice(0, MISSION_MAX_ITEMS);
+}
+function missionItems(){
+  if(!Array.isArray(state.missionItems)) state.missionItems = normalizeMissionItems(null);
+  return state.missionItems;
+}
+/* 하루 전체 횟수 (항목 수 × 2) — 항목을 늘리거나 줄이면 같이 바뀐다 */
+function missionFull(){ return MISSION_MAX * missionItems().length; }
 function blankDay(){
   const a = [];
   while(a.length < MIN_STUDY_ROWS) a.push('');
@@ -2718,6 +2862,19 @@ function migrate(s){
   /* 🏥 포켓몬센터 미션 — 날짜별 체크만 저장한다 (강화 XP·강화권은 그대로 유지) */
   if(!s.mission || typeof s.mission !== 'object') s.mission = {};
   if(!s.mission.done || typeof s.mission.done !== 'object') s.mission.done = {};
+  /* 🏥 미션(집안일) 이름 목록 — 부모 설정에서 고칠 수 있다. 없거나 잘못된 값이면 기본 3개. */
+  s.missionItems = normalizeMissionItems(s.missionItems);
+  /* 저장된 항목 수가 바뀌었으면(3 → 4 등) 칸 수를 맞춘다 — 오늘 카드가 바로 맞게 보인다 */
+  Object.keys(s.mission.done).forEach(k => {
+    const a = s.mission.done[k];
+    if(Array.isArray(a) && a.length !== s.missionItems.length) a.length = s.missionItems.length;
+  });
+  /* 💬 오늘의 긍정 확언 — 수동 고정 문장 (null 이면 날짜별 자동 문구) */
+  if(typeof s.customAffirmation !== 'string') s.customAffirmation = null;
+  else {
+    const c = s.customAffirmation.replace(/\s+/g, ' ').trim().slice(0, 40);
+    s.customAffirmation = c || null;
+  }
   if(!Array.isArray(s.study.nightDates)) s.study.nightDates = [];   // 9:40 전에 취침 루틴을 끝낸 날
   if(!Array.isArray(s.study.restDates)) s.study.restDates = [];
   if(typeof s.xpDate !== 'string'){   // 하루 단위 경험치 기준일 (여기선 getNow를 쓰지 않는다)
@@ -4635,32 +4792,28 @@ function renderHeaderXp(){
 }
 
 /* =========================================================
-   🏥 포켓몬센터 미션 — 매일 같은 3가지 (빨래 정리 · 신발 정리 · 분리수거)
+   🏥 포켓몬센터 미션 — 기본은 3가지 (빨래 정리 · 신발 정리 · 분리수거).
+   부모 설정의 '💬 확언·미션' 탭에서 이름을 고치고 늘리고 줄일 수 있다(state.missionItems).
    항목마다 하루 2번까지 (0 → 1 → 2). 한 번 올릴 때마다 ⚡ 강화 XP +1,
    '↩ 취소' 로 한 번씩 되돌린다 (오늘의 공부·취침과 같은 8칸 저울에 합산).
    날짜가 바뀌면 횟수만 새로 시작하고, 누적 강화 XP·강화권은 그대로 둔다.
    ========================================================= */
-const MISSIONS = [
-  /* tip 은 화면에 그리지 않고 aria-label(읽어주기)로만 쓴다 — 카드는 아이콘·제목만 깔끔하게 */
-  { name:'빨래 정리', icon:'🧺', tip:'빨래를 개서 제자리에 넣어요' },
-  { name:'신발 정리', icon:'👟', tip:'신발을 가지런히 신발장에' },
-  { name:'분리수거', icon:'♻️', tip:'종이·플라스틱·캔을 나눠요' },
-];
 function missionToday(){
   state.mission = state.mission || {};
   const m = state.mission;
   if(!m.done || typeof m.done !== 'object') m.done = {};
+  const items = missionItems();
   const k = todayKey();
   let arr = m.done[k];
   if(!Array.isArray(arr)) arr = m.done[k] = [];
   /* 예전 저장값(boolean 배열)도 그대로 읽는다 — true → 1, false → 0 */
-  for(let i=0;i<MISSIONS.length;i++){
+  for(let i=0;i<items.length;i++){
     const v = arr[i];
     if(v === true) arr[i] = 1;
     else if(v === false || v == null) arr[i] = 0;
     else arr[i] = Math.max(0, Math.min(MISSION_MAX, Math.floor(Number(v) || 0)));
   }
-  arr.length = MISSIONS.length;
+  arr.length = items.length;
   /* 지난 날짜는 20일치만 남긴다 (날짜가 바뀌면 오늘 미션은 자동으로 새로 시작) */
   const keys = Object.keys(m.done).sort();
   if(keys.length > 20) keys.slice(0, keys.length - 20).forEach(x => { delete m.done[x]; });
@@ -4671,15 +4824,15 @@ function missionDone(arr){ return arr.reduce((a, b)=> a + (Number(b) || 0), 0); 
 function missionAdd(i){
   const arr = missionToday();
   if(arr[i] >= MISSION_MAX) return;
-  const wasFull = missionDone(arr) >= MISSION_FULL;
+  const wasFull = missionDone(arr) >= missionFull();
   arr[i] += 1;
   const gotTicket = incrementSelfProgress('mission');
   save();
   renderMission();
   renderStudy();
-  if(!wasFull && !gotTicket && missionDone(arr) >= MISSION_FULL){
+  if(!wasFull && !gotTicket && missionDone(arr) >= missionFull()){
     setTimeout(()=>{ playMissionSfx(()=>{ chime(); pokeFanfare(); }); confetti();
-      toast('🏥 포켓몬센터 미션 6번 완벽! 정말 멋져요!'); }, 260);
+      toast(`🏥 포켓몬센터 미션 ${missionFull()}번 완벽! 정말 멋져요!`); }, 260);
   }
 }
 /* 카드 모서리의 '↩ 취소' — 한 번 누를 때마다 1씩 되돌린다 */
@@ -4695,9 +4848,13 @@ function missionUndo(i){
 function renderMission(){
   const grid = document.getElementById('centerGrid');
   if(!grid) return;
+  const items = missionItems();
   const arr = missionToday();
   grid.innerHTML = '';
-  MISSIONS.forEach((m, i)=>{
+  /* 항목이 3개를 넘으면 두 줄이 된다 — 카드가 작아지므로 글자·아이콘을 함께 줄인다(스타일 .many) */
+  grid.style.gridTemplateColumns = `repeat(${Math.min(items.length, 3)}, 1fr)`;
+  grid.classList.toggle('many', items.length > 3);
+  items.forEach((m, i)=>{
     const n = arr[i] || 0;
     const full = n >= MISSION_MAX;
     const card = document.createElement('div');
@@ -4710,7 +4867,7 @@ function renderMission(){
     body.setAttribute('aria-label', `${m.name} — ${n}/${MISSION_MAX}회 완료 · ${m.tip}`
       + (full ? ' · 오늘은 다 했어요' : ' · 누르면 한 번 더'));
     body.innerHTML = `<span class="m-chk">${full ? '✓' : (n > 0 ? n : '')}</span>`
-      + `<span class="m-ico">${m.icon}</span><span class="m-name">${m.name}</span>`
+      + `<span class="m-ico">${m.icon}</span><span class="m-name">${escapeHtml(m.name)}</span>`
       + `<span class="m-xp">${full ? '2/2 완료 ⚡' : (n > 0 ? '한 번 더 +1 ⚡' : '+1 ⚡ 강화 XP')}</span>`;
     body.addEventListener('click', ()=> missionAdd(i));
     const c = document.createElement('span');
@@ -4728,7 +4885,7 @@ function renderMission(){
     grid.appendChild(card);
   });
   const done = missionDone(arr);
-  /* 6회라는 숫자는 화면에 드러내지 않는다 — 카드마다의 0/2 · 1/2 · 2/2 만으로 읽힌다 */
+  /* 하루 전체 횟수는 화면에 드러내지 않는다 — 카드마다의 0/2 · 1/2 · 2/2 만으로 읽힌다 */
   void done;
 }
 
@@ -5163,6 +5320,11 @@ function unlockParent(){
   pinOverlay.classList.remove('show');
   clearPinState();
   if(document.activeElement === pinInput) pinInput.blur();
+  renderPanelStatus();
+  renderPanelMode();
+  renderAffirmSettings();
+  renderMissionSettings();
+  switchPanelTab(panelTab, { silent:true });
   const hd = document.querySelector('header.sky');        // 하늘 배너 바로 아래에 붙게
   if(hd){
     const r = hd.getBoundingClientRect();
@@ -5173,6 +5335,174 @@ function unlockParent(){
   panel.style.maxHeight = Math.max(240, Math.round(window.innerHeight - topPx - 12)) + 'px';
   panel.classList.add('show');
   toast('🔓 부모 설정을 열었어요');
+}
+
+/* =========================================================
+   ⚙️ 설정 카테고리 탭 — 🕒 시간·모드 / 💬 확언·미션 / 🎁 보상·도감 / 💾 데이터·앱
+   탭·제목은 고정, 내용(.setbody)만 안에서 스크롤된다.
+   ========================================================= */
+let panelTab = 'time';
+function switchPanelTab(name, opts){
+  const known = ['time', 'say', 'reward', 'data'];
+  if(known.indexOf(name) < 0) name = 'time';
+  panelTab = name;
+  panel.querySelectorAll('.ptab').forEach(b=>{
+    const on = b.dataset.ptab === name;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+    b.tabIndex = on ? 0 : -1;
+  });
+  panel.querySelectorAll('.ppane').forEach(p=> p.classList.toggle('show', p.dataset.ppane === name));
+  if(name === 'say'){ renderAffirmSettings(); renderMissionSettings(); }
+  if(name === 'time'){ renderPanelStatus(); renderPanelMode(); }
+  const body = document.getElementById('setBody');
+  if(body && !(opts && opts.silent)) body.scrollTop = 0;
+}
+/* 지금 모드·화면 시각 — 탭 1 맨 위 상태줄 */
+function renderPanelStatus(){
+  const el = document.getElementById('pStat');
+  if(!el) return;
+  const p = n => (n < 10 ? '0' : '') + n;
+  const d = getNow();
+  const md = MODE_DEFS[modeId];
+  el.innerHTML = `지금 모드 <b>${md ? md.label : '등교'}</b> · 화면 시각 <b>${p(d.getHours())}:${p(d.getMinutes())}</b> (${simOffsetMs ? '미리보기' : '실제 시간'})`;
+}
+function renderPanelMode(){
+  panel.querySelectorAll('[data-set-mode]').forEach(b=>{
+    const on = b.dataset.setMode === modeId;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
+/* ---------- 💬 오늘의 긍정 확언 (자동 / 수동) ---------- */
+function renderAffirmSettings(){
+  const badge = document.getElementById('affirmMode');
+  const inp = document.getElementById('affirmInput');
+  const now = document.getElementById('affirmNow');
+  if(!badge || !inp) return;
+  const manual = typeof state.customAffirmation === 'string' && !!state.customAffirmation.trim();
+  badge.textContent = manual ? '✏️ 수동 고정' : '🤖 자동 (매일 랜덤)';
+  badge.classList.toggle('manual', manual);
+  if(document.activeElement !== inp) inp.value = manual ? state.customAffirmation : '';
+  inp.placeholder = manual ? '다른 문장으로 바꾸려면 입력하세요' : affirmAutoText();
+  if(now) now.textContent = `지금 배너: ${currentAffirmText()}`;
+}
+function applyCustomAffirm(){
+  const inp = document.getElementById('affirmInput');
+  if(!inp) return;
+  const v = inp.value.replace(/\s+/g, ' ').trim().slice(0, 40);
+  if(!v){ toast('✏️ 문장을 먼저 입력해 주세요'); inp.focus(); return; }
+  state.customAffirmation = v;
+  save();
+  renderAffirm(); renderAffirmSettings();
+  toast('✏️ 오늘의 긍정 확언을 수동으로 고정했어요');
+}
+function useAutoAffirm(){
+  state.customAffirmation = null;
+  save();
+  renderAffirm(); renderAffirmSettings();
+  toast('🤖 매일 랜덤 확언으로 돌아왔어요');
+}
+
+/* ---------- 🏥 포켓몬센터 미션 (집안일) 목록 편집 ---------- */
+function renderMissionSettings(){
+  const wrap = document.getElementById('missionRows');
+  if(!wrap) return;
+  const items = missionItems();
+  wrap.innerHTML = '';
+  items.forEach((m, i)=>{
+    const row = document.createElement('div');
+    row.className = 'mrow';
+    const ico = document.createElement('span');
+    ico.className = 'mico'; ico.textContent = m.icon; ico.setAttribute('aria-hidden', 'true');
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.className = 'mname'; inp.maxLength = 10; inp.value = m.name;
+    inp.dataset.i = i;
+    inp.setAttribute('aria-label', `${i+1}번째 미션 이름`);
+    inp.placeholder = '미션 이름';
+    const del = document.createElement('button');
+    del.type = 'button'; del.className = 'mdel'; del.textContent = '✕';
+    del.dataset.i = i;
+    del.title = `${m.name || '미션'} 삭제`;
+    del.setAttribute('aria-label', `${m.name || '미션'} 삭제`);
+    del.disabled = items.length <= 1;
+    row.append(ico, inp, del);
+    wrap.appendChild(row);
+  });
+  const cnt = document.getElementById('missionCount');
+  if(cnt) cnt.textContent = `${items.length}개`;
+  const add = document.getElementById('missionAdd');
+  if(add) add.disabled = items.length >= MISSION_MAX_ITEMS;
+}
+/* 미션 이름을 고치면 카드에 즉시 반영 — 횟수(0/2)는 같은 자리에 그대로 남는다 */
+function missionRename(i, name){
+  const items = missionItems();
+  if(!items[i]) return;
+  const clean = String(name == null ? '' : name).replace(/\s+/g, ' ').slice(0, 10);
+  items[i].name = clean;
+  const ic = missionIconFor(clean);
+  if(ic) items[i].icon = ic;
+  items[i].tip = missionTipFor(clean);
+  save();
+  renderMission();
+  const row = document.querySelectorAll('#missionRows .mrow')[i];
+  const ico = row && row.querySelector('.mico');
+  if(ico) ico.textContent = items[i].icon;
+}
+/* 입력칸을 비워 두거나 앞뒤에 빈칸을 남기고 나갔을 때 정리한다 */
+function missionNameFix(i){
+  const items = missionItems();
+  if(!items[i]) return;
+  const t = items[i].name.trim();
+  if(!t){
+    items[i].name = '집안일';
+    items[i].icon = missionIconFor('집안일') || items[i].icon;
+    items[i].tip = missionTipFor('집안일');
+  }else if(t !== items[i].name){
+    items[i].name = t;
+    items[i].tip = missionTipFor(t);
+  }else return;
+  save(); renderMission(); renderMissionSettings();
+}
+function padMissionDays(){
+  const n = missionItems().length;
+  const done = state.mission && state.mission.done;
+  if(!done || typeof done !== 'object') return;
+  Object.keys(done).forEach(k=>{
+    const a = done[k];
+    if(!Array.isArray(a)){ done[k] = []; return; }
+    if(a.length < n) for(let i = a.length; i < n; i++) a.push(0);
+    else if(a.length > n) a.length = n;
+  });
+}
+function addMissionItem(){
+  const items = missionItems();
+  if(items.length >= MISSION_MAX_ITEMS){ toast(`🏥 미션은 ${MISSION_MAX_ITEMS}개까지 넣을 수 있어요`); return; }
+  items.push({ name:'새 미션', icon: missionIconFor('새 미션') || MISSION_ICON_POOL[items.length % MISSION_ICON_POOL.length], tip: missionTipFor('새 미션') });
+  padMissionDays();
+  save(); renderMission(); renderMissionSettings();
+  const inp = document.querySelector('#missionRows .mrow:last-child input');
+  if(inp){ inp.focus(); inp.select(); }
+}
+function removeMissionItem(i){
+  const items = missionItems();
+  if(items.length <= 1){ toast('🏥 미션은 하나 이상 있어야 해요'); return; }
+  if(!items[i]) return;
+  items.splice(i, 1);
+  const done = state.mission && state.mission.done;
+  if(done && typeof done === 'object'){
+    Object.keys(done).forEach(k=>{ if(Array.isArray(done[k])) done[k].splice(i, 1); });
+  }
+  save(); renderMission(); renderMissionSettings();
+  toast('🏥 미션을 하나 뺐어요');
+}
+function resetMissionItems(){
+  if(!confirm('포켓몬센터 미션을 기본 3개(빨래 정리 · 신발 정리 · 분리수거)로 되돌릴까요?')) return;
+  state.missionItems = MISSION_DEFAULTS.map(d => ({ ...d }));
+  padMissionDays();
+  save(); renderMission(); renderMissionSettings();
+  toast('🏥 기본 미션으로 복원했어요');
 }
 function submitPin(){
   const v = String(pinInput.value || '').replace(/\D/g, '');
@@ -5280,6 +5610,9 @@ document.getElementById('pinCancel').addEventListener('click', closePinPrompt);
 pinOverlay.addEventListener('click', e=>{ if(e.target === pinOverlay) closePinPrompt(); });
 document.addEventListener('click', e=>{
   if(pinOverlay.contains(e.target)) return;
+  /* 미션 목록처럼 줄을 다시 그리는 버튼은 누르는 순간 DOM 에서 빠진다 —
+     그때 e.target 은 document 밖이라 '바깥클릭'으로 오해되어 설정창이 닫힌다. 그 경우는 건너뛴다. */
+  if(!document.contains(e.target)) return;
   if(panel.classList.contains('show') && !panel.contains(e.target) && e.target.id !== 'gearBtn')
     closePanel();
 });
@@ -5322,8 +5655,57 @@ renderPinDots();
 updatePinOk();
 
 panel.querySelectorAll('[data-time]').forEach(b=>{
-  b.addEventListener('click', parentOnly(()=> setPreview(b.dataset.time)));
+  b.addEventListener('click', parentOnly(()=>{ setPreview(b.dataset.time); renderPanelStatus(); }));
 });
+
+/* ---------- ⚙️ 설정 탭 줄 · 새 설정 항목 동작 ---------- */
+panel.querySelectorAll('.ptab').forEach(b=>{
+  b.addEventListener('click', ()=> switchPanelTab(b.dataset.ptab));
+});
+panel.querySelector('.ptabs').addEventListener('keydown', e=>{
+  if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const tabs = Array.prototype.slice.call(panel.querySelectorAll('.ptab'));
+  const i = tabs.indexOf(document.activeElement);
+  if(i < 0) return;
+  e.preventDefault();
+  const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+  next.focus(); switchPanelTab(next.dataset.ptab);
+});
+/* 오늘 모드 — 설정 안에서도 부모가 바로 바꿀 수 있다 (이미 비밀번호를 통과한 창) */
+panel.querySelectorAll('[data-set-mode]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const id = b.dataset.setMode;
+    if(!MODE_DEFS[id]) return;
+    if(id !== modeId) setMode(id);
+    renderPanelMode(); renderPanelStatus();
+  });
+});
+/* 💬 긍정 확언 — 수동 고정 / 자동(매일 랜덤) */
+document.getElementById('affirmApply').addEventListener('click', applyCustomAffirm);
+document.getElementById('affirmAuto').addEventListener('click', useAutoAffirm);
+document.getElementById('affirmInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); applyCustomAffirm(); }
+});
+/* 🏥 미션 목록 편집 — 이름 입력·삭제·추가·기본값 */
+const missionRowsEl = document.getElementById('missionRows');
+missionRowsEl.addEventListener('input', e=>{
+  const inp = e.target.closest('input.mname');
+  if(!inp) return;
+  missionRename(Number(inp.dataset.i), inp.value);
+});
+missionRowsEl.addEventListener('change', e=>{
+  const inp = e.target.closest('input.mname');
+  if(!inp) return;
+  missionNameFix(Number(inp.dataset.i));
+});
+missionRowsEl.addEventListener('click', e=>{
+  const b = e.target.closest('.mdel');
+  if(!b || b.disabled) return;
+  e.stopPropagation();                       // 줄을 다시 그리면서 사라지는 버튼 — 바깥클릭으로 전파하지 않는다
+  removeMissionItem(Number(b.dataset.i));
+});
+document.getElementById('missionAdd').addEventListener('click', addMissionItem);
+document.getElementById('missionReset').addEventListener('click', resetMissionItems);
 /* 시간 미리보기 — 'HH:MM' 또는 'HH:MM:SS', 'real' 이면 실제 시간으로.
    부모 패널 버튼과 헤드리스 점검 스크립트가 같이 쓴다. */
 function setPreview(v){
@@ -5430,6 +5812,9 @@ function restoreData(file){
       renderModePills();
       save();
       curRKey = null; syncRoutine(); renderTasks(); renderWild(); renderDex(); renderStudy(); renderMission();
+      /* 백업에 담긴 긍정 확언·미션 목록도 바로 화면에 반영한다 */
+      renderAffirm(); renderAffirmSettings(); renderMissionSettings();
+      renderPanelMode(); renderPanelStatus();
       tick(true);
       toast('✅ 백업을 불러왔어요');
     }catch(e){
@@ -5616,14 +6001,23 @@ function affirmIndexFor(key){
   return (own + step) % n;
 }
 let curAffirmDay = '';
+/* 오늘 보여 줄 문장 — 부모가 수동으로 고정한 문장이 있으면 그것, 없으면 날짜 해시 자동 문구.
+   수동 문장은 날짜가 바뀌어도 그대로 나온다 (자동으로 돌리면 다시 날짜별 문장). */
+function affirmAutoText(){ return AFFIRMATIONS[affirmIndexFor(affirmKeyOf())]; }
+function currentAffirmText(){
+  const c = typeof state.customAffirmation === 'string' ? state.customAffirmation.trim() : '';
+  return c || affirmAutoText();
+}
 /* 한 줄에 다 들어오게 — 기기 글꼴이 넓어 넘치면 글자 크기를 조금씩 줄인다 (14px 까지) */
 function fitAffirm(){
   const el = document.getElementById('affirmTx');
   if(!el || el.clientWidth < 40) return;     // 다른 탭이라 숨어 있으면 재지 않는다
   el.style.fontSize = '';
   let size = parseFloat(getComputedStyle(el).fontSize) || 22;
+  /* 수동으로 넣은 긴 문장은 12px 까지 줄여 한 줄에 담는다 */
+  const floor = (el.textContent || '').length > 30 ? 12 : 14;
   let guard = 80;
-  while(el.scrollWidth > el.clientWidth + 0.5 && size > 14 && guard-- > 0){
+  while(el.scrollWidth > el.clientWidth + 0.5 && size > floor && guard-- > 0){
     size -= 0.5; el.style.fontSize = size + 'px';
   }
 }
@@ -5631,7 +6025,7 @@ function renderAffirm(){
   const el = document.getElementById('affirmTx');
   if(!el) return;
   curAffirmDay = affirmKeyOf();
-  el.textContent = AFFIRMATIONS[affirmIndexFor(curAffirmDay)];
+  el.textContent = currentAffirmText();
   fitAffirm();
 }
 
