@@ -114,33 +114,38 @@
     filter:drop-shadow(0 0 .26em rgba(255,255,255,.9)) drop-shadow(0 0 .8em rgba(168,208,255,.6));}
   header.sky:not([data-sky="night"]) .sky-shoot{display:none;}
 
-  /* ===== 아침 해 — 05:00~10:59 에만. 잔디(z-index 1)와 카드(z-index 2) 뒤에서만 움직인다 ===== */
-  .sky-sun{position:absolute; z-index:0; pointer-events:none; width:68px; height:68px; display:none; opacity:0;}
+  /* ===== 아침 해 (v40 · 2안 '잔디 너머 반원 햇살') — 05:00~10:59 에만 보인다.
+     잔디(z-index 1)와 카드(z-index 2) 뒤에서만 움직인다.
+     150×150 박스 한가운데에 72px 부드러운 원형 해 + 170px 따뜻한 햇살 후광(픽셀 점 없음).
+     박스 중심을 잔디선 + 4px 에 두므로 해의 위쪽 반원(높이 ~32px)만 잔디 위로 보인다. */
+  .sky-sun{position:absolute; z-index:0; pointer-events:none; width:150px; height:150px; display:none; opacity:0;}
   header.sky[data-sky="morning"] .sky-sun{display:block; opacity:1;
     animation:skySunRise 1.9s cubic-bezier(.2,.85,.3,1) both;}
-  .sky-sun svg{position:relative; z-index:1; width:100%; height:100%; display:block; shape-rendering:crispEdges;}
-  .sky-sun .sun-glow{position:absolute; left:50%; top:50%; width:340%; height:340%; border-radius:50%;
-    pointer-events:none; animation:skySunGlow 5.2s ease-in-out infinite;
-    background:radial-gradient(circle, rgba(255,238,168,.62) 0%, rgba(255,228,152,.34) 26%,
-      rgba(255,220,148,.16) 48%, rgba(255,214,144,.06) 70%, rgba(255,212,140,0) 100%);}
+  .sky-sun .sun-halo{position:absolute; left:50%; top:50%; width:170px; height:170px;
+    margin:-85px 0 0 -85px; border-radius:50%; pointer-events:none;
+    animation:skySunGlow 5.2s ease-in-out infinite;
+    background:radial-gradient(circle closest-side, rgba(255,234,176,.40) 0%, rgba(255,220,150,.24) 20%,
+      rgba(255,208,136,.12) 42%, rgba(255,202,130,.05) 64%, rgba(255,200,126,.01) 84%,
+      rgba(255,200,126,0) 100%);}
+  .sky-sun .sun-disc{position:absolute; left:50%; top:50%; width:72px; height:72px;
+    margin:-36px 0 0 -36px; border-radius:50%; pointer-events:none;
+    background:radial-gradient(circle closest-side at 50% 44%, #FFFBEA 0%, #FFF0BC 14%, #FFDF9E 34%,
+      #FFC074 62%, #FFA75C 84%, #F79347 100%);
+    box-shadow:0 0 0 1.5px rgba(247,156,84,.45), 0 0 24px rgba(255,182,104,.55),
+      inset 0 2px 8px rgba(255,255,255,.45);}
   /* 잔디 뒤에서 스르륵 떠오른 뒤, 살짝 숨 쉬듯 오르내린다 */
   @keyframes skySunRise{
-    0%{transform:translateY(46px) scale(.88); opacity:0;}
+    0%{transform:translateY(28px) scale(.92); opacity:0;}
     30%{opacity:1;}
     70%{transform:translateY(-3px) scale(1.02); opacity:1;}
     85%{transform:translateY(1px) scale(1);}
     100%{transform:translateY(0) scale(1); opacity:1;}
   }
+  /* 후광 맥박 — 은은하게 */
   @keyframes skySunGlow{
-    0%,100%{opacity:.85; transform:translate(-50%,-50%) scale(1);}
-    50%{opacity:1; transform:translate(-50%,-50%) scale(1.08);}
+    0%,100%{opacity:.85; transform:scale(1);}
+    50%{opacity:1; transform:scale(1.08);}
   }
-  .sky-spark{position:absolute; z-index:0; pointer-events:none; display:none; opacity:0;
-    background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%207%207%27%3E%3Cg%20fill%3D%27%23FFC02B%27%3E%3Crect%20x%3D%273%27%20y%3D%270%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%276%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%270%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%276%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%271%27%20width%3D%273%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%275%27%20width%3D%273%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%271%27%20y%3D%272%27%20width%3D%271%27%20height%3D%273%27%2F%3E%3Crect%20x%3D%275%27%20y%3D%272%27%20width%3D%271%27%20height%3D%273%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%272%27%20width%3D%273%27%20height%3D%273%27%2F%3E%3C%2Fg%3E%3Crect%20x%3D%273%27%20y%3D%272%27%20width%3D%271%27%20height%3D%272%27%20fill%3D%27%23FFF8D8%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%273%27%20width%3D%272%27%20height%3D%271%27%20fill%3D%27%23FFF8D8%27%2F%3E%3C%2Fsvg%3E");
-    background-repeat:no-repeat; background-size:100% 100%;
-    filter:drop-shadow(0 0 3px rgba(255,226,140,.95)) drop-shadow(0 0 8px rgba(255,214,110,.55));}
-  header.sky[data-sky="morning"] .sky-spark{display:block; animation:skySparkTw 3.4s ease-in-out infinite;}
-  @keyframes skySparkTw{0%,100%{opacity:.12; transform:scale(.72);} 50%{opacity:1; transform:scale(1);}}
   .sky-shoot.sh1{left:36%; top:-.1em; animation:skyShoot1 7.2s linear infinite;}
   .sky-shoot.sh2{left:51%; top:-.2em; animation:skyShoot2 5.8s linear infinite -2.4s;}
   .sky-shoot.sh3{left:60%; top:.1em; animation:skyShoot3 6.6s linear infinite -4.6s;}
@@ -1993,14 +1998,11 @@
     <div class="sky-shoot sh2" aria-hidden="true"></div>
     <div class="sky-shoot sh3" aria-hidden="true"></div>
 
-    <!-- v39 아침 해 — 05:00~10:59 에만 잔디 뒤에서 떠오른다 (픽셀 해 + 광휘 + 반짝이 9개) -->
+    <!-- v40 아침 해 (2안 · 잔디 너머 반원 햇살) — 05:00~10:59 에만 잔디 뒤에서 떠오른다 -->
     <div class="sky-sun" id="skySun" aria-hidden="true">
-      <span class="sun-glow"></span>
-      <svg viewBox='0 0 16 16' aria-hidden='true'><g fill='#F2871A'><rect x='7' y='0' width='2' height='1'/><rect x='7' y='15' width='2' height='1'/><rect x='0' y='7' width='1' height='2'/><rect x='15' y='7' width='1' height='2'/><rect x='2' y='2' width='1' height='1'/><rect x='13' y='2' width='1' height='1'/><rect x='2' y='13' width='1' height='1'/><rect x='13' y='13' width='1' height='1'/></g><g fill='#F79A24'><rect x='6' y='1' width='4' height='1'/><rect x='4' y='2' width='8' height='1'/><rect x='3' y='3' width='10' height='1'/><rect x='2' y='4' width='12' height='6'/><rect x='3' y='10' width='10' height='1'/><rect x='4' y='11' width='8' height='1'/><rect x='6' y='12' width='4' height='1'/></g><g fill='#FFC93F'><rect x='6' y='2' width='4' height='1'/><rect x='4' y='3' width='8' height='1'/><rect x='3' y='4' width='10' height='6'/><rect x='4' y='10' width='8' height='1'/><rect x='6' y='11' width='4' height='1'/></g><rect x='5' y='4' width='3' height='2' fill='#FFDE74'/><rect x='5' y='4' width='1' height='1' fill='#FFF7D2'/></svg>
+      <span class="sun-halo"></span>
+      <span class="sun-disc"></span>
     </div>
-    <i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i>
-    <i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i>
-    <i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i>
 
     <div class="topstrip">
       <div class="tabs" role="tablist">
@@ -3318,13 +3320,14 @@ function renderSky(){
   const ph = skyPhaseNow();
   if(SKY_HDR.dataset.sky !== ph){
     SKY_HDR.dataset.sky = ph;
-    if(ph === 'morning'){                 // 해·반짝이는 카드 배치가 끝난 뒤 자리를 잡는다
+    if(ph === 'morning'){                 // 해가 자리(잔디선)를 알 수 있도록 배치가 끝난 뒤 자리를 잡는다
       requestAnimationFrame(placeMorningSky);
       setTimeout(placeMorningSky, 120);
     }
   }
 }
-/* 아침 해·반짝이 자리 — 시계 숫자 오른쪽 ~ 파트너 카드 왼쪽의 빈 하늘, 아래는 잔디에 살짝 잠기게 */
+/* 아침 해 자리 (v40 2안) — 시계 숫자 오른쪽 ~ 파트너 카드 왼쪽의 한가운데,
+   150×150 박스의 중심을 잔디선 + 4px 에 두어 위쪽 반원만 잔디 위로 보이게 한다 */
 function placeMorningSky(){
   const hd = SKY_HDR;
   if(!hd || hd.dataset.sky !== 'morning') return;
@@ -3336,38 +3339,22 @@ function placeMorningSky(){
     return {l: b.left - hr.left, t: b.top - hr.top, r: b.right - hr.left, b: b.bottom - hr.top, w: b.width, h: b.height}; };
   const clock = rel(document.getElementById('clock'));
   const hxp = rel(document.getElementById('hxp'));
-  const tabs = rel(document.querySelector('.tabs'));
   if(!clock || !hxp) return;
-  const size = Math.max(44, Math.min(84, Math.round(hr.height * 0.37)));
-  sun.style.width = size + 'px';
-  sun.style.height = size + 'px';
+  const BOX = 150;                                      // 2안 .sky-sun 박스 크기(CSS와 같음)
+  const grassH = (parseFloat(getComputedStyle(hd).fontSize) || 14.4) * 0.8;   // 잔디 테두리 높이(.8em)
   const gapCx = (clock.r + hxp.l) / 2;
-  sun.style.left = Math.round(Math.max(6, gapCx - size / 2)) + 'px';
-  sun.style.top = Math.round(hr.height - size * 0.96) + 'px';
-  /* 반짝이 — 탭 줄 오른쪽 빈 하늘과 해 주변에 흩뿌린다 */
-  const topY = tabs ? tabs.t + 2 : 10;
-  const spots = [
-    [tabs ? tabs.r + 40 : 420, topY + 2, 20],
-    [tabs ? tabs.r + 128 : 510, topY + 15, 12],
-    [tabs ? tabs.r + 224 : 600, topY + 0, 23],
-    [tabs ? tabs.r + 318 : 690, topY + 17, 11],
-    [tabs ? tabs.r + 396 : 770, topY + 3, 17],
-    [tabs ? tabs.r + 468 : 840, topY + 19, 12],
-    [gapCx - 54, hr.height - size - 46, 21],
-    [gapCx + 36, hr.height - size + 24, 13],
-    [gapCx - 8, hr.height - size - 12, 10],
-  ];
-  document.querySelectorAll('.sky-spark').forEach((el, i) => {
-    const [x, y, sz] = spots[i % spots.length];
-    el.style.left = Math.round(x) + 'px';
-    el.style.top = Math.round(y) + 'px';
-    el.style.width = sz + 'px';
-    el.style.height = sz + 'px';
-    el.style.animationDelay = (i * 0.42).toFixed(2) + 's';
-  });
+  sun.style.left = Math.round(Math.max(6, gapCx - BOX / 2)) + 'px';
+  sun.style.top = Math.round(hr.height - grassH + 4 - BOX / 2) + 'px';   // 중심 = 잔디선 + 4
 }
 window.addEventListener('resize', ()=> placeMorningSky());
 window.addEventListener('load', ()=> setTimeout(placeMorningSky, 200));
+/* 헤더·시계·파트너 카드 크기는 그림·글꼴이 늦게 불러와지면 자리 잡은 뒤에도 커진다.
+   그때 해만 예전 잔디선에 남지 않도록, 크기가 바뀌면 다시 자리를 잡는다. */
+if(window.ResizeObserver && SKY_HDR){
+  const ro = new ResizeObserver(()=>{ if(SKY_HDR.dataset.sky === 'morning') placeMorningSky(); });
+  ro.observe(SKY_HDR);
+  ['clock','hxp'].forEach(id => { const el = document.getElementById(id); if(el) ro.observe(el); });
+}
 
 const DAYS = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
 function renderClock(){
