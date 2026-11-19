@@ -81,14 +81,14 @@
   header.sky[data-sky="night"] .sky-cl{background-image:linear-gradient(180deg,#3f5484 0%,#25355a 100%);}
 
   /* 밤하늘의 반짝이는 픽셀 별 2겹 (밤에만 보인다)
-     v39 — 별을 다시 1/3 수준으로 줄였다(도트 10 → 4). 타일 한 장에 3개 + 1개만 남기고
+     v39 — 별을 v38(도트 10)의 절반으로 줄였다(도트 5). 타일 한 장에 4개 + 1개만 남기고
      겹마다 패턴·속도를 달리해 반짝임은 그대로 둔다. 밤하늘이 훨씬 깔끔하고 여유 있어진다. */
   .sky-stars{position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0;
     background-repeat:repeat; transition:opacity .5s ease;}
-  .sky-stars.s1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='15' shape-rendering='crispEdges'%3E%3Cg fill='%23ffffff'%3E%3Crect x='4' y='2' width='1' height='1'/%3E%3Crect x='23' y='5' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%23ffe9a8'%3E%3Crect x='14' y='12' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+  .sky-stars.s1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='15' shape-rendering='crispEdges'%3E%3Cg fill='%23ffffff'%3E%3Crect x='4' y='2' width='1' height='1'/%3E%3Crect x='23' y='5' width='1' height='1'/%3E%3Crect x='12' y='10' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%23ffe9a8'%3E%3Crect x='27' y='12' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
     background-size:6em 3em;}
-  .sky-stars.s2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='15' shape-rendering='crispEdges'%3E%3Cg fill='%23e8f2ff'%3E%3Crect x='16' y='7' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
-    background-size:6em 3em; background-position:2.2em 1.4em;}
+  .sky-stars.s2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' shape-rendering='crispEdges'%3E%3Cg fill='%23e8f2ff'%3E%3Crect x='15' y='3' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+    background-size:4.8em 2.4em; background-position:1.6em 1.1em;}
   header.sky[data-sky="night"] .sky-stars{opacity:1; animation:skyTwinkle 3.8s ease-in-out infinite;}
   header.sky[data-sky="night"] .sky-stars.s2{animation-duration:5.4s; animation-delay:-1.6s;}
   @keyframes skyTwinkle{0%,100%{opacity:1;}50%{opacity:.5;}}
@@ -403,7 +403,6 @@
   }
   .runner img{width:100%;height:100%;object-fit:contain;}
   .runner .fallback{font-size:calc(var(--run,56px) * .54);line-height:var(--run,56px);text-align:center;}
-  .goal{position:absolute;right:-8px;top:-20px;font-size:32px;z-index:4;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18));}
   /* '출발 오전 8:35' — 2배로 커진 포켓몬이 바 끝에서도 글자를 가리지 않도록
      바가 아니라 왼쪽 시간 칸(.pblock) 아래 작은 캡션으로 둔다 */
   .depart{font-size:11.5px;font-weight:800;color:#9a8d78;white-space:nowrap;text-align:left;line-height:1.3;margin-top:.12em;}
@@ -530,7 +529,7 @@
   .dex-empty{grid-column:1/-1;text-align:center;padding:30px 10px;font-weight:800;color:#a2937c;font-size:14px;}
   .dex-grid{
     flex:1;overflow-y:auto;overscroll-behavior:contain;display:grid;gap:8px;
-    grid-template-columns:repeat(6,1fr);grid-auto-rows:150px;padding:0 4px 8px;align-content:start;
+    grid-template-columns:repeat(6,1fr);grid-auto-rows:150px;padding:12px 4px 8px;align-content:start;
     scrollbar-width:thin;
   }
   .dex-card{
@@ -698,6 +697,12 @@
   .mrow input{flex:1 1 auto;min-width:0;font-family:inherit;font-size:12.5px;font-weight:800;color:#4a5a44;
     border:2px solid #dfe5d4;border-radius:9px;padding:6px 8px;background:#fff;}
   .mrow input:focus{outline:3px solid rgba(255,217,77,.5);outline-offset:-1px;}
+  /* 하루 최대 횟수 숫자칸 — 이름칸과 ✕ 사이의 작은 칸 (1~9) */
+  .mrow .mmaxwrap{flex:0 0 auto;display:inline-flex;align-items:center;gap:2px;}
+  .mrow .mmaxwrap b{font-size:10.5px;font-weight:900;color:#9a8d78;line-height:1;}
+  .mrow input.mmax{flex:0 0 auto;width:40px;text-align:center;padding:5px 2px;font-size:12.5px;
+    font-weight:900;color:#4a5a44;border:2px solid #dfe5d4;border-radius:9px;background:#fff;}
+  .mrow input.mmax:focus{outline:3px solid rgba(255,217,77,.5);outline-offset:-1px;}
   .mrow .mdel{flex:0 0 auto;width:26px;height:26px;border:none;border-radius:8px;background:#fdeceb;
     color:#c0392b;font-family:inherit;font-weight:900;font-size:12px;line-height:1;cursor:pointer;}
   .mrow .mdel:disabled{opacity:.35;cursor:default;}
@@ -1440,7 +1445,6 @@
     .pblock{min-width:172px;}
     .pblock .plabel{font-size:14px;}
     .pblock .pmain{font-size:25px;}
-    .goal{font-size:28px;top:-18px;}
     .track{height:26px;}
     .strip{--run:96px;}   /* v39 — 달리는 파트너 2배 (48 → 96) */
     .school{font-size:28px;top:-18px;}
@@ -1489,7 +1493,6 @@
     .pblock{min-width:152px;}
     .pblock .plabel{font-size:12.5px;}
     .pblock .pmain{font-size:21px;}
-    .goal{font-size:26px;top:-17px;}
     .depart{font-size:10.5px;}
     .track{height:22px;}
     .strip{--run:84px;}   /* v39 — 달리는 파트너 2배 (42 → 84) */
@@ -2048,7 +2051,6 @@
         <div class="fill" id="fill" style="width:0%"></div>
         <!-- 시간 바 위를 달리는 포켓몬 = 지금 파트너 (기본 피카츄 #025) -->
         <div class="runner" id="runner" style="left:0%"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" alt="피카츄" id="runnerImg"><div class="fallback" style="display:none">⚡</div></div>
-        <div class="goal" id="goalIcon">🏫</div>
       </div>
     </div>
   </div>
@@ -2090,7 +2092,7 @@
     <div class="center-main">
       <div class="center-head">
         <h2>🏥 포켓몬센터 미션</h2>
-        <span class="sub">미션을 하나 끝낼 때마다 <b>⚡ 강화 XP +1</b> · 미션은 하루에 두 번까지 가능</span>
+        <span class="sub">미션을 하나 끝낼 때마다 <b>⚡ 강화 XP +1</b></span>
       </div>
       <div class="center-grid" id="centerGrid"></div>
     </div>
@@ -2177,7 +2179,7 @@
         <span class="ptier" id="pokeTier">일반</span>
         <span class="iv-badge" id="pokeIv">개체값</span>
         <span class="plv zero" id="pokeLv">강화 +0</span>
-        <span class="pdate" id="pokeDate">📅 도감 등록</span>
+        <span class="pdate" id="pokeDate">📅 도감등록</span>
         <span class="pno" id="pokeNo">001/200</span>
       </div>
       <!-- 희귀·전설 홀로그램: 무지개 필름 + 별빛 스파클 (일반 카드에서는 숨어 있다) -->
@@ -2198,7 +2200,7 @@
       <div class="pbrow pbrow-2">
         <!-- 왼쪽: 🎟 강화하기 (보유 강화권 수) · 오른쪽: 🔴(몬스터볼) 너로 정했다! / ⭐ 현재 파트너 -->
         <button class="ps-btn ps-up" id="pokeUp" type="button">
-          <span class="ps-lb">🎟 강화하기</span><b class="ps-cnt" id="pokeTicketN">0장</b>
+          <span class="ps-lb">⚡ 강화하기</span><b class="ps-cnt" id="pokeTicketN">0장</b>
         </button>
         <button class="ps-btn ps-partner" id="pokePartner" type="button">
           <svg class="ps-ball" id="pokePartnerBall" viewBox="0 0 32 32" aria-hidden="true">
@@ -2852,6 +2854,14 @@ function statsOf(id, lv, iv){
 const STAT_REF = { hp: 300, atk: 240, def: 310, power: 1050 };
 function pgPct(v, ref){ return Math.max(5, Math.min(100, (Number(v) || 0) / ref * 100)); }
 /* 카드 푸터의 포획 날짜 — 기기 시간(한국) 기준 'YYYY.MM.DD' */
+/* 'YYYY.MM.DD' → 'YY.MM.DD' (카드 푸터 표기용). 이미 YY.MM.DD 거나 다른 형식이면 그대로 */
+function dotYY(s){
+  const t = String(s == null ? '' : s).trim();
+  const m = t.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
+  if(!m) return t;
+  const p = n => (n < 10 ? '0' : '') + n;
+  return m[1].slice(2) + '.' + p(+m[2]) + '.' + p(+m[3]);
+}
 function caughtDot(d){
   d = d || getNow();
   const p = n => (n < 10 ? '0' : '') + n;
@@ -2863,7 +2873,8 @@ const DAYS_SHORT = ['일','월','화','수','목','금','토'];   // index = Dat
 const DAY_ORDER = [1,2,3,4,5,6,0];                          // 월 → 일
 const MIN_STUDY_ROWS = 8;                                    // 화면이 비어 보이지 않게 최소 8칸
 const BOOST_MAX = 8;                                          // ⚡ 강화 XP 8개 = 🎟 강화권 1장
-const MISSION_MAX = 2;                                        // 집안일 미션은 항목마다 하루 2번까지
+const MISSION_MAX = 2;                                        // 미션 하루 최대 횟수의 기본값 (설정에서 항목마다 1~9로 바꾼다)
+const MISSION_MAX_CEIL = 9;                                    // 설정 숫자칸에 넣을 수 있는 최대
 const MISSION_MAX_ITEMS = 6;                                   // 설정에서 늘릴 수 있는 최대 개수
 /* 🏥 포켓몬센터 미션 기본값 — 부모 설정(💬 확언·미션 탭)에서 이름을 고치거나 늘리고 줄일 수 있다.
    tip 은 화면에 그리지 않고 aria-label(읽어주기)로만 쓴다 — 카드는 아이콘·제목만 깔끔하게 */
@@ -2891,32 +2902,39 @@ function missionTipFor(name){
   const hit = MISSION_DEFAULTS.find(d => d.name === s);
   return hit ? hit.tip : `${s} 미션을 해요`;
 }
-/* 저장값을 항상 [{name, icon, tip}] 로 맞춘다 — 예전에 이름만 저장한 값도 읽는다 */
+/* 항목별 하루 최대 횟수 — 1~9 정수. 값이 없거나 이상하면 기본 2 */
+function missionCapOf(m){
+  if(!m || typeof m !== 'object') return MISSION_MAX;
+  const n = Math.floor(Number(m.max));
+  if(!isFinite(n) || n < 1) return MISSION_MAX;
+  return Math.min(MISSION_MAX_CEIL, n);
+}
+/* 저장값을 항상 [{name, icon, tip, max}] 로 맞춘다 — 예전에 이름만 저장한 값도 읽는다 */
 function normalizeMissionItems(list){
   const raw = Array.isArray(list) ? list : [];
   const arr = raw.map((it, i)=>{
     if(typeof it === 'string'){
       const name = it.replace(/\s+/g, ' ').trim().slice(0, 10);
-      return { name, icon: missionIconFor(name) || MISSION_ICON_POOL[i % MISSION_ICON_POOL.length], tip: missionTipFor(name) };
+      return { name, icon: missionIconFor(name) || MISSION_ICON_POOL[i % MISSION_ICON_POOL.length], tip: missionTipFor(name), max: MISSION_MAX };
     }
     if(it && typeof it === 'object'){
       const name = String(it.name == null ? '' : it.name).replace(/\s+/g, ' ').trim().slice(0, 10);
       const icon = typeof it.icon === 'string' && it.icon.trim()
         ? it.icon.trim() : (missionIconFor(name) || MISSION_ICON_POOL[i % MISSION_ICON_POOL.length]);
       const tip = typeof it.tip === 'string' && it.tip.trim() ? it.tip.trim() : missionTipFor(name);
-      return { name, icon, tip };
+      return { name, icon, tip, max: missionCapOf(it) };
     }
     return null;
   }).filter(it => it && it.name);
-  if(!arr.length) return MISSION_DEFAULTS.map(d => ({ ...d }));
+  if(!arr.length) return MISSION_DEFAULTS.map(d => ({ ...d, max: MISSION_MAX }));
   return arr.slice(0, MISSION_MAX_ITEMS);
 }
 function missionItems(){
   if(!Array.isArray(state.missionItems)) state.missionItems = normalizeMissionItems(null);
   return state.missionItems;
 }
-/* 하루 전체 횟수 (항목 수 × 2) — 항목을 늘리거나 줄이면 같이 바뀐다 */
-function missionFull(){ return MISSION_MAX * missionItems().length; }
+/* 하루 전체 횟수 = 항목별 최대 횟수의 합 — 항목을 늘리거나 줄이거나 숫자를 바꾸면 같이 바뀐다 */
+function missionFull(){ return missionItems().reduce((a, m)=> a + missionCapOf(m), 0); }
 function blankDay(){
   const a = [];
   while(a.length < MIN_STUDY_ROWS) a.push('');
@@ -2961,6 +2979,11 @@ function migrate(s){
       s.caught[k].iv = rollIv(pk ? ((pk.tier|0) || 0) : 0);
       s.__ivRoll = true;
     }
+  });
+  /* v39 — 이상해씨(#1)·이상해풀(#2)은 처음 잡은 날이 남아 있지 않았다. 잡혀 있을 때만 날짜를 채운다
+     (잡지 않은 포켓몬에는 넣지 않는다 — 도감에 없는 카드에 날짜가 붙으면 안 된다) */
+  [['1', '2026.11.18'], ['2', '2026.11.19']].forEach(([id, when])=>{
+    if(s.caught[id] && !s.caughtAt[id]) s.caughtAt[id] = when;
   });
   s.days = s.days || {};
   Object.keys(s.days).forEach(k => { s.days[k] = migrateDay(s.days[k]); });
@@ -3254,11 +3277,6 @@ let curRKey = null;
 const NIGHT_START = 21*60;         // 취침 준비 시작 21:00 — 이때 시작음과 안내가 울린다
 const NIGHT_BED = 21*60 + 40;      // 취침 목표 21:40 — 취침 루틴은 여기까지 남은 시간을 보여 준다
 function routineNow(){ return curRKey || routineKeyAt(); }
-function goalIconFor(key){
-  if(key === 'morning') return modeId === 'afterschool' ? '🎒' : modeId === 'vacation' ? '🏖️' : '🏫';
-  if(key === 'night') return '🌙';
-  return '🎒';
-}
 function renderProgress(){
   const now = nowMinutes();
   const key = routineNow();
@@ -3317,9 +3335,6 @@ function renderProgress(){
   mainEl.classList.toggle('alert', alert);
   /* 취침 마감 문구는 경고(빨강)가 아니라 밤하늘 인디고 톤으로 */
   mainEl.classList.toggle('sleep', key === 'night' && alert);
-  const goal = document.getElementById('goalIcon');
-  const gi = goalIconFor(key);
-  if(goal.textContent !== gi) goal.textContent = gi;
   const dl = document.getElementById('departLabel');
   const dep = key === 'after' ? ''            // 오후 루틴은 제한시간이 없다
             : key === 'night' ? '취침 목표 오후 9:40'
@@ -4610,9 +4625,9 @@ function renderPokeCard(){
   document.getElementById('pgDef').style.width = pgPct(st.def, STAT_REF.def).toFixed(1) + '%';
   document.getElementById('pgPow').style.width = pgPct(st.power, STAT_REF.power).toFixed(1) + '%';
 
-  /* 푸터의 포획 날짜 — 예전에 잡아 둔 포켓몬은 '도감 등록' */
+  /* 푸터의 도감 등록 날짜 — v39 형식 '📅 도감등록 YY.MM.DD' (예전에 잡아 둔 포켓몬은 날짜 없이 '도감등록') */
   const got = (state.caughtAt && state.caughtAt[pokeId]) || (rec && rec.caughtAt) || '';
-  document.getElementById('pokeDate').textContent = got ? `📅 포획 ${got}` : '📅 도감 등록';
+  document.getElementById('pokeDate').textContent = got ? `📅 도감등록 ${dotYY(got)}` : '📅 도감등록';
 
   const pv = document.getElementById('pokeIv');
   pv.className = 'iv-badge ' + g.cls;
@@ -4984,7 +4999,7 @@ function missionToday(){
     const v = arr[i];
     if(v === true) arr[i] = 1;
     else if(v === false || v == null) arr[i] = 0;
-    else arr[i] = Math.max(0, Math.min(MISSION_MAX, Math.floor(Number(v) || 0)));
+    else arr[i] = Math.max(0, Math.min(missionCapOf(items[i]), Math.floor(Number(v) || 0)));
   }
   arr.length = items.length;
   /* 지난 날짜는 20일치만 남긴다 (날짜가 바뀌면 오늘 미션은 자동으로 새로 시작) */
@@ -4996,7 +5011,8 @@ function missionDone(arr){ return arr.reduce((a, b)=> a + (Number(b) || 0), 0); 
 /* 카드를 누르면 0 → 1 → 2 로만 올라간다 — 2에서 또 누를 때 실수로 0이 되지 않게 멈춘다 */
 function missionAdd(i){
   const arr = missionToday();
-  if(arr[i] >= MISSION_MAX) return;
+  const cap = missionCapOf(missionItems()[i]);
+  if(arr[i] >= cap) return;
   const wasFull = missionDone(arr) >= missionFull();
   arr[i] += 1;
   const gotTicket = incrementSelfProgress('mission');
@@ -5029,23 +5045,24 @@ function renderMission(){
   grid.classList.toggle('many', items.length > 3);
   items.forEach((m, i)=>{
     const n = arr[i] || 0;
-    const full = n >= MISSION_MAX;
+    const cap = missionCapOf(m);
+    const full = n >= cap;
     const card = document.createElement('div');
     card.className = 'mcard' + (full ? ' done' : (n > 0 ? ' half' : '')) + (n > 0 ? ' has' : '');
     card.setAttribute('role', 'group');
-    card.setAttribute('aria-label', `${m.name} — ${n}/${MISSION_MAX}회`);
+    card.setAttribute('aria-label', `${m.name} — ${n}/${cap}회`);
     card.innerHTML = `<button class="m-body" type="button" aria-pressed="${full ? 'true' : 'false'}"></button>`;
     const body = card.firstChild;
-    body.title = full ? '오늘 2번 모두 했어요' : '누르면 한 번 더 (+1 ⚡ 강화 XP)';
-    body.setAttribute('aria-label', `${m.name} — ${n}/${MISSION_MAX}회 완료 · ${m.tip}`
+    body.title = full ? `오늘 ${cap}번 모두 했어요` : '누르면 한 번 더 (+1 ⚡ 강화 XP)';
+    body.setAttribute('aria-label', `${m.name} — ${n}/${cap}회 완료 · ${m.tip}`
       + (full ? ' · 오늘은 다 했어요' : ' · 누르면 한 번 더'));
     body.innerHTML = `<span class="m-chk">${full ? '✓' : (n > 0 ? n : '')}</span>`
       + `<span class="m-ico">${m.icon}</span><span class="m-name">${escapeHtml(m.name)}</span>`
-      + `<span class="m-xp">${full ? '2/2 완료 ⚡' : (n > 0 ? '한 번 더 +1 ⚡' : '+1 ⚡ 강화 XP')}</span>`;
+      + `<span class="m-xp">${full ? `${cap}/${cap} 완료 ⚡` : (n > 0 ? '한 번 더 +1 ⚡' : '+1 ⚡ 강화 XP')}</span>`;
     body.addEventListener('click', ()=> missionAdd(i));
     const c = document.createElement('span');
     c.className = 'm-cnt';
-    c.textContent = `${n}/${MISSION_MAX}`;
+    c.textContent = `${n}/${cap}`;
     card.appendChild(c);
     const undo = document.createElement('button');
     undo.type = 'button';
@@ -5599,13 +5616,26 @@ function renderMissionSettings(){
     inp.dataset.i = i;
     inp.setAttribute('aria-label', `${i+1}번째 미션 이름`);
     inp.placeholder = '미션 이름';
+    /* 하루 최대 횟수 — 이름칸 바로 오른쪽, ✕ 왼쪽의 작은 숫자칸 (1~9, 기본 2) */
+    const box = document.createElement('span');
+    box.className = 'mmaxwrap';
+    const num = document.createElement('input');
+    num.type = 'number'; num.className = 'mmax'; num.min = '1'; num.max = String(MISSION_MAX_CEIL);
+    num.step = '1'; num.value = String(missionCapOf(m));
+    num.dataset.i = i;
+    num.setAttribute('inputmode', 'numeric');
+    num.setAttribute('aria-label', `${m.name || i + 1 + '번째 미션'} 하루 최대 횟수`);
+    num.title = '하루에 몇 번까지 할 수 있는지 (1~9)';
+    const unit = document.createElement('b');
+    unit.textContent = '회';
+    box.append(num, unit);
     const del = document.createElement('button');
     del.type = 'button'; del.className = 'mdel'; del.textContent = '✕';
     del.dataset.i = i;
     del.title = `${m.name || '미션'} 삭제`;
     del.setAttribute('aria-label', `${m.name || '미션'} 삭제`);
     del.disabled = items.length <= 1;
-    row.append(ico, inp, del);
+    row.append(ico, inp, box, del);
     wrap.appendChild(row);
   });
   const cnt = document.getElementById('missionCount');
@@ -5643,6 +5673,20 @@ function missionNameFix(i){
   }else return;
   save(); renderMission(); renderMissionSettings();
 }
+/* 하루 최대 횟수를 바꾼다 — 1~9 밖의 값은 기본 2로 되돌리고, 오늘 이미 센 횟수가 더 많으면 그만큼 줄인다 */
+function missionMaxSet(i, v){
+  const items = missionItems();
+  if(!items[i]) return;
+  const n = Math.floor(Number(v));
+  const cap = (!isFinite(n) || n < 1) ? MISSION_MAX : Math.min(MISSION_MAX_CEIL, n);
+  items[i].max = cap;
+  const arr = missionToday();               // 새 최대보다 많이 센 값은 여기서 잘린다
+  if(arr[i] > cap) arr[i] = cap;
+  save();
+  renderMission();
+  renderMissionSettings();
+  toast(`🏥 ${items[i].name} — 하루 ${cap}번까지`);
+}
 function padMissionDays(){
   const n = missionItems().length;
   const done = state.mission && state.mission.done;
@@ -5657,7 +5701,7 @@ function padMissionDays(){
 function addMissionItem(){
   const items = missionItems();
   if(items.length >= MISSION_MAX_ITEMS){ toast(`🏥 미션은 ${MISSION_MAX_ITEMS}개까지 넣을 수 있어요`); return; }
-  items.push({ name:'새 미션', icon: missionIconFor('새 미션') || MISSION_ICON_POOL[items.length % MISSION_ICON_POOL.length], tip: missionTipFor('새 미션') });
+  items.push({ name:'새 미션', icon: missionIconFor('새 미션') || MISSION_ICON_POOL[items.length % MISSION_ICON_POOL.length], tip: missionTipFor('새 미션'), max: MISSION_MAX });
   padMissionDays();
   save(); renderMission(); renderMissionSettings();
   const inp = document.querySelector('#missionRows .mrow:last-child input');
@@ -5677,7 +5721,7 @@ function removeMissionItem(i){
 }
 function resetMissionItems(){
   if(!confirm('포켓몬센터 미션을 기본 3개(빨래 정리 · 신발 정리 · 분리수거)로 되돌릴까요?')) return;
-  state.missionItems = MISSION_DEFAULTS.map(d => ({ ...d }));
+  state.missionItems = MISSION_DEFAULTS.map(d => ({ ...d, max: MISSION_MAX }));
   padMissionDays();
   save(); renderMission(); renderMissionSettings();
   toast('🏥 기본 미션으로 복원했어요');
@@ -5872,6 +5916,8 @@ missionRowsEl.addEventListener('input', e=>{
   missionRename(Number(inp.dataset.i), inp.value);
 });
 missionRowsEl.addEventListener('change', e=>{
+  const num = e.target.closest('input.mmax');
+  if(num){ missionMaxSet(Number(num.dataset.i), num.value); return; }
   const inp = e.target.closest('input.mname');
   if(!inp) return;
   missionNameFix(Number(inp.dataset.i));
