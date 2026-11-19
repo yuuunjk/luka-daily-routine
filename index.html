@@ -346,32 +346,33 @@
   .tbtn.end{background:#efece2;color:#7a6a55;}
   .timer.running{background:#eaf9df;border-color:var(--green);}
 
-  /* ===== 💬 오늘의 긍정 확언 (루틴 카드 아래 한 줄 배너) =====
-     카드·모드 바·진행 바를 밀어내지 않도록 flex:0 0 auto 로 한 줄만 차지하고,
-     남는 세로 공간은 위의 .tasks 가 가져간다. */
+  /* ===== 💬 오늘의 긍정 확언 (루틴 탭 맨 위, 오늘 모드·남은 시간 바 위 한 줄 배너) =====
+     아이가 루틴을 시작하기 전에 제일 먼저 읽는 문장이라 맨 위에 둔다.
+     flex:0 0 auto 로 한 줄만 차지하고, 남는 세로 공간은 아래 .tasks 가 가져간다.
+     카드가 잘리지 않게 위아래 여백·글자 크기를 컴팩트하게 잡았다. */
   .affirm{
-    flex:0 0 auto; display:flex; align-items:center; gap:clamp(10px,1.1vw,18px);
+    flex:0 0 auto; display:flex; align-items:center; gap:clamp(9px,1vw,16px);
     min-width:0; overflow:hidden;
-    background:linear-gradient(90deg,#fffaf0 0%,#fff5dc 55%,#ffeecd 100%);
-    border:2px solid #f4d284; border-radius:18px;
-    padding:clamp(6px,.85vh,10px) clamp(13px,1.35vw,22px);
-    box-shadow:0 4px 14px rgba(160,120,40,.15);
+    background:linear-gradient(90deg,#fffaf0 0%,#fff5dc 55%,#fdeccb 100%);
+    border:2px solid #f4d284; border-radius:16px;
+    padding:clamp(5px,.7vh,9px) clamp(12px,1.3vw,20px);
+    box-shadow:0 4px 14px rgba(160,120,40,.16);
   }
   .affirm[hidden]{display:none;}
   .affirm .affirm-lab{
     flex:0 0 auto; display:inline-flex; align-items:center;
     background:linear-gradient(180deg,#ffe89a,#ffd75e); color:#7a5200;
     border:1.5px solid #eec44b; border-radius:999px;
-    padding:.24em .82em; font-size:clamp(12px,1.6vh,16px); font-weight:900;
+    padding:.22em .78em; font-size:clamp(11px,1.45vh,15px); font-weight:900;
     line-height:1.25; white-space:nowrap;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 3px rgba(150,110,20,.14);
   }
   .affirm .affirm-tx{
     flex:1 1 auto; min-width:0; display:block; overflow:hidden; text-align:center;
     color:#5a3f10; font-weight:900; white-space:nowrap;
-    font-size:clamp(18px,2.2vw,30px); line-height:1.22; letter-spacing:-.01em;
+    font-size:clamp(17px,2.1vw,27px); line-height:1.2; letter-spacing:-.01em;
   }
-  .affirm .affirm-star{flex:0 0 auto; font-size:clamp(15px,2vw,24px); opacity:.7; line-height:1;}
+  .affirm .affirm-star{flex:0 0 auto; font-size:clamp(14px,1.9vw,22px); opacity:.7; line-height:1;}
 
   /* ===== Pokédex ===== */
   .dex{flex:1;display:none;flex-direction:column;min-height:0;overflow:hidden;}
@@ -881,8 +882,10 @@
     background:conic-gradient(from 0deg, rgba(255,90,190,.85), rgba(90,255,235,.75) 18%, rgba(255,255,120,.85) 36%,
       rgba(150,110,255,.85) 54%, rgba(90,210,255,.8) 72%, rgba(255,255,150,.85) 88%, rgba(255,90,190,.85) 100%);
     mix-blend-mode:color-dodge;opacity:0;transition:opacity .3s;}
-  .pcard.t1 .pring{opacity:.30;}
-  .pcard.t2 .pring{opacity:.42;animation:holoSpin 7s linear infinite;}
+  .pcard.t1 .pring{opacity:.5;filter:saturate(1.35) brightness(1.12);}
+  .pcard.t2 .pring{opacity:.72;filter:saturate(1.5) brightness(1.2);animation:holoSpin 5.2s linear infinite;}
+  /* 전설·환상은 테두리 바깥으로 무지개 빛이 번진다 */
+  .pcard.t2{filter:drop-shadow(0 0 calc(var(--k)*2.2) rgba(190,140,255,.55)) drop-shadow(0 0 calc(var(--k)*3.6) rgba(110,210,255,.35));}
   /* 잡지 않은 포켓몬 = 로열 블루 테두리 */
   .pcard.backmode{background:linear-gradient(150deg,#79a8ff 0%,#2e5cc4 11%,#123078 23%,#5f8ff0 37%,#1b3f96 50%,#7fb0ff 62%,#16357e 76%,#4a79d8 89%,#0e2560 100%);
     box-shadow:0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(2,8,24,.72), 0 0 calc(var(--k)*4.4) rgba(70,130,255,.6);}
@@ -949,9 +952,10 @@
     background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.7) 48%, rgba(255,255,255,0) 100%);
     animation:sheenSweep 5s ease-in-out infinite;}
   @keyframes sheenSweep{0%,52%{left:-70%;}88%,100%{left:135%;}}
-  .pcard.t1 .pholo{opacity:.28;}
-  .pcard.t2 .pholo{opacity:.44;animation-duration:5.4s;}
-  .pcard.iv3 .pholo{opacity:.38;animation-duration:6s;}
+  .pcard.t1 .pholo{opacity:.55;mix-blend-mode:hard-light;filter:saturate(1.2);animation-duration:6.4s;}
+  .pcard.t2 .pholo{opacity:.72;mix-blend-mode:hard-light;filter:saturate(1.4) brightness(1.06);animation-duration:3.9s;}
+  /* 최상급 개체(✨)의 은은한 반짝임 — 희귀·전설은 위의 더 강한 홀로그램을 그대로 쓴다 */
+  .pcard.iv3:not(.t1):not(.t2) .pholo{opacity:.42;animation-duration:6s;}
   .pcard.t2 .part{box-shadow:inset 0 0 0 calc(var(--k)*.45) #ffffff,
       inset 0 0 0 calc(var(--k)*1) rgba(150,90,240,.55),
       inset 0 0 0 calc(var(--k)*1.45) rgba(255,255,255,.9),
@@ -963,6 +967,62 @@
       radial-gradient(circle at 76% 80%, rgba(255,255,255,.85) 0 1.6%, transparent 6%);
     animation:sparkle 2.4s ease-in-out infinite;}
   @keyframes sparkle{0%,100%{opacity:.35;}50%{opacity:.95;}}
+
+  /* --- ②-b 희귀·전설 홀로그램 강화 — 카드 앞면 전체에 도는 무지개 필름 + 별빛 스파클 ---
+     실제 포켓몬 홀로/시크릿 레어 카드처럼 빛이 카드 위를 흘러가고 별이 반짝인다.
+     희귀=은은하게, 전설·환상=더 선명하고 빠르게. 일반 카드에는 보이지 않는다(opacity 0). */
+  .pcard-in > .pfoil{position:absolute;inset:0;z-index:6;border-radius:inherit;pointer-events:none;opacity:0;
+    mix-blend-mode:overlay;
+    background:
+      conic-gradient(from 40deg at 50% 42%, rgba(255,90,190,.9), rgba(255,235,110,.9) 15%, rgba(120,255,225,.9) 30%,
+        rgba(110,150,255,.9) 45%, rgba(215,120,255,.9) 60%, rgba(255,140,200,.9) 75%, rgba(255,240,140,.9) 90%, rgba(255,90,190,.9) 100%),
+      linear-gradient(115deg, rgba(255,110,200,0) 0%, rgba(255,110,200,.85) 12%, rgba(120,255,235,.85) 28%,
+        rgba(255,250,130,.9) 44%, rgba(165,120,255,.9) 60%, rgba(110,205,255,.85) 76%, rgba(255,140,210,.8) 90%, rgba(255,110,200,0) 100%);
+    background-size:180% 180%, 260% 260%;background-position:50% 50%, 0% 50%;}
+  @keyframes foilSlide{0%{background-position:50% 50%, 0% 50%;}100%{background-position:50% 50%, 130% 50%;}}
+  /* 여러 색 띠가 한때에 같이 보이도록 hue 회전은 쓰지 않고, 찬란한 무지개 띠만 흘려 보낸다 */
+  .pcard.t1 .pfoil{opacity:.38;filter:saturate(1.25);animation:foilSlide 9s linear infinite;}
+  .pcard.t2 .pfoil{opacity:.52;filter:saturate(1.35) brightness(1.03);animation:foilSlide 5.6s linear infinite;}
+
+  .pspark{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;transition:opacity .3s;}
+  /* 카드 위를 지나가는 반짝 빛줄기 — 가끔 번쩍하고 훑고 간다 */
+  .pspark::before{content:'';position:absolute;left:-60%;top:-40%;width:46%;height:180%;
+    transform:rotate(12deg);opacity:0;pointer-events:none;
+    background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.75) 50%, rgba(255,255,255,0) 100%);
+    mix-blend-mode:color-dodge;animation:cardSweep 7.5s ease-in-out infinite;}
+  .pcard.t2 .pspark::before{animation-duration:5.4s;}
+  @keyframes cardSweep{0%,58%{left:-60%;opacity:0;}66%{opacity:1;}86%,100%{left:130%;opacity:0;}}
+  .pspark i{position:absolute;width:calc(var(--k)*3);height:calc(var(--k)*3);
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 50% 50%, #fff 0 30%, rgba(255,255,255,.98) 40%, rgba(205,245,255,.7) 55%, rgba(205,245,255,0) 72%);
+    clip-path:polygon(50% 0%,57% 43%,100% 50%,57% 57%,50% 100%,43% 57%,0% 50%,43% 43%);
+    filter:drop-shadow(0 0 calc(var(--k)*1.1) rgba(190,240,255,.95));
+    animation:twinkle 2.6s ease-in-out infinite;}
+  .pspark i:nth-child(1){left:11%;top:22%;}
+  .pspark i:nth-child(2){left:83%;top:19%;animation-delay:.35s;}
+  .pspark i:nth-child(3){left:24%;top:47%;animation-delay:.7s;width:calc(var(--k)*2.3);height:calc(var(--k)*2.3);}
+  .pspark i:nth-child(4){left:76%;top:44%;animation-delay:1.05s;}
+  .pspark i:nth-child(5){left:15%;top:70%;animation-delay:1.4s;}
+  .pspark i:nth-child(6){left:88%;top:63%;animation-delay:1.75s;width:calc(var(--k)*2.4);height:calc(var(--k)*2.4);}
+  .pspark i:nth-child(7){left:49%;top:31%;animation-delay:2.1s;width:calc(var(--k)*2.2);height:calc(var(--k)*2.2);}
+  .pspark i:nth-child(8){left:62%;top:78%;animation-delay:.2s;width:calc(var(--k)*2.6);height:calc(var(--k)*2.6);}
+  @keyframes twinkle{0%,100%{opacity:.3;transform:translate(-50%,-50%) scale(.66) rotate(0deg);}
+    45%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(24deg);}}
+  /* 희귀 = 별 5개 · 은은하게 / 전설·환상 = 별 8개 · 크고 빠르게 */
+  .pcard.t1 .pspark{opacity:.85;}
+  .pcard.t1 .pspark i:nth-child(n+6){display:none;}
+  .pcard.t2 .pspark{opacity:1;}
+  .pcard.t2 .pspark i{animation-duration:2s;width:calc(var(--k)*4.2);height:calc(var(--k)*4.2);
+    filter:drop-shadow(0 0 calc(var(--k)*1.4) rgba(255,235,160,.95)) drop-shadow(0 0 calc(var(--k)*2) rgba(150,225,255,.9));}
+  .pcard.backmode .pspark,.pcard.backmode .pfoil{opacity:0;}
+  /* 전설·환상은 은은한 무지개 후광이 카드 안쪽을 감싼다 */
+  .pcard.t2 .pcard-in::before{content:'';position:absolute;inset:0;z-index:5;pointer-events:none;border-radius:inherit;
+    background:radial-gradient(circle at 50% 44%, rgba(255,255,255,0) 44%, rgba(190,140,255,.22) 70%, rgba(120,215,255,.3) 88%, rgba(255,160,225,.3) 100%);
+    mix-blend-mode:screen;animation:legHalo 3.6s ease-in-out infinite;}
+  @keyframes legHalo{0%,100%{opacity:.45;}50%{opacity:.95;}}
+  .pcard.t1 .psheen{animation-duration:4.2s;}
+  .pcard.t2 .psheen{animation-duration:3.1s;
+    background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.92) 47%, rgba(255,255,255,0) 100%);}
 
   /* --- ③ 일러스트 아래 정보 띠 --- */
   .pstrip{position:relative;z-index:3;flex:0 0 auto;display:flex;align-items:center;gap:calc(var(--k)*.9);
@@ -984,8 +1044,20 @@
   .prow+.prow{border-top:calc(var(--k)*.16) solid rgba(60,50,30,.16);}
   .prow .pen{width:calc(var(--k)*4.1);height:calc(var(--k)*4.1);font-size:calc(var(--k)*2.2);border-color:rgba(0,0,0,.18);box-shadow:inset 0 0 calc(var(--k)*1) rgba(255,255,255,.6);}
   .prow .pn{font-size:calc(var(--k)*2.15);font-weight:900;color:#5f5140;letter-spacing:-.02em;white-space:nowrap;}
-  .prow .pv{margin-left:auto;font-size:calc(var(--k)*3);font-weight:900;color:#33281a;font-variant-numeric:tabular-nums;
-    line-height:1;transition:color .2s;}
+  /* --- 능력치 게이지 막대 — 수치 옆에 막대 길이로도 강함이 한눈에 보인다 --- */
+  .prow .pg{position:relative;flex:1 1 auto;min-width:calc(var(--k)*5);height:calc(var(--k)*1.9);
+    margin-left:calc(var(--k)*.6);border-radius:999px;overflow:hidden;
+    background:rgba(72,60,40,.14);box-shadow:inset 0 calc(var(--k)*.22) calc(var(--k)*.4) rgba(60,45,20,.24);}
+  .prow .pg i{display:block;height:100%;width:0;border-radius:999px;
+    background:linear-gradient(90deg, var(--pg1,#c9d6a8), var(--pg2,#6f9b3d));
+    box-shadow:inset 0 calc(var(--k)*.5) 0 rgba(255,255,255,.42), 0 0 calc(var(--k)*.5) rgba(0,0,0,.12);
+    transition:width .5s cubic-bezier(.3,1.4,.6,1);}
+  .prow.r-hp  .pg{--pg1:#ffb3c1;--pg2:#e02a48;}
+  .prow.r-atk .pg{--pg1:#ffc46b;--pg2:#e2560a;}
+  .prow.r-def .pg{--pg1:#93d7ff;--pg2:#1668cf;}
+  .prow.tot   .pg{--pg1:#ffe783;--pg2:#dfa200;}
+  .prow .pv{margin-left:calc(var(--k)*.9);font-size:calc(var(--k)*3);font-weight:900;color:#33281a;font-variant-numeric:tabular-nums;
+    line-height:1;transition:color .2s;min-width:calc(var(--k)*7.4);text-align:right;}
   .prow.bump .pv{color:#2e7d32;}
   .prow.tot{background:linear-gradient(90deg, rgba(255,246,214,.9), rgba(255,233,168,.85));}
   .prow.tot .pv{color:#a86a00;}
@@ -1001,6 +1073,11 @@
   .ptier.tt2{background:linear-gradient(90deg,#7b3fd4,#c356d8);}
   .pcard .iv-badge{font-size:calc(var(--k)*1.6);padding:calc(var(--k)*.22) calc(var(--k)*.9);gap:calc(var(--k)*.35);
     border-width:calc(var(--k)*.2);flex:0 0 auto;}
+  /* 포획 날짜 칩 — 이전에 잡아 둔 포켓몬은 '📅 도감 등록'으로 보인다 */
+  .pdate{flex:0 0 auto;display:inline-flex;align-items:center;gap:calc(var(--k)*.3);
+    font-size:calc(var(--k)*1.5);font-weight:900;color:#fff8e0;border-radius:999px;
+    padding:calc(var(--k)*.22) calc(var(--k)*.85);line-height:1.35;white-space:nowrap;
+    background:rgba(8,18,34,.46);box-shadow:inset 0 0 0 calc(var(--k)*.16) rgba(255,220,130,.45);}
   .plv{flex:0 0 auto;font-size:calc(var(--k)*1.62);font-weight:900;color:#fff;background:var(--green-dark);
     border-radius:999px;padding:calc(var(--k)*.22) calc(var(--k)*.95);line-height:1.35;white-space:nowrap;
     box-shadow:0 calc(var(--k)*.2) calc(var(--k)*.6) rgba(0,0,0,.25);}
@@ -1736,6 +1813,13 @@
     </div>
   </header>
 
+  <!-- ======= 💬 오늘의 긍정 확언 — 루틴 탭 맨 위, 오늘 모드·남은 시간 바 바로 위 ======= -->
+  <div class="affirm" id="affirm" role="note" aria-label="오늘의 긍정 확언">
+    <span class="affirm-lab">💬 오늘의 긍정 확언</span>
+    <span class="affirm-tx" id="affirmTx"></span>
+    <span class="affirm-star" aria-hidden="true">✨</span>
+  </div>
+
   <!-- ======= PROGRESS STRIP ======= -->
   <div class="strip">
     <div class="modes" id="modes" role="group" aria-label="오늘 모드">
@@ -1763,13 +1847,6 @@
 
   <!-- ======= TASKS ======= -->
   <div class="tasks" id="tasks"></div>
-
-  <!-- ======= 💬 오늘의 긍정 확언 — 루틴 카드 아래 한 줄 ======= -->
-  <div class="affirm" id="affirm" role="note" aria-label="오늘의 긍정 확언">
-    <span class="affirm-lab">💬 오늘의 긍정 확언</span>
-    <span class="affirm-tx" id="affirmTx"></span>
-    <span class="affirm-star" aria-hidden="true">✨</span>
-  </div>
 
   <!-- ======= TODAY'S STUDY ======= -->
   <div class="study" id="study">
@@ -1863,24 +1940,28 @@
         <span id="pokeIvTx">개체값 4/31</span>
       </div>
       <div class="pbody">
-        <div class="prow" id="stHp">
+        <div class="prow r-hp" id="stHp">
           <span class="pen" id="penHp">❤️</span>
           <span class="pn">HP</span>
+          <span class="pg"><i id="pgHp"></i></span>
           <b class="pv" id="pHp">0</b>
         </div>
-        <div class="prow" id="stAtk">
+        <div class="prow r-atk" id="stAtk">
           <span class="pen" id="penAtk"></span>
           <span class="pn">공격력</span>
+          <span class="pg"><i id="pgAtk"></i></span>
           <b class="pv" id="pAtk">0</b>
         </div>
-        <div class="prow" id="stDef">
+        <div class="prow r-def" id="stDef">
           <span class="pen" id="penDef"></span>
           <span class="pn">방어력</span>
+          <span class="pg"><i id="pgDef"></i></span>
           <b class="pv" id="pDef">0</b>
         </div>
         <div class="prow tot" id="stPow">
           <span class="pen" id="penPow">⚡</span>
           <span class="pn">전투력</span>
+          <span class="pg"><i id="pgPow"></i></span>
           <b class="pv" id="pokePow">0</b>
         </div>
       </div>
@@ -1888,8 +1969,12 @@
         <span class="ptier" id="pokeTier">일반</span>
         <span class="iv-badge" id="pokeIv">개체값</span>
         <span class="plv zero" id="pokeLv">강화 +0</span>
+        <span class="pdate" id="pokeDate">📅 도감 등록</span>
         <span class="pno" id="pokeNo">001/200</span>
       </div>
+      <!-- 희귀·전설 홀로그램: 무지개 필름 + 별빛 스파클 (일반 카드에서는 숨어 있다) -->
+      <div class="pfoil" aria-hidden="true"></div>
+      <div class="pspark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </div>
 
     <!-- ===== 카드 뒷면 (아직 못 잡은 포켓몬) ===== -->
@@ -2527,6 +2612,15 @@ function statsOf(id, lv, iv){
         def = Math.round(b[2]*mul) + lv*LV_UP[2];
   return { hp, atk, def, power: hp + atk*2 + def*2, iv: v, tier };
 }
+/* 능력치 게이지의 가득 찬 기준 — 도감 200종에서 가장 섭은 값보다 조금 위(강한 포켓몬 = 막대가 거의 꿈 찬다) */
+const STAT_REF = { hp: 300, atk: 240, def: 310, power: 1050 };
+function pgPct(v, ref){ return Math.max(5, Math.min(100, (Number(v) || 0) / ref * 100)); }
+/* 카드 푸터의 포획 날짜 — 기기 시간(한국) 기준 'YYYY.MM.DD' */
+function caughtDot(d){
+  d = d || getNow();
+  const p = n => (n < 10 ? '0' : '') + n;
+  return `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())}`;
+}
 
 /* ---------- weekly study plan (구글 시트에서 내려받아 저장하는 캐시) ---------- */
 const DAYS_SHORT = ['일','월','화','수','목','금','토'];   // index = Date.getDay()
@@ -2569,6 +2663,8 @@ function load(){
 }
 function migrate(s){
   s.caught = s.caught || {};
+  s.caughtAt = s.caughtAt || {};   // 포획한 날짜 (YYYY.MM.DD) — 예전에 잡아 둔 포켓몬은 비어 있다('도감 등록'으로 표시)
+  if(!s.rareSlots || typeof s.rareSlots.block !== 'number' || !Array.isArray(s.rareSlots.slots)) s.rareSlots = null;
   Object.keys(s.caught).forEach(k => {
     s.caught[k].lv = s.caught[k].lv || 0;
     /* 예전에 잡아 둔 포켓몬에는 개체값이 없다 → 티어 하한을 지키는 값으로 한 번만 정해 준다 */
@@ -2795,12 +2891,7 @@ function playMissionSfx(fallback){
 }
 function toast(msg){
   const t = document.getElementById('toast');
-  /* 루틴 탭에서는 카드 아래 '오늘의 긍정 확언' 배너를 가리지 않게 그 위로 띄운다 */
-  const aff = document.getElementById('affirm');
-  const affOn = aff && getComputedStyle(aff).display !== 'none';
-  t.style.bottom = affOn
-    ? Math.round(innerHeight - aff.getBoundingClientRect().top + 12) + 'px'
-    : '';
+  /* 긍정 확언 배너는 루틴 탭 맨 위로 옮겨서, 화면 아래에서 뜨는 알림과 겹치지 않는다 */
   t.textContent = msg; t.classList.add('show');
   clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2600);
 }
@@ -3082,10 +3173,30 @@ function checkAllComplete(){
 }
 
 /* ---------- XP / catch ---------- */
-/* 다음 목표 고르기 — 3번째 잡기마다 희귀, 5번째 잡기마다 전설·환상 */
+/* 다음 목표 고르기 — 10마리 잡는 블록마다 희귀 2번 + 전설·환상 1번 (딱 3번).
+     · 10번째(next % 10 === 0)  → 전설·환상 타이밍 → 아직 안 잡은 전설·환상 중 랜덤
+     · 블록마다 1~9 중 서로 다른 2자리를 랜덤으로 뽑아 state.rareSlots 에 저장 → 그 두 번이 희귀(랜덤 마리)
+       (저장해 두므로 새로고침해도 목표가 바뀌지 않고, 다음 블록에서는 다른 자리에 나와 예측할 수 없다)
+     · 나머지 7번               → 일반 타이밍     → 아직 안 잡은 일반을 도감 순서대로
+   해당 등급을 다 잡았다면 예전처럼 희귀 → 아무나 순서로 넘어간다. */
+function rareSlotsFor(next){
+  const block = Math.floor((next - 1) / 10);
+  const rs = state.rareSlots;
+  if(rs && rs.block === block && Array.isArray(rs.slots) && rs.slots.length === 2) return rs.slots;
+  const pool = [1,2,3,4,5,6,7,8,9];
+  const slots = [];
+  for(let k=0;k<2;k++) slots.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  slots.sort((a,b) => a - b);
+  state.rareSlots = { block, slots };   // 이번 블록의 희귀 자리 — 저장해서 새로고침해도 그대로
+  save();
+  return slots;
+}
 function pickTarget(){
   const next = totalCatches() + 1;
-  const want = next % 5 === 0 ? 2 : next % 3 === 0 ? 1 : 0;
+  const pos = ((next - 1) % 10) + 1;                 // 블록 안에서 몇 번째(1~10)
+  const want = next % 10 === 0 ? 2
+             : rareSlotsFor(next).includes(pos) ? 1
+             : 0;
   const scan = pred => {
     for(let k=1;k<=DEX.length;k++){
       const i = (state.wildIndex + k) % DEX.length;
@@ -3093,10 +3204,19 @@ function pickTarget(){
     }
     return -1;
   };
+  /* 해당 등급의 아직 못 잡은 포켓몬 중 무작위 1마리 (도감 순서와 상관없이 골고루)
+     ※ 이 함수는 다른 곳과 같게 '도감 배열의 번호(index)'를 돌려준다 (id 가 아니다) */
+  const anyOf = pred => {
+    const pool = [];
+    DEX.forEach((p, i) => { if(!state.caught[p.id] && pred(p)) pool.push(i); });
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : -1;
+  };
   let i = -1;
-  if(want === 2) i = scan(p => tierOf(p) === 2);
-  if(i < 0 && want >= 1) i = scan(p => tierOf(p) === 1);
-  if(i < 0) i = scan(()=>true);
+  if(want === 2)      i = anyOf(p => tierOf(p) === 2);   // 전설·환상 랜덤
+  else if(want === 1) i = anyOf(p => tierOf(p) === 1);   // 희귀 랜덤
+  else                i = scan(p => tierOf(p) === 0);    // 일반은 도감 순서
+  if(i < 0 && want === 2) i = scan(p => tierOf(p) === 1); // 전설을 다 잡았다 → 희귀(도감 순서)
+  if(i < 0) i = scan(()=>true);                           // 그것도 없으면 아무나 도감 순서
   return i < 0 ? state.wildIndex : i;
 }
 function normalizeWild(){
@@ -3132,6 +3252,7 @@ function maybeCatch(){
     rec.iv = prevIv == null ? gotIv : Math.max(prevIv, gotIv);
     const improved = prevIv != null && rec.iv > prevIv;
     state.caught[pk.id] = rec;
+    if(!state.caughtAt[pk.id]) state.caughtAt[pk.id] = caughtDot();   // 처음 잡은 날
     state.wildIndex = pickTarget();   // 다음 목표 (희귀·전설 마일스톤 포함)
     save();
     showCatchModal(pk, rec.iv, improved);
@@ -4034,6 +4155,15 @@ function renderPokeCard(msg){
   document.getElementById('pAtk').textContent = st.atk;
   document.getElementById('pDef').textContent = st.def;
   document.getElementById('pokePow').textContent = st.power;
+  /* 능력치 게이지 막대 — 수치와 함께 막대 길이로 강함을 보여 준다 */
+  document.getElementById('pgHp').style.width = pgPct(st.hp, STAT_REF.hp).toFixed(1) + '%';
+  document.getElementById('pgAtk').style.width = pgPct(st.atk, STAT_REF.atk).toFixed(1) + '%';
+  document.getElementById('pgDef').style.width = pgPct(st.def, STAT_REF.def).toFixed(1) + '%';
+  document.getElementById('pgPow').style.width = pgPct(st.power, STAT_REF.power).toFixed(1) + '%';
+
+  /* 푸터의 포획 날짜 — 예전에 잡아 둔 포켓몬은 '도감 등록' */
+  const got = (state.caughtAt && state.caughtAt[pokeId]) || (rec && rec.caughtAt) || '';
+  document.getElementById('pokeDate').textContent = got ? `📅 포획 ${got}` : '📅 도감 등록';
 
   const pv = document.getElementById('pokeIv');
   pv.className = 'iv-badge ' + g.cls;
@@ -5032,6 +5162,7 @@ function registerTestPokemon(n){
     const prevIv = Number.isInteger(rec.iv) ? rec.iv : null;
     rec.iv = prevIv == null ? gotIv : Math.max(prevIv, gotIv);
     state.caught[pk.id] = rec;
+    if(!state.caughtAt[pk.id]) state.caughtAt[pk.id] = caughtDot();
     names.push(pk.name);
   }
   save();
@@ -5172,52 +5303,52 @@ function confetti(){
    같은 문장이 나오고(기기가 달라도 같다), 바로 전날과 같은 문장이 뽑히면 한 칸 밀어
    이틀 연속 같은 문장이 나오지 않게 한다. */
 const AFFIRMATIONS = [
-  '나는 실수해도 다시 해낼 수 있는 멋진 아이야!',
-  '오늘도 내 힘으로 차근차근 해내는 내가 자랑스러워!',
-  '나는 친절하고 용감한 마음을 가지고 있어!',
-  '조금 어려워도 포기하지 않으면 분명 할 수 있어!',
-  '나는 매일 조금씩 더 자라고 있는 아이야!',
-  '나는 할 수 있다고 믿으면 정말 할 수 있어!',
-  '힘들 때 한 번만 더 해 보면 내가 더 강해져!',
-  '나는 친구에게 따뜻한 말을 해 주는 좋은 친구야!',
-  '오늘 하루도 최선을 다하는 나는 참 멋져!',
-  '나는 새로운 걸 배우는 게 즐거운 아이야!',
-  '틀려도 괜찮아, 다시 해 보면 더 잘하게 돼!',
-  '나는 스스로 준비하고 스스로 해내는 아이야!',
-  '나는 오늘도 웃으면서 씩씩하게 걸어갈 거야!',
-  '내 마음속에는 용기와 재미가 가득해!',
-  '나는 어려운 일도 하나씩 해내는 힘이 있어!',
-  '지금 이 순간의 나도 충분히 멋지고 좋아!',
-  '나는 사랑받는 소중한 아이야!',
-  '나는 고맙다는 말을 잘하는 다정한 아이야!',
-  '나는 내 물건을 스스로 정리하는 멋진 아이야!',
-  '나는 잘 못해도 즐겁게 해 보는 게 좋아!',
-  '모르는 건 물어보면 더 잘 알게 돼!',
-  '나는 궁금한 게 많아서 더 많이 자랄 수 있어!',
-  '오늘도 밝게 인사하는 나는 멋진 아이야!',
-  '나는 스스로 해내는 순간마다 더 대단해져!',
-  '나는 조금씩 조금씩 꿈에 다가가고 있어!',
-  '힘든 일이 있어도 나는 다시 일어나는 용사야!',
-  '나는 내 힘으로 해내면 기분이 정말 좋아!',
-  '오늘도 나는 나를 칭찬해 줄 거야!',
-  '나는 좋아하는 걸 오래 오래 해낼 수 있어!',
-  '나는 친구가 기쁠 일을 먼저 해 주는 아이야!',
-  '나는 잠깐 쉬어도 다시 시작할 줄 아는 아이야!',
-  '오늘의 나는 어제의 나보다 조금 더 자랐어!',
-  '나는 나만의 멋진 재능을 가진 아이야!',
-  '깊게 숨을 쉬면 내 마음이 편안해져!',
-  '나는 다정하고 씩씩한 마음으로 오늘을 살 거야!',
-  '나는 내가 가진 것에 고마워할 줄 알아!',
-  '나는 한 걸음씩 앞으로 걸어가는 멋진 아이야!',
-  '나는 잘 들어 주고 잘 이해하는 좋은 아이야!',
-  '나는 해야 할 일을 씩씩하게 해내는 아이야!',
-  '나는 상상력이 풍부한 멋진 아이야!',
-  '오늘도 나는 스스로에게 멋진 말을 해 줄 거야!',
-  '나는 실수한 친구에게 괜찮다고 말해 줄 수 있어!',
-  '나는 어제보다 조금 더 친절한 아이가 될 거야!',
-  '나는 내가 하는 일에 최선을 다하는 용사야!',
-  '나는 웃음이 많아서 주변을 밝게 하는 아이야!',
-  '나는 오늘도 나를 믿고 한 걸음 나아갈 거야!'
+  '나는 스스로 척척 해내는 멋진 아이야!',
+  '실수해도 괜찮아! 다시 해 보면 돼!',
+  '오늘도 내 힘으로 준비 다 할 수 있어!',
+  '조금 어려워도 끝까지 해 볼 거야!',
+  '나는 친구에게 먼저 웃어 주는 좋은 친구야!',
+  '오늘도 씩씩하게 잘 해낼 수 있어!',
+  '느려도 괜찮아, 차근차근 하면 다 돼!',
+  '나는 내 물건도 스스로 잘 챙겨!',
+  '아침에 일어나면 혼자서 척척 준비해!',
+  '나는 오늘도 신나게 학교에 갈 거야!',
+  '세수도 양치도 내가 먼저 할 수 있어!',
+  '나는 내 가방을 스스로 메고 다녀!',
+  '오늘 숙제도 끝까지 다 해낼 거야!',
+  '한 번 더 해 보면 더 잘하게 돼!',
+  '모르는 건 손 들어서 물어볼 거야!',
+  '나는 친구 이름을 부르며 인사해!',
+  '친구가 슬퍼 보이면 먼저 물어볼 거야!',
+  '나는 줄을 잘 서고 차례를 잘 지켜!',
+  '나는 밥도 골고루 잘 먹어!',
+  '오늘도 나는 크게 웃을 거야!',
+  '넘어져도 툭 털고 일어날 수 있어!',
+  '나는 내 생각을 씩씩하게 말할 수 있어!',
+  '내 차례가 오면 씩씩하게 발표할 거야!',
+  '나는 오늘 하루도 반짝반짝 빛날 거야!',
+  '힘들면 잠깐 쉬었다가 다시 할 거야!',
+  '나는 나를 웃게 하는 말을 스스로 해 줄 거야!',
+  '좋아하는 건 오래오래 끝까지 해 볼 거야!',
+  '나는 만나면 먼저 웃으며 인사할 거야!',
+  '나는 엄마 아빠를 와락 안아 줄 거야!',
+  '나는 내 방을 스스로 정리할 수 있어!',
+  '나는 물도 잘 마시고 화장실도 잘 다녀와!',
+  '나는 밖에서 신나게 뛰어놀 거야!',
+  '책을 읽으면 새로운 걸 많이 알게 돼!',
+  '모르는 글자가 나와도 끝까지 읽어 볼 거야!',
+  '나는 내 물건을 소중히 다뤄!',
+  '잘못했으면 미안하다고 말할 수 있어!',
+  '나는 고맙다는 말을 자주 할 거야!',
+  '오늘도 나는 한 뼘 더 자랄 거야!',
+  '내 힘으로 해내서 정말 뿌듯해!',
+  '나는 오늘도 용감하게 해 볼 거야!',
+  '무서운 일이 있어도 나는 한 걸음 나아가!',
+  '나는 친구와 사이좋게 놀 수 있어!',
+  '나는 심심할 때도 혼자 재미있게 놀 수 있어!',
+  '오늘은 꼭 한 가지 새로 해 볼 거야!',
+  '잘하고 있는 나를 내가 칭찬해 줄 거야!',
+  '내일의 나도 오늘의 나처럼 멋질 거야!'
 ];
 function affirmKeyOf(d){
   d = d || getNow();
