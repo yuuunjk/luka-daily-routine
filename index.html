@@ -346,6 +346,33 @@
   .tbtn.end{background:#efece2;color:#7a6a55;}
   .timer.running{background:#eaf9df;border-color:var(--green);}
 
+  /* ===== 💬 오늘의 긍정 확언 (루틴 카드 아래 한 줄 배너) =====
+     카드·모드 바·진행 바를 밀어내지 않도록 flex:0 0 auto 로 한 줄만 차지하고,
+     남는 세로 공간은 위의 .tasks 가 가져간다. */
+  .affirm{
+    flex:0 0 auto; display:flex; align-items:center; gap:clamp(10px,1.1vw,18px);
+    min-width:0; overflow:hidden;
+    background:linear-gradient(90deg,#fffaf0 0%,#fff5dc 55%,#ffeecd 100%);
+    border:2px solid #f4d284; border-radius:18px;
+    padding:clamp(6px,.85vh,10px) clamp(13px,1.35vw,22px);
+    box-shadow:0 4px 14px rgba(160,120,40,.15);
+  }
+  .affirm[hidden]{display:none;}
+  .affirm .affirm-lab{
+    flex:0 0 auto; display:inline-flex; align-items:center;
+    background:linear-gradient(180deg,#ffe89a,#ffd75e); color:#7a5200;
+    border:1.5px solid #eec44b; border-radius:999px;
+    padding:.24em .82em; font-size:clamp(12px,1.6vh,16px); font-weight:900;
+    line-height:1.25; white-space:nowrap;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 3px rgba(150,110,20,.14);
+  }
+  .affirm .affirm-tx{
+    flex:1 1 auto; min-width:0; display:block; overflow:hidden; text-align:center;
+    color:#5a3f10; font-weight:900; white-space:nowrap;
+    font-size:clamp(18px,2.2vw,30px); line-height:1.22; letter-spacing:-.01em;
+  }
+  .affirm .affirm-star{flex:0 0 auto; font-size:clamp(15px,2vw,24px); opacity:.7; line-height:1;}
+
   /* ===== Pokédex ===== */
   .dex{flex:1;display:none;flex-direction:column;min-height:0;overflow:hidden;}
   .dex.show{display:flex;}
@@ -1737,6 +1764,13 @@
   <!-- ======= TASKS ======= -->
   <div class="tasks" id="tasks"></div>
 
+  <!-- ======= 💬 오늘의 긍정 확언 — 루틴 카드 아래 한 줄 ======= -->
+  <div class="affirm" id="affirm" role="note" aria-label="오늘의 긍정 확언">
+    <span class="affirm-lab">💬 오늘의 긍정 확언</span>
+    <span class="affirm-tx" id="affirmTx"></span>
+    <span class="affirm-star" aria-hidden="true">✨</span>
+  </div>
+
   <!-- ======= TODAY'S STUDY ======= -->
   <div class="study" id="study">
     <div class="study-body">
@@ -2761,6 +2795,12 @@ function playMissionSfx(fallback){
 }
 function toast(msg){
   const t = document.getElementById('toast');
+  /* 루틴 탭에서는 카드 아래 '오늘의 긍정 확언' 배너를 가리지 않게 그 위로 띄운다 */
+  const aff = document.getElementById('affirm');
+  const affOn = aff && getComputedStyle(aff).display !== 'none';
+  t.style.bottom = affOn
+    ? Math.round(innerHeight - aff.getBoundingClientRect().top + 12) + 'px'
+    : '';
   t.textContent = msg; t.classList.add('show');
   clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2600);
 }
@@ -4699,6 +4739,9 @@ function showTab(key){
   if(key === 'dex') renderDex();
   if(key === 'study'){ renderStudy(); sheetFetch('tab'); }
   if(key === 'center'){ renderMission(); renderHeaderXp(); }
+  const af = document.getElementById('affirm');
+  af.style.display = key === 'dash' ? 'flex' : 'none';
+  if(key === 'dash') requestAnimationFrame(fitAffirm);
 }
 Object.keys(TAB_IDS).forEach(k => document.getElementById(TAB_IDS[k]).addEventListener('click', ()=>showTab(k)));
 document.getElementById('selfBtn').addEventListener('click', selfToggle);
@@ -5123,6 +5166,101 @@ function confetti(){
   b._h = setTimeout(()=>{ b.classList.remove('show'); b.innerHTML=''; }, 2400);
 }
 
+/* ---------- 💬 오늘의 긍정 확언 ----------
+   날짜(기기 시간 = 한국 시간)마다 다른 문장을 보여 준다.
+   문장은 'YYYY-MM-DD' 날짜 문자열의 해시로 뽑으므로 같은 날에는 새로고침·재실행을 해도
+   같은 문장이 나오고(기기가 달라도 같다), 바로 전날과 같은 문장이 뽑히면 한 칸 밀어
+   이틀 연속 같은 문장이 나오지 않게 한다. */
+const AFFIRMATIONS = [
+  '나는 실수해도 다시 해낼 수 있는 멋진 아이야!',
+  '오늘도 내 힘으로 차근차근 해내는 내가 자랑스러워!',
+  '나는 친절하고 용감한 마음을 가지고 있어!',
+  '조금 어려워도 포기하지 않으면 분명 할 수 있어!',
+  '나는 매일 조금씩 더 자라고 있는 아이야!',
+  '나는 할 수 있다고 믿으면 정말 할 수 있어!',
+  '힘들 때 한 번만 더 해 보면 내가 더 강해져!',
+  '나는 친구에게 따뜻한 말을 해 주는 좋은 친구야!',
+  '오늘 하루도 최선을 다하는 나는 참 멋져!',
+  '나는 새로운 걸 배우는 게 즐거운 아이야!',
+  '틀려도 괜찮아, 다시 해 보면 더 잘하게 돼!',
+  '나는 스스로 준비하고 스스로 해내는 아이야!',
+  '나는 오늘도 웃으면서 씩씩하게 걸어갈 거야!',
+  '내 마음속에는 용기와 재미가 가득해!',
+  '나는 어려운 일도 하나씩 해내는 힘이 있어!',
+  '지금 이 순간의 나도 충분히 멋지고 좋아!',
+  '나는 사랑받는 소중한 아이야!',
+  '나는 고맙다는 말을 잘하는 다정한 아이야!',
+  '나는 내 물건을 스스로 정리하는 멋진 아이야!',
+  '나는 잘 못해도 즐겁게 해 보는 게 좋아!',
+  '모르는 건 물어보면 더 잘 알게 돼!',
+  '나는 궁금한 게 많아서 더 많이 자랄 수 있어!',
+  '오늘도 밝게 인사하는 나는 멋진 아이야!',
+  '나는 스스로 해내는 순간마다 더 대단해져!',
+  '나는 조금씩 조금씩 꿈에 다가가고 있어!',
+  '힘든 일이 있어도 나는 다시 일어나는 용사야!',
+  '나는 내 힘으로 해내면 기분이 정말 좋아!',
+  '오늘도 나는 나를 칭찬해 줄 거야!',
+  '나는 좋아하는 걸 오래 오래 해낼 수 있어!',
+  '나는 친구가 기쁠 일을 먼저 해 주는 아이야!',
+  '나는 잠깐 쉬어도 다시 시작할 줄 아는 아이야!',
+  '오늘의 나는 어제의 나보다 조금 더 자랐어!',
+  '나는 나만의 멋진 재능을 가진 아이야!',
+  '깊게 숨을 쉬면 내 마음이 편안해져!',
+  '나는 다정하고 씩씩한 마음으로 오늘을 살 거야!',
+  '나는 내가 가진 것에 고마워할 줄 알아!',
+  '나는 한 걸음씩 앞으로 걸어가는 멋진 아이야!',
+  '나는 잘 들어 주고 잘 이해하는 좋은 아이야!',
+  '나는 해야 할 일을 씩씩하게 해내는 아이야!',
+  '나는 상상력이 풍부한 멋진 아이야!',
+  '오늘도 나는 스스로에게 멋진 말을 해 줄 거야!',
+  '나는 실수한 친구에게 괜찮다고 말해 줄 수 있어!',
+  '나는 어제보다 조금 더 친절한 아이가 될 거야!',
+  '나는 내가 하는 일에 최선을 다하는 용사야!',
+  '나는 웃음이 많아서 주변을 밝게 하는 아이야!',
+  '나는 오늘도 나를 믿고 한 걸음 나아갈 거야!'
+];
+function affirmKeyOf(d){
+  d = d || getNow();
+  const p = n => (n < 10 ? '0' : '') + n;
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function affirmHash(s){                      // FNV-1a — 짧고 고르게 퍼진다
+  let h = 2166136261 >>> 0;
+  for(let i = 0; i < s.length; i++){
+    h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h;
+}
+function affirmIndexFor(key){
+  const n = AFFIRMATIONS.length;
+  const own = affirmHash(key) % n;
+  const y = Number(key.slice(0,4)), m = Number(key.slice(5,7)) - 1, d = Number(key.slice(8,10));
+  const day = new Date(y, m, d, 12, 0, 0);
+  const prev = affirmHash(affirmKeyOf(new Date(y, m, d - 1))) % n;
+  if(own !== prev || n < 3) return own;
+  const step = 1 + (Math.floor(day.getTime() / 86400000) % (n - 1));   // 1~n-1 칸 밀기
+  return (own + step) % n;
+}
+let curAffirmDay = '';
+/* 한 줄에 다 들어오게 — 기기 글꼴이 넓어 넘치면 글자 크기를 조금씩 줄인다 (14px 까지) */
+function fitAffirm(){
+  const el = document.getElementById('affirmTx');
+  if(!el || el.clientWidth < 40) return;     // 다른 탭이라 숨어 있으면 재지 않는다
+  el.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(el).fontSize) || 22;
+  let guard = 80;
+  while(el.scrollWidth > el.clientWidth + 0.5 && size > 14 && guard-- > 0){
+    size -= 0.5; el.style.fontSize = size + 'px';
+  }
+}
+function renderAffirm(){
+  const el = document.getElementById('affirmTx');
+  if(!el) return;
+  curAffirmDay = affirmKeyOf();
+  el.textContent = AFFIRMATIONS[affirmIndexFor(curAffirmDay)];
+  fitAffirm();
+}
+
 /* ---------- main tick ---------- */
 function syncRoutine(){
   const k = routineKeyAt();
@@ -5142,6 +5280,7 @@ function tick(force){
     curMissionDay = todayKey();
     if(curTab === 'center') renderMission();
   }
+  if(curAffirmDay !== affirmKeyOf()) renderAffirm();   // 자정을 넘기면 긍정 확언도 새 문장으로
   const now = renderProgress();
   /* 아침 마감 알림 — 방과후 모드는 8:45에 대기 화면으로 넘어가지만 알림은 그대로 울린다 */
   if(now < DEPART + 15) checkDepartAlert(now);
@@ -5154,10 +5293,11 @@ setInterval(tick, 250);
 /* ---------- init ---------- */
 curRKey = routineKeyAt();
 buildTasks();
+renderAffirm();
 renderModePills();
 normalizeWild();
 renderWild();
-window.addEventListener('resize', ()=>{});
+window.addEventListener('resize', ()=>{ fitAffirm(); });
 /* 도감 200마리는 대시보드 첫 그림 이후에 조용히 준비한다 (첫 로딩을 가볍게) */
 updateDexReward();
 renderStudy();
