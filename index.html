@@ -456,8 +456,9 @@
   .tasks{flex:1 1 auto;display:flex;gap:12px;min-height:0;padding-bottom:2px;}
   .tasks.six{gap:10px;}
   .tasks.six .card{padding:34px 8px 8px;}
-  .tasks.six .tname{font-size:clamp(12px,1.9vh,18px);line-height:1.15;text-align:center;
-    white-space:normal;word-break:keep-all;padding:4px 2px 2px;}
+  .tasks.six .tname{font-size:clamp(11px,1.8vh,17px);line-height:1.15;text-align:center;
+    padding:4px 2px 2px;gap:.26em;}
+  .tasks.six .tname .stamp{font-size:.6em;padding:.2em .42em;}
   .tasks.six .num{width:22px;height:22px;font-size:12px;left:8px;top:6px;}
   .card{
     flex:1;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
@@ -488,13 +489,23 @@
     object-fit:contain;object-position:center;pointer-events:none;}
   .card .emoji-fallback{flex:0 1 auto;align-items:center;justify-content:center;
     font-size:clamp(40px,7vh,64px);line-height:1;}
-  .tname{font-size:clamp(14px,2.2vh,20px);font-weight:800;flex:0 0 auto;padding-top:4px;}
-  .stamp{
-    position:absolute;left:50%;top:16%;transform:translate(-50%,-50%) rotate(-14deg);
-    font-size:24px;font-weight:900;color:var(--green-dark);border:4px solid var(--green-dark);
-    border-radius:10px;padding:2px 10px;opacity:0;transition:all .25s;background:#ffffffcc;z-index:3;
+  /* 제목 줄 — '완료!' 배지는 그림을 가리지 않고 제목 왼쪽에 나란히 붙는다 */
+  .tname{font-size:clamp(14px,2.2vh,20px);font-weight:800;flex:0 0 auto;padding-top:4px;
+    display:flex;align-items:center;justify-content:center;gap:.34em;max-width:100%;min-width:0;}
+  .tname .ttx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tname .stamp{
+    display:none;flex:0 0 auto;font-size:.72em;font-weight:900;line-height:1.1;color:#fff;
+    background:var(--green-dark);border-radius:999px;padding:.18em .46em;white-space:nowrap;
+    letter-spacing:-.01em;box-shadow:0 2px 5px rgba(40,90,40,.28);
   }
-  .card.done .stamp{opacity:.9;}
+  .card.done .tname .stamp{display:inline-block;}
+  /* 세로 화면 — 카드가 좁아 제목+배지가 한 줄에 넘치지 않게 글자를 한 단 줄인다 */
+  @media (max-width:900px){
+    .tname{font-size:clamp(10px,1.5vh,14px);gap:.2em;}
+    .tname .stamp{font-size:.6em;padding:.16em .34em;}
+    .tasks.six .tname{font-size:clamp(10px,1.4vh,13px);}
+    .tasks.six .tname .stamp{font-size:.58em;padding:.14em .3em;}
+  }
 
   /* meal timer — 숫자를 크게, 버튼은 두 줄로 나눠 손가락으로 누르기 쉽게 */
   .timer{
@@ -1508,7 +1519,6 @@
     .tbtn{padding:8px 6px;font-size:15px;min-height:40px;}
     .num{width:22px;height:22px;font-size:12px;}
     .checkmark{font-size:25px;}
-    .stamp{font-size:20px;}
     .self-banner{padding:6px 14px;gap:12px;}
     .self-btn{font-size:18px;padding:6px 16px 6px 9px;}
     .self-btn .box{width:32px;height:32px;font-size:19px;}
@@ -3541,10 +3551,9 @@ function buildTasks(){
     card.innerHTML = `
       <div class="num">${i+1}</div>
       <div class="checkmark">✅</div>
-      <div class="stamp">완료!</div>
       <img src="${t.img}" alt="${t.name}" onerror="this.style.display='none';this.parentElement.querySelector('.emoji-fallback').style.display='flex'">
       <div class="emoji-fallback" style="display:none">${t.emoji}</div>
-      <div class="tname">${t.name}</div>
+      <div class="tname"><span class="stamp">완료!</span><span class="ttx">${t.name}</span></div>
       ${withTimer ? `
       <div class="timer" id="mealTimer">
         <span class="tval" id="tval">30:00</span>
