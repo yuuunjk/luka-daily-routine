@@ -235,6 +235,12 @@
   header.sky .hxp-gauge i.on{background:linear-gradient(180deg,#ffd95a,#f5b400); border-color:#d79a00;
     box-shadow:0 1px 3px rgba(190,130,0,.4);}
   header.sky .hxp-boost.hot{background:#fffbe8; border-color:#e0a800;}
+  /* 세로로 긴 화면(휴대폰·태블릿 세로)에서는 두 칸이 아주 좌아져 라벨 글자가 이름을 밀어낸다.
+     그럴 땐 '다음 목표·파트너' 라벨을 감추고 아이콘·이름만 남긴다 — 아이콘과 이름으로도 읽힌다. */
+  @media (max-width:900px){
+    header.sky .hxp-top .hxp-k{display:none;}
+    header.sky .hxp-top .hxp-lab b{max-width:none;}
+  }
 
   /* ===== 오늘 모드 (등교 / 방과후 / 방학) ===== */
   .modes{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;justify-content:center;}
