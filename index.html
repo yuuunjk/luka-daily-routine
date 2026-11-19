@@ -76,6 +76,13 @@
     width:2em; height:2em; font-size:1em; line-height:1; cursor:pointer; flex:0 0 auto;
     display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(20,60,90,.2);}
   header.sky .gear:active{transform:scale(.95);}
+  /* 🟢 ON / 🔴 OFF — 부모님이 사용 시간을 끄고 켜는 스위치 (⚙️ 바로 왼쪽) */
+  header.sky .powerbtn{border:2px solid #fff; border-radius:.55em; background:#fff; color:#186b2a;
+    font-family:inherit; font-weight:900; font-size:.86em; line-height:1.2; padding:.26em .6em;
+    cursor:pointer; white-space:nowrap; flex:0 0 auto; display:inline-flex; align-items:center; gap:.2em;
+    box-shadow:0 2px 6px rgba(20,60,90,.2);}
+  header.sky .powerbtn:active{transform:scale(.95);}
+  header.sky .powerbtn.off{background:#ffe6df; border-color:#fff; color:#c0392b;}
   header.sky .wakechip{display:none; font-size:.78em; font-weight:900; color:#0d6b2f; background:#eafbe9;
     border-radius:999px; padding:.18em .6em; white-space:nowrap; line-height:1.3; border:1.5px solid #fff;}
   header.sky .wakechip.show{display:inline-flex; align-items:center;}
@@ -527,6 +534,29 @@
 
   /* ===== 부모 확인 (비밀번호는 구글 시트에서 온다) ===== */
   .pinoverlay{z-index:56;background:rgba(40,60,50,.62);}
+
+  /* ===== 🔴 OFF — 사용 시간이 아닐 때 웹앱 전체를 덮는 잠금 화면 =====
+     아이가 루틴·탭·공부·도감·배틀 어느 것도 누를 수 없다.
+     위쪽 OFF 버튼과 이 화면의 '부모님 확인' 버튼만 부모 비밀번호를 받는다. */
+  .applock{
+    position:fixed; inset:0; z-index:59; display:none;
+    flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    text-align:center; padding:26px;
+    background:linear-gradient(180deg, #16283c 0%, #0a1220 100%);
+    color:#fff; overscroll-behavior:contain;
+  }
+  body.app-off .applock{display:flex;}
+  body.app-off .pinoverlay{z-index:120;}        /* OFF 상태에서도 부모 비밀번호 창은 잠금 화면 위에 */
+  body.app-off header.sky .topstrip{z-index:60; pointer-events:none;}  /* OFF 버튼만 잠금 화면 위로 올린다 */
+  body.app-off header.sky .topstrip > *{visibility:hidden; pointer-events:none;}
+  body.app-off header.sky .topstrip > .powerbtn{visibility:visible; pointer-events:auto;}
+  .applock .lockico{font-size:clamp(52px,9vh,86px); line-height:1; filter:drop-shadow(0 6px 16px rgba(0,0,0,.45));}
+  .applock h2{margin:0; font-size:clamp(19px,3.1vh,29px); font-weight:900; letter-spacing:-.02em;}
+  .applock p{margin:0; font-size:clamp(13px,2vh,17px); font-weight:800; color:#cfe0f2; line-height:1.6;}
+  .applock .lbtn{margin-top:8px; border:2px solid #8fd0ff; border-radius:14px; background:rgba(255,255,255,.12);
+    color:#eaf7ff; font-family:inherit; font-weight:900; font-size:clamp(14px,2.1vh,18px);
+    padding:.72em 1.5em; cursor:pointer;}
+  .applock .lbtn:active{transform:scale(.97);}
   .pinmodal{
     width:min(94vw,392px);max-width:392px;padding:18px 22px 12px;
     display:flex;flex-direction:column;align-items:center;
@@ -1721,6 +1751,7 @@
       <div class="spacer"></div>
       <span class="wakechip" id="wakeChip">🔆 화면 켜짐 유지</span>
       <button class="soundbtn" id="soundBtn">🔊 소리 켜기</button>
+      <button class="powerbtn" id="powerBtn" type="button" aria-pressed="true" title="사용 ON · 부모 비밀번호로 끌 수 있어요">🟢 ON</button>
       <button class="gear" id="gearBtn" title="설정">⚙️</button>
     </div>
 
@@ -2140,6 +2171,14 @@
     </div>
     <button class="ghostbtn" id="pinCancel">취소</button>
   </div>
+</div>
+
+<!-- 🔴 OFF — 부모님이 사용 시간을 끄면 웹앱 전체를 덮는 잠금 화면 (위쪽 OFF 버튼과 이 안의 버튼만 눌린다) -->
+<div class="applock" id="appLock" role="dialog" aria-modal="true" aria-labelledby="appLockTitle" aria-hidden="true">
+  <div class="lockico" aria-hidden="true">🔒</div>
+  <h2 id="appLockTitle">지금은 사용 시간이 아니에요</h2>
+  <p>부모님이 ON으로 켜 주시면 다시 사용할 수 있어요!</p>
+  <button class="lbtn" id="appLockBtn" type="button">부모님 확인</button>
 </div>
 
 <!-- settings -->
@@ -2677,6 +2716,10 @@ function migrate(s){
   /* 배틀 전용 비밀번호 (시트 '배틀비번' 열) — 없으면 null 로 두고 부모 비밀번호를 따른다 */
   if(s.battlePin != null && !/^\d{4}$/.test(String(s.battlePin))) s.battlePin = null;
   if(!MODE_DEFS[s.mode]) s.mode = 'school';   // 오늘 모드 (등교 / 방과후 / 방학)
+  /* 🟢 ON / 🔴 OFF — 부모님이 사용 시간을 끄고 켜는 스위치 (처음엔 ON) */
+  if(typeof s.appEnabled !== 'boolean') s.appEnabled = true;
+  /* 오늘 루틴 경험치로 잡은 포켓몬 기록 — 체크를 풀면 반납할 때 쓴다 */
+  if(!s.routineCatch || typeof s.routineCatch !== 'object') s.routineCatch = null;
   return s;
 }
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
@@ -3081,9 +3124,15 @@ function toggleTask(i, forceOn){
   const was = rd.tasks[i];
   rd.tasks[i] = forceOn === true ? true : !was;
   if(rd.tasks[i] && !was){ blip(); }
+  /* 완료해 둔 루틴의 체크를 하나라도 풀면, 그 루틴이 준 경험치와 오늘 잡은 포켓몬을 함께 되돌린다 */
+  const returned = (!rd.tasks[i] && was) ? revokeRoutineReward(key) : null;
   save(); renderTasks(); renderProgress();
   if(rd.tasks[i] && !was) checkAllComplete();
   if(key === 'night') syncNightReward();   // 9:40 전 취침 완료 → 강화권 5번 세기
+  if(returned){
+    sad();
+    toast(`체크가 해제되어 오늘 받은 ${btJosa(returned.name, '이', '가')} 반납되었어요!`);
+  }
 }
 function checkAllComplete(){
   const key = routineNow();
@@ -3115,7 +3164,9 @@ function checkAllComplete(){
   }
   d.rewarded[slot] = true;
   rollXpDay();                                 // 날짜가 바뀌었으면 어제 경험치는 버린다
-  state.xp += xp; save(); renderWild(); renderProgress(); renderTasks();
+  state.xp += xp;
+  routineCatchToday().slots[slot] = true;      // 오늘 이 루틴의 경험치를 받았다 (체크를 풀면 되돌린다)
+  save(); renderWild(); renderProgress(); renderTasks();
   toast(`🎉 ${R.stripLabel} 완료! 경험치 +${xp}!`);
   playMissionSfx(chime); confetti();
   setTimeout(maybeCatch, 900);
@@ -3192,7 +3243,10 @@ function maybeCatch(){
   while(state.xp >= 100){
     state.xp -= 100;
     const pk = DEX[state.wildIndex];
-    const rec = state.caught[pk.id] || { count:0, first:null };
+    /* 반납할 때 되돌릴 '잡기 전' 기록 (같은 포켓몬을 또 잡은 경우도 그대로 살린다) */
+    const prevSnap = state.caught[pk.id] ? JSON.parse(JSON.stringify(state.caught[pk.id])) : null;
+    const prevAt = state.caughtAt[pk.id] || null;
+    const rec = JSON.parse(JSON.stringify(state.caught[pk.id] || { count:0, first:null }));
     rec.count += 1;
     if(!rec.first) rec.first = todayKey();
     /* 포획할 때 개체값을 뽑는다 — 이미 잡아 둔 포켓몬이면 더 좋은 쪽을 남긴다 */
@@ -3202,6 +3256,9 @@ function maybeCatch(){
     const improved = prevIv != null && rec.iv > prevIv;
     state.caught[pk.id] = rec;
     if(!state.caughtAt[pk.id]) state.caughtAt[pk.id] = caughtDot();   // 처음 잡은 날
+    /* 오늘 루틴 경험치(아침 50 + 오후 50)로 잡은 포켓몬은 기록해 둔다 — 체크를 풀면 이 포켓몬을 반납한다 */
+    const rc = routineCatchToday();
+    if(rc.slots.morning || rc.slots.after) rc.ids.push({ id: pk.id, snap: prevSnap, at: prevAt });
     state.wildIndex = pickTarget();   // 다음 목표 (희귀·전설 마일스톤 포함)
     save();
     showCatchModal(pk, rec.iv, improved);
@@ -3209,6 +3266,50 @@ function maybeCatch(){
     renderDex();
     break; // one celebration at a time
   }
+}
+/* ---------- 오늘 잡은 포켓몬 반납 ----------
+   아침(50 XP) + 오후(50 XP)를 모두 끝내 포켓몬을 잡았는데, 그 루틴의 체크를 하나라도 풀면
+   100 XP 밑으로 내려가므로 오늘 그 루틴으로 받은 포켓몬을 도감에서 되돌려 준다.
+   예전 날짜에 잡아 둔 포켓몬이나 부모 테스트로 넣은 포켓몬은 건드리지 않고,
+   다시 체크해서 100 XP를 채우면 같은 포켓몬을 그대로 다시 잡는다. */
+function routineCatchToday(){
+  const k = todayKey();
+  if(!state.routineCatch || state.routineCatch.date !== k){
+    state.routineCatch = { date:k, slots:{ morning:false, after:false }, ids:[] };
+  }
+  return state.routineCatch;
+}
+function returnCaughtPokemon(entry){
+  if(!entry || entry.id == null) return null;
+  const id = entry.id;
+  if(entry.snap) state.caught[id] = entry.snap; else delete state.caught[id];      // 잡기 전 도감으로 되돌린다
+  if(entry.at) state.caughtAt[id] = entry.at; else delete state.caughtAt[id];
+  const i = DEX.findIndex(p => p.id === id);
+  if(i >= 0) state.wildIndex = i;   // 다음 목표를 그 포켓몬으로 → 다시 체크하면 같은 포켓몬을 잡는다
+  return DEX_BY_ID[id] || null;
+}
+function revokeRoutineReward(key){
+  const R = ROUTINES[key];
+  if(!R || !R.xp) return null;                        // 취침 루틴은 경험치·포켓몬 보상이 없다
+  const slot = key === 'morning' ? 'morning' : 'after';
+  const d = day();
+  if(!d.rewarded || !d.rewarded[slot]) return null;    // 오늘 이 루틴의 경험치를 받은 적이 없다
+  d.rewarded[slot] = false;                            // 다시 체크하면 경험치를 다시 받는다
+  const rd = rday(key);
+  if(rd) rd.claimed = false;
+  const rc = routineCatchToday();
+  rc.slots[slot] = false;
+  let returned = null;
+  if(rc.ids.length && !(rc.slots.morning && rc.slots.after)){
+    returned = returnCaughtPokemon(rc.ids.pop());
+    if(state.xpDate === todayKey()) state.xp += 100;   // 포켓몬을 잡느라 쓴 100 XP 를 돌려놓는다
+  }
+  if(state.xpDate === todayKey()) state.xp = Math.max(0, state.xp - (R.xp || 0));
+  save();
+  renderWild(); renderDex(); renderProgress();
+  /* 테스트 경험치 등으로 아직 100 XP 가 남아 있으면 바로 다시 잡는다 */
+  if(returned && state.xp >= 100) setTimeout(maybeCatch, 400);
+  return returned;
 }
 function showCatchModal(pk, iv, improved){
   const t = tierOf(pk);
@@ -4989,6 +5090,36 @@ function parentOnly(fn){
   };
 }
 
+/* ---------- 🟢 ON / 🔴 OFF — 부모님이 사용 시간을 끄고 켜는 스위치 ----------
+   기본값은 ON. 버튼을 누르면 부모 비밀번호를 받고, 맞아야만 켜짐/꺼짐이 바뀐다.
+   OFF 이면 잠금 화면이 웹앱 전체를 덮어 아이가 루틴·탭·공부·도감·배틀 아무것도 누를 수 없다.
+   (위쪽 OFF 버튼과 잠금 화면의 '부모님 확인' 버튼만 부모 비밀번호를 받는다) */
+const powerBtn = document.getElementById('powerBtn');
+const appLockEl = document.getElementById('appLock');
+function appOn(){ return state.appEnabled !== false; }
+function renderPower(){
+  const on = appOn();
+  powerBtn.textContent = on ? '🟢 ON' : '🔴 OFF';
+  powerBtn.classList.toggle('off', !on);
+  powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  powerBtn.title = on ? '사용 ON · 부모 비밀번호로 끌 수 있어요' : '사용 OFF · 부모 비밀번호로 켤 수 있어요';
+  appLockEl.setAttribute('aria-hidden', on ? 'true' : 'false');
+  document.body.classList.toggle('app-off', !on);
+}
+function setAppEnabled(on){
+  state.appEnabled = !!on;
+  save(); renderPower();
+  if(on){ blip(); toast('🟢 사용 ON — 이제 루틴을 할 수 있어요!'); }
+  else { toast('🔴 사용 OFF — 지금은 잠금 화면이에요'); }
+}
+function askAppPower(){ askPin(()=> setAppEnabled(!appOn()), 'parent'); }
+powerBtn.addEventListener('click', e=>{ e.stopPropagation(); askAppPower(); });
+appLockEl.addEventListener('click', e=>{
+  e.stopPropagation();
+  if(e.target.closest('#appLockBtn')) askAppPower();
+});
+renderPower();
+
 document.getElementById('gearBtn').addEventListener('click', e=>{
   e.stopPropagation();
   if(parentUnlocked && panel.classList.contains('show')){ closePanel(); return; }  // 한 번 더 누르면 닫기
@@ -5073,6 +5204,7 @@ document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   d.alertDone = false;
   d.nightStarted = nowMinutes() < NIGHT_START ? false : d.nightStarted;   // 21:00 전에만 시작음 다시 울리기
   d.nightLateDone = false;
+  state.routineCatch = null;           // 오늘 잡은 포켓몬 기록도 비운다 (도감은 그대로 둔다)
   revertNightCount({ silent:true });   // 오늘 취침 완료로 올린 별 하나도 함께 되돌린다
   save();
   buildTasks(); renderProgress(); syncWake();
