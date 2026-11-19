@@ -81,14 +81,13 @@
   header.sky[data-sky="night"] .sky-cl{background-image:linear-gradient(180deg,#3f5484 0%,#25355a 100%);}
 
   /* 밤하늘의 반짝이는 픽셀 별 2겹 (밤에만 보인다)
-     v39 — 별을 v38(도트 10)의 절반으로 줄였다(도트 5). 타일 한 장에 4개 + 1개만 남기고
-     겹마다 패턴·속도를 달리해 반짝임은 그대로 둔다. 밤하늘이 훨씬 깔끔하고 여유 있어진다. */
+     v39 — 헤더 전체(100% x 100%)에 별을 딱 27개만 한 번 그린다(no-repeat).
+     작은 타일을 반복해 점이 수백 개로 보이던 방식 대신, 하늘에 별이 드문드문 놓인다.
+     두 겹(s1 18개 · s2 9개)은 반짝임 주기만 달리해 서로 어긋나게 빛난다. */
   .sky-stars{position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0;
-    background-repeat:repeat; transition:opacity .5s ease;}
-  .sky-stars.s1{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='15' shape-rendering='crispEdges'%3E%3Cg fill='%23ffffff'%3E%3Crect x='4' y='2' width='1' height='1'/%3E%3Crect x='23' y='5' width='1' height='1'/%3E%3Crect x='12' y='10' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%23ffe9a8'%3E%3Crect x='27' y='12' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
-    background-size:6em 3em;}
-  .sky-stars.s2{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' shape-rendering='crispEdges'%3E%3Cg fill='%23e8f2ff'%3E%3Crect x='15' y='3' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
-    background-size:4.8em 2.4em; background-position:1.6em 1.1em;}
+    background-repeat:no-repeat; background-size:100% 100%; transition:opacity .5s ease;}
+  .sky-stars.s1{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%271000%27%20height%3D%27130%27%20shape-rendering%3D%27crispEdges%27%3E%3Cg%20fill%3D%27%23ffffff%27%3E%3Crect%20x%3D%27240%27%20y%3D%272%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27860%27%20y%3D%271%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27330%27%20y%3D%279%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27370%27%20y%3D%2722%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27414%27%20y%3D%2714%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27458%27%20y%3D%2727%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27502%27%20y%3D%2710%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27546%27%20y%3D%2723%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27590%27%20y%3D%2715%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27634%27%20y%3D%278%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27700%27%20y%3D%2726%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%2740%27%20y%3D%2731%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27150%27%20y%3D%2732%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27640%27%20y%3D%2732%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27960%27%20y%3D%2730%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2744%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%2717%27%20y%3D%2774%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%275%27%20y%3D%27104%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");}
+  .sky-stars.s2{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%271000%27%20height%3D%27130%27%20shape-rendering%3D%27crispEdges%27%3E%3Cg%20fill%3D%27%23e8f2ff%27%3E%3Crect%20x%3D%2720%27%20y%3D%27118%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27300%27%20y%3D%2746%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27360%27%20y%3D%2768%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27420%27%20y%3D%2792%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27310%27%20y%3D%27106%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%27%23ffe9a8%27%3E%3Crect%20x%3D%27560%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27778%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%2712%27%20y%3D%2790%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27486%27%20y%3D%2730%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");}
   header.sky[data-sky="night"] .sky-stars{opacity:1; animation:skyTwinkle 3.8s ease-in-out infinite;}
   header.sky[data-sky="night"] .sky-stars.s2{animation-duration:5.4s; animation-delay:-1.6s;}
   @keyframes skyTwinkle{0%,100%{opacity:1;}50%{opacity:.5;}}
@@ -693,7 +692,9 @@
   .ptext:focus{outline:3px solid rgba(255,217,77,.5);outline-offset:-1px;}
   .phint{display:block;font-size:10.5px;font-weight:800;color:#9a8d78;line-height:1.4;margin:4px 0 0;}
   .mrow{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-  .mrow .mico{flex:0 0 auto;width:24px;text-align:center;font-size:16px;line-height:1;}
+  .mrow input.micon{flex:0 0 auto;width:34px;padding:5px 2px;text-align:center;font-size:15px;line-height:1.2;
+    font-family:inherit;color:#4a5a44;border:2px solid #dfe5d4;border-radius:9px;background:#fff;font-weight:800;}
+  .mrow input.micon:focus{outline:3px solid rgba(255,217,77,.5);outline-offset:-1px;}
   .mrow input{flex:1 1 auto;min-width:0;font-family:inherit;font-size:12.5px;font-weight:800;color:#4a5a44;
     border:2px solid #dfe5d4;border-radius:9px;padding:6px 8px;background:#fff;}
   .mrow input:focus{outline:3px solid rgba(255,217,77,.5);outline-offset:-1px;}
@@ -2450,7 +2451,7 @@
         <button class="pbtn" id="missionAdd" type="button">＋ 미션 추가</button>
         <button class="pbtn" id="missionReset" type="button">기본값으로 복원</button>
       </div>
-      <span class="phint">이름을 고치면 '포켓몬센터 미션' 탭 카드에 바로 반영돼요. 항목마다 하루 2번까지 · 취소 −1.</span>
+      <span class="phint">이름을 고치면 '포켓몬센터 미션' 탭 카드에 바로 반영돼요. 옆 숫자칸은 하루 최대 횟수(1~9) · 취소 −1.</span>
     </div>
 
     <!-- 탭 3: 보상 · 도감 -->
@@ -2919,8 +2920,11 @@ function normalizeMissionItems(list){
     }
     if(it && typeof it === 'object'){
       const name = String(it.name == null ? '' : it.name).replace(/\s+/g, ' ').trim().slice(0, 10);
-      const icon = typeof it.icon === 'string' && it.icon.trim()
-        ? it.icon.trim() : (missionIconFor(name) || MISSION_ICON_POOL[i % MISSION_ICON_POOL.length]);
+      /* icon 칸이 아예 없던 예전 저장값만 이름으로 추정해 준다.
+         부모가 일부러 비워 둔 ''(빈 문자열)은 그대로 둔다. */
+      const icon = (typeof it.icon === 'string')
+        ? [...it.icon.replace(/\s+/g, '')].slice(0, 3).join('')
+        : (missionIconFor(name) || MISSION_ICON_POOL[i % MISSION_ICON_POOL.length]);
       const tip = typeof it.tip === 'string' && it.tip.trim() ? it.tip.trim() : missionTipFor(name);
       return { name, icon, tip, max: missionCapOf(it) };
     }
@@ -4982,7 +4986,7 @@ function renderHeaderXp(){
 /* =========================================================
    🏥 포켓몬센터 미션 — 기본은 3가지 (빨래 정리 · 신발 정리 · 분리수거).
    부모 설정의 '💬 확언·미션' 탭에서 이름을 고치고 늘리고 줄일 수 있다(state.missionItems).
-   항목마다 하루 2번까지 (0 → 1 → 2). 한 번 올릴 때마다 ⚡ 강화 XP +1,
+   항목마다 설정한 만큼(기본 2번, 1~9) 하루에 할 수 있다. 한 번 올릴 때마다 ⚡ 강화 XP +1,
    '↩ 취소' 로 한 번씩 되돌린다 (오늘의 공부·취침과 같은 8칸 저울에 합산).
    날짜가 바뀌면 횟수만 새로 시작하고, 누적 강화 XP·강화권은 그대로 둔다.
    ========================================================= */
@@ -5057,7 +5061,8 @@ function renderMission(){
     body.setAttribute('aria-label', `${m.name} — ${n}/${cap}회 완료 · ${m.tip}`
       + (full ? ' · 오늘은 다 했어요' : ' · 누르면 한 번 더'));
     body.innerHTML = `<span class="m-chk">${full ? '✓' : (n > 0 ? n : '')}</span>`
-      + `<span class="m-ico">${m.icon}</span><span class="m-name">${escapeHtml(m.name)}</span>`
+      + (m.icon ? `<span class="m-ico">${escapeHtml(m.icon)}</span>` : '')
+      + `<span class="m-name">${escapeHtml(m.name)}</span>`
       + `<span class="m-xp">${full ? `${cap}/${cap} 완료 ⚡` : (n > 0 ? '한 번 더 +1 ⚡' : '+1 ⚡ 강화 XP')}</span>`;
     body.addEventListener('click', ()=> missionAdd(i));
     const c = document.createElement('span');
@@ -5609,8 +5614,12 @@ function renderMissionSettings(){
   items.forEach((m, i)=>{
     const row = document.createElement('div');
     row.className = 'mrow';
-    const ico = document.createElement('span');
-    ico.className = 'mico'; ico.textContent = m.icon; ico.setAttribute('aria-hidden', 'true');
+    /* 이모티콘 칸 — 부모가 직접 넣고 고친다(비워 두면 카드에도 아이콘이 없다) */
+    const ico = document.createElement('input');
+    ico.type = 'text'; ico.className = 'micon'; ico.value = m.icon || '';
+    ico.maxLength = 6; ico.dataset.i = i;
+    ico.setAttribute('aria-label', `${i+1}번째 미션 이모티콘 (비워 두면 표시하지 않아요)`);
+    ico.placeholder = '🙂'; ico.title = '미션 앞에 붙일 이모티콘 — 비워 두면 표시하지 않아요';
     const inp = document.createElement('input');
     inp.type = 'text'; inp.className = 'mname'; inp.maxLength = 10; inp.value = m.name;
     inp.dataset.i = i;
@@ -5643,20 +5652,27 @@ function renderMissionSettings(){
   const add = document.getElementById('missionAdd');
   if(add) add.disabled = items.length >= MISSION_MAX_ITEMS;
 }
+/* 이모티콘을 고치면 카드에 즉시 반영 — 비워 두면 카드에도 아이콘이 없다 */
+function missionIconSet(i, v){
+  const items = missionItems();
+  if(!items[i]) return;
+  const icon = [...String(v == null ? '' : v).replace(/\s+/g, '')].slice(0, 3).join('');
+  items[i].icon = icon;
+  save();
+  renderMission();
+  const row = document.querySelectorAll('#missionRows .mrow')[i];
+  const el = row && row.querySelector('input.micon');
+  if(el && el.value !== icon) el.value = icon;
+}
 /* 미션 이름을 고치면 카드에 즉시 반영 — 횟수(0/2)는 같은 자리에 그대로 남는다 */
 function missionRename(i, name){
   const items = missionItems();
   if(!items[i]) return;
   const clean = String(name == null ? '' : name).replace(/\s+/g, ' ').slice(0, 10);
   items[i].name = clean;
-  const ic = missionIconFor(clean);
-  if(ic) items[i].icon = ic;
-  items[i].tip = missionTipFor(clean);
+  items[i].tip = missionTipFor(clean);          // 아이콘은 부모가 넣은 그대로 둔다
   save();
   renderMission();
-  const row = document.querySelectorAll('#missionRows .mrow')[i];
-  const ico = row && row.querySelector('.mico');
-  if(ico) ico.textContent = items[i].icon;
 }
 /* 입력칸을 비워 두거나 앞뒤에 빈칸을 남기고 나갔을 때 정리한다 */
 function missionNameFix(i){
@@ -5665,7 +5681,6 @@ function missionNameFix(i){
   const t = items[i].name.trim();
   if(!t){
     items[i].name = '집안일';
-    items[i].icon = missionIconFor('집안일') || items[i].icon;
     items[i].tip = missionTipFor('집안일');
   }else if(t !== items[i].name){
     items[i].name = t;
@@ -5701,7 +5716,7 @@ function padMissionDays(){
 function addMissionItem(){
   const items = missionItems();
   if(items.length >= MISSION_MAX_ITEMS){ toast(`🏥 미션은 ${MISSION_MAX_ITEMS}개까지 넣을 수 있어요`); return; }
-  items.push({ name:'새 미션', icon: missionIconFor('새 미션') || MISSION_ICON_POOL[items.length % MISSION_ICON_POOL.length], tip: missionTipFor('새 미션'), max: MISSION_MAX });
+  items.push({ name:'새 미션', icon:'', tip: missionTipFor('새 미션'), max: MISSION_MAX });
   padMissionDays();
   save(); renderMission(); renderMissionSettings();
   const inp = document.querySelector('#missionRows .mrow:last-child input');
@@ -5916,6 +5931,8 @@ missionRowsEl.addEventListener('input', e=>{
   missionRename(Number(inp.dataset.i), inp.value);
 });
 missionRowsEl.addEventListener('change', e=>{
+  const ic = e.target.closest('input.micon');
+  if(ic){ missionIconSet(Number(ic.dataset.i), ic.value); return; }
   const num = e.target.closest('input.mmax');
   if(num){ missionMaxSet(Number(num.dataset.i), num.value); return; }
   const inp = e.target.closest('input.mname');
