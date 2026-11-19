@@ -65,6 +65,12 @@
      아침(05~16)은 따로 색을 만들지 않고 낮과 같은 맑은 파란 하늘 하나로 쓴다(v38). */
   header.sky[data-sky="day"]{
     background:linear-gradient(180deg,#5db7f5 0%,#72c5f8 40%,#a3e1ff 74%,#9be0ff 100%);}
+  /* v39 아침(05:00~10:59) — 파란 하늘에서 해가 떠오르며 아래로 갈수록 크림·살구빛 (1안) */
+  header.sky[data-sky="morning"]{
+    background:
+      radial-gradient(78% 62% at 30% 112%, rgba(255,214,150,.80) 0%, rgba(255,229,163,.42) 42%, rgba(255,229,163,0) 74%),
+      linear-gradient(180deg,#4FB8F5 0%,#62C2F7 20%,#7CCDF8 38%,#9CDAF5 50%,
+        #C4E9F1 60%,#EBEDD4 69%,#FFE6A2 80%,#FFDCA6 88%,#FFD0AC 100%);}
   header.sky[data-sky="dusk"]{
     background:linear-gradient(180deg,#4b3f7d 0%,#8b4f86 26%,#dd6f57 58%,#ff9d5c 84%,#ffd39a 100%);}
   header.sky[data-sky="night"]{
@@ -77,6 +83,7 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='18' shape-rendering='crispEdges'%3E%3Crect width='24' height='18' fill='%231e3d2f'/%3E%3Crect x='0' y='0' width='8' height='6' fill='%23335f48'/%3E%3Crect x='12' y='0' width='8' height='6' fill='%232a543e'/%3E%3Crect x='6' y='6' width='6' height='3' fill='%23142c22'/%3E%3Crect x='18' y='6' width='6' height='3' fill='%23142c22'/%3E%3C/svg%3E");}
 
   /* 구름 빛 — 낮은 흰 구름, 노을은 코랄빛, 밤은 달빛에 물든 푸른 구름 */
+  header.sky[data-sky="morning"] .sky-cl{background-image:linear-gradient(180deg,#ffffff 0%,#fff4e2 62%,#ffe3c4 100%); opacity:.9;}
   header.sky[data-sky="dusk"] .sky-cl{background-image:linear-gradient(180deg,#ffdcc4 0%,#ff9f78 100%); opacity:.7;}
   header.sky[data-sky="night"] .sky-cl{background-image:linear-gradient(180deg,#3f5484 0%,#25355a 100%);}
 
@@ -86,8 +93,8 @@
      두 겹(s1 18개 · s2 9개)은 반짝임 주기만 달리해 서로 어긋나게 빛난다. */
   .sky-stars{position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0;
     background-repeat:no-repeat; background-size:100% 100%; transition:opacity .5s ease;}
-  .sky-stars.s1{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%271000%27%20height%3D%27130%27%20shape-rendering%3D%27crispEdges%27%3E%3Cg%20fill%3D%27%23ffffff%27%3E%3Crect%20x%3D%27240%27%20y%3D%272%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27860%27%20y%3D%271%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27330%27%20y%3D%279%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27370%27%20y%3D%2722%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27414%27%20y%3D%2714%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27458%27%20y%3D%2727%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27502%27%20y%3D%2710%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27546%27%20y%3D%2723%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27590%27%20y%3D%2715%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27634%27%20y%3D%278%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27700%27%20y%3D%2726%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%2740%27%20y%3D%2731%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27150%27%20y%3D%2732%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27640%27%20y%3D%2732%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27960%27%20y%3D%2730%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2744%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%2717%27%20y%3D%2774%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%275%27%20y%3D%27104%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");}
-  .sky-stars.s2{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%271000%27%20height%3D%27130%27%20shape-rendering%3D%27crispEdges%27%3E%3Cg%20fill%3D%27%23e8f2ff%27%3E%3Crect%20x%3D%2720%27%20y%3D%27118%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27300%27%20y%3D%2746%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27360%27%20y%3D%2768%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27420%27%20y%3D%2792%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27310%27%20y%3D%27106%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%27%23ffe9a8%27%3E%3Crect%20x%3D%27560%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27778%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%2712%27%20y%3D%2790%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27486%27%20y%3D%2730%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");}
+  .sky-stars.s1{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%271000%27%20height%3D%27130%27%20shape-rendering%3D%27crispEdges%27%3E%3Cg%20fill%3D%27%23ffffff%27%3E%3Crect%20x%3D%27240%27%20y%3D%272%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27860%27%20y%3D%271%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27345%27%20y%3D%2730%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27392%27%20y%3D%2722%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27450%27%20y%3D%2714%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27508%27%20y%3D%2727%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27566%27%20y%3D%2710%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27624%27%20y%3D%2723%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27690%27%20y%3D%2715%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27766%27%20y%3D%2730%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27258%27%20y%3D%2742%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27272%27%20y%3D%2766%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27288%27%20y%3D%2792%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27262%27%20y%3D%27116%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27340%27%20y%3D%2750%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27356%27%20y%3D%2780%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27330%27%20y%3D%27110%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27300%27%20y%3D%2762%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");}
+  .sky-stars.s2{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%271000%27%20height%3D%27130%27%20shape-rendering%3D%27crispEdges%27%3E%3Cg%20fill%3D%27%23e8f2ff%27%3E%3Crect%20x%3D%2740%27%20y%3D%2731%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27150%27%20y%3D%2732%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27650%27%20y%3D%2729%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27972%27%20y%3D%2728%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2744%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%274%27%20y%3D%2762%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%27%23ffe9a8%27%3E%3Crect%20x%3D%27560%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%27778%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%274%27%20y%3D%2788%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");}
   header.sky[data-sky="night"] .sky-stars{opacity:1; animation:skyTwinkle 3.8s ease-in-out infinite;}
   header.sky[data-sky="night"] .sky-stars.s2{animation-duration:5.4s; animation-delay:-1.6s;}
   @keyframes skyTwinkle{0%,100%{opacity:1;}50%{opacity:.5;}}
@@ -106,6 +113,34 @@
     -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
     filter:drop-shadow(0 0 .26em rgba(255,255,255,.9)) drop-shadow(0 0 .8em rgba(168,208,255,.6));}
   header.sky:not([data-sky="night"]) .sky-shoot{display:none;}
+
+  /* ===== 아침 해 — 05:00~10:59 에만. 잔디(z-index 1)와 카드(z-index 2) 뒤에서만 움직인다 ===== */
+  .sky-sun{position:absolute; z-index:0; pointer-events:none; width:68px; height:68px; display:none; opacity:0;}
+  header.sky[data-sky="morning"] .sky-sun{display:block; opacity:1;
+    animation:skySunRise 1.9s cubic-bezier(.2,.85,.3,1) both;}
+  .sky-sun svg{position:relative; z-index:1; width:100%; height:100%; display:block; shape-rendering:crispEdges;}
+  .sky-sun .sun-glow{position:absolute; left:50%; top:50%; width:340%; height:340%; border-radius:50%;
+    pointer-events:none; animation:skySunGlow 5.2s ease-in-out infinite;
+    background:radial-gradient(circle, rgba(255,238,168,.62) 0%, rgba(255,228,152,.34) 26%,
+      rgba(255,220,148,.16) 48%, rgba(255,214,144,.06) 70%, rgba(255,212,140,0) 100%);}
+  /* 잔디 뒤에서 스르륵 떠오른 뒤, 살짝 숨 쉬듯 오르내린다 */
+  @keyframes skySunRise{
+    0%{transform:translateY(46px) scale(.88); opacity:0;}
+    30%{opacity:1;}
+    70%{transform:translateY(-3px) scale(1.02); opacity:1;}
+    85%{transform:translateY(1px) scale(1);}
+    100%{transform:translateY(0) scale(1); opacity:1;}
+  }
+  @keyframes skySunGlow{
+    0%,100%{opacity:.85; transform:translate(-50%,-50%) scale(1);}
+    50%{opacity:1; transform:translate(-50%,-50%) scale(1.08);}
+  }
+  .sky-spark{position:absolute; z-index:0; pointer-events:none; display:none; opacity:0;
+    background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%207%207%27%3E%3Cg%20fill%3D%27%23FFC02B%27%3E%3Crect%20x%3D%273%27%20y%3D%270%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%276%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%270%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%276%27%20y%3D%273%27%20width%3D%271%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%271%27%20width%3D%273%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%275%27%20width%3D%273%27%20height%3D%271%27%2F%3E%3Crect%20x%3D%271%27%20y%3D%272%27%20width%3D%271%27%20height%3D%273%27%2F%3E%3Crect%20x%3D%275%27%20y%3D%272%27%20width%3D%271%27%20height%3D%273%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%272%27%20width%3D%273%27%20height%3D%273%27%2F%3E%3C%2Fg%3E%3Crect%20x%3D%273%27%20y%3D%272%27%20width%3D%271%27%20height%3D%272%27%20fill%3D%27%23FFF8D8%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%273%27%20width%3D%272%27%20height%3D%271%27%20fill%3D%27%23FFF8D8%27%2F%3E%3C%2Fsvg%3E");
+    background-repeat:no-repeat; background-size:100% 100%;
+    filter:drop-shadow(0 0 3px rgba(255,226,140,.95)) drop-shadow(0 0 8px rgba(255,214,110,.55));}
+  header.sky[data-sky="morning"] .sky-spark{display:block; animation:skySparkTw 3.4s ease-in-out infinite;}
+  @keyframes skySparkTw{0%,100%{opacity:.12; transform:scale(.72);} 50%{opacity:1; transform:scale(1);}}
   .sky-shoot.sh1{left:36%; top:-.1em; animation:skyShoot1 7.2s linear infinite;}
   .sky-shoot.sh2{left:51%; top:-.2em; animation:skyShoot2 5.8s linear infinite -2.4s;}
   .sky-shoot.sh3{left:60%; top:.1em; animation:skyShoot3 6.6s linear infinite -4.6s;}
@@ -134,10 +169,11 @@
   /* 시간대별 글자 대비 — 어두운 하늘에서 초(sec)·탭 글자가 묻히지 않게 */
   header.sky[data-sky="night"] .clock .sec{color:#b9d5f6; opacity:.92;}
   header.sky[data-sky="dusk"] .clock .sec{color:#ffe9d2; opacity:.95;}
-  header.sky[data-sky="day"] .tab{background:rgba(20,66,108,.3);}
+  header.sky[data-sky="day"] .tab, header.sky[data-sky="morning"] .tab{background:rgba(20,66,108,.3);}
   header.sky[data-sky="dusk"] .tab{background:rgba(40,18,52,.44);}
   header.sky[data-sky="night"] .tab{background:rgba(6,18,40,.52); text-shadow:0 1px 3px rgba(0,8,24,.75);}
-  header.sky[data-sky="day"] .soundbtn:not(.on){background:rgba(20,66,108,.3);}
+  header.sky[data-sky="day"] .soundbtn:not(.on),
+  header.sky[data-sky="morning"] .soundbtn:not(.on){background:rgba(20,66,108,.3);}
   header.sky[data-sky="night"] .soundbtn:not(.on){background:rgba(6,18,40,.52);}
   header.sky[data-sky="dusk"] .soundbtn:not(.on){background:rgba(40,18,52,.44);}
 
@@ -175,7 +211,7 @@
     font-size:.9em; line-height:1.2; padding:.24em .62em; white-space:nowrap;
     border:2px solid rgba(255,255,255,.75); border-radius:.62em;
     background:rgba(23,74,116,.24); color:#fff; text-shadow:0 1px 2px rgba(25,70,110,.35);}
-  header.sky[data-sky="day"] .wakechip{background:rgba(20,66,108,.3);}
+  header.sky[data-sky="day"] .wakechip, header.sky[data-sky="morning"] .wakechip{background:rgba(20,66,108,.3);}
   header.sky[data-sky="dusk"] .wakechip{background:rgba(40,18,52,.44);}
   header.sky[data-sky="night"] .wakechip{background:rgba(6,18,40,.52);}
   header.sky .wakechip.show{display:inline-flex; align-items:center; gap:.22em;}
@@ -294,9 +330,9 @@
      두 줄의 바깥 높이가 날씨 카드와 같아진다. 폭은 남는 공간을 받되 상한에서 멈춘다.
      v38 — 폭 상한을 26em → 17.4em(약 2/3)로 줄이고, 그 안에서 이름·게이지가 잘리지 않게 글자·아이콘을 다듬었다. */
   header.sky .hxp{position:relative; z-index:2; display:grid;
-    grid-template-columns:minmax(0,6em) minmax(0,1fr);
+    grid-template-columns:minmax(0,8.6em) minmax(0,1fr);
     grid-template-rows:1fr 1fr;
-    gap:.24em; flex:1 1 0; min-width:11em; max-width:17.4em; align-self:stretch; overflow:visible;
+    gap:.24em; flex:1 1 0; min-width:13em; max-width:20.6em; align-self:stretch; overflow:visible;
     margin-left:auto;}   /* 남는 폭은 시계↔XP 사이로 → XP+날씨는 오른쪽에 나란히 */
   header.sky .hxp-card{display:flex; align-items:center; gap:.3em; min-width:0; min-height:0;
     background:#fff; border:2px solid #2b3445; border-radius:.62em; padding:.16em .42em;
@@ -312,7 +348,7 @@
   header.sky .hxp-art{width:2.1em; height:2.1em; object-fit:contain; flex:0 0 auto;
     filter:drop-shadow(0 1px 1px rgba(20,50,80,.18));}
   /* 파트너 그림 — 세로 카드라 다음 목표 아이콘보다 크게, 라벨·이름과 함께 가운데로 */
-  header.sky .hxp-partner .hxp-art{width:2.9em; height:2.9em;}
+  header.sky .hxp-partner .hxp-art{width:2.4em; height:2.4em;}
   header.sky .hxp-col{display:flex; flex-direction:column; justify-content:center; gap:.14em; min-width:0;
     flex:1 1 auto;}
   header.sky .hxp-partner .hxp-col{flex:0 0 auto; align-items:center; gap:.05em;}
@@ -323,15 +359,21 @@
   /* 파트너 카드 — '파트너' 라벨 위, 이름 아래로 두 줄. 세로 카드라 이름을 줄이지 않는다 */
   header.sky .hxp-partner .hxp-lab{flex-direction:column; align-items:center; gap:.06em;
     font-size:.72em; line-height:1.15; overflow:visible;}
-  header.sky .hxp-partner .hxp-lab b{font-size:1.28em; line-height:1.15; max-width:100%; overflow:visible;
-    letter-spacing:-.01em; color:#1f6fd4;}
+  /* v39 — 파트너 이름을 약 2배로. 이름이 5·6자인 포켓몬은 한 단씩 줄여 카드 안에 꼭 들어가게 한다 */
+  header.sky .hxp-partner .hxp-lab b{font-size:2.4em; line-height:1.1; max-width:100%; overflow:visible;
+    letter-spacing:-.02em; color:#1f6fd4;}
+  header.sky .hxp-partner .hxp-lab b.l5{font-size:2.05em;}
+  header.sky .hxp-partner .hxp-lab b.l6{font-size:1.72em;}
   header.sky .hxp-lab .tchip{display:none;}
+  /* v39 — '다음 목표' 라벨 위, 포켓몬 이름 아래(약 1.5배). XP 바는 그 밑에 깔끔히 정렬 */
+  header.sky .hxp-routine .hxp-lab{flex-direction:column; align-items:flex-start; gap:.02em; overflow:visible;}
+  header.sky .hxp-routine .hxp-lab b{font-size:1.6em; line-height:1.1; max-width:100%;}
   /* 미니 XP 바 — wildbox 의 .xpbar 를 그대로 쓰고 크기만 줄인다 */
   header.sky .hxp-routine .xpbar{flex:1 1 auto; width:auto; min-width:3em; height:1.24em;}
   header.sky .hxp-routine .xpbar .xt{font-size:.68em; line-height:1.82em;}
   header.sky .hxp-boost .hxp-lab{justify-content:flex-start; gap:.3em;}
   header.sky .hxp-boost .hxp-lab b{color:#a8791a;}
-  header.sky .hxp-tk{color:#7a5b00; font-size:.96em; margin-left:auto;}
+  header.sky .hxp-tk{color:#7a5b00; font-size:1.44em; margin-left:auto; line-height:1.15;}
   header.sky .hxp-gauge{display:flex; gap:.16em;}
   header.sky .hxp-gauge i{display:block; flex:1 1 0; min-width:0; height:1.02em; border-radius:.24em;
     background:#fffdf6; border:2px solid #cdba88; box-shadow:inset 0 1px 2px rgba(150,125,70,.12);
@@ -343,12 +385,16 @@
      그럴 땐 '다음 목표' 라벨을 감추고 아이콘·이름만 남긴다 — 아이콘과 이름으로도 읽힌다.
      파트너 카드는 세로 배치라 그림·라벨·이름을 그대로 두고 크기만 한 단 줄인다. */
   @media (max-width:900px){
-    header.sky .hxp{grid-template-columns:minmax(0,5.5em) minmax(0,1fr);}
+    header.sky .hxp{grid-template-columns:minmax(0,6.6em) minmax(0,1fr);}
     header.sky .hxp-routine .hxp-k{display:none;}
-    header.sky .hxp-routine .hxp-lab b{max-width:none;}
-    header.sky .hxp-partner .hxp-art{width:2.2em; height:2.2em;}
-    header.sky .hxp-partner .hxp-lab{font-size:.66em;}
-    header.sky .hxp-partner .hxp-lab b{font-size:1.2em;}
+    header.sky .hxp-routine .hxp-lab b{max-width:none; font-size:1.45em;}
+    header.sky .hxp-partner .hxp-art{width:2.1em; height:2.1em;}
+    header.sky .hxp-partner .hxp-lab{font-size:.62em;}
+    header.sky .hxp-partner .hxp-lab b{font-size:1.9em;}
+    header.sky .hxp-partner .hxp-lab b.l5{font-size:1.7em;}
+    header.sky .hxp-partner .hxp-lab b.l6{font-size:1.35em;}
+    header.sky .hxp-tk{font-size:1.2em;}
+    header.sky .hxp-boost .hxp-lab{gap:.18em;}
   }
 
   /* ===== 오늘 모드 (등교 / 방과후 / 방학) ===== */
@@ -1937,6 +1983,15 @@
     <div class="sky-shoot sh2" aria-hidden="true"></div>
     <div class="sky-shoot sh3" aria-hidden="true"></div>
 
+    <!-- v39 아침 해 — 05:00~10:59 에만 잔디 뒤에서 떠오른다 (픽셀 해 + 광휘 + 반짝이 9개) -->
+    <div class="sky-sun" id="skySun" aria-hidden="true">
+      <span class="sun-glow"></span>
+      <svg viewBox='0 0 16 16' aria-hidden='true'><g fill='#F2871A'><rect x='7' y='0' width='2' height='1'/><rect x='7' y='15' width='2' height='1'/><rect x='0' y='7' width='1' height='2'/><rect x='15' y='7' width='1' height='2'/><rect x='2' y='2' width='1' height='1'/><rect x='13' y='2' width='1' height='1'/><rect x='2' y='13' width='1' height='1'/><rect x='13' y='13' width='1' height='1'/></g><g fill='#F79A24'><rect x='6' y='1' width='4' height='1'/><rect x='4' y='2' width='8' height='1'/><rect x='3' y='3' width='10' height='1'/><rect x='2' y='4' width='12' height='6'/><rect x='3' y='10' width='10' height='1'/><rect x='4' y='11' width='8' height='1'/><rect x='6' y='12' width='4' height='1'/></g><g fill='#FFC93F'><rect x='6' y='2' width='4' height='1'/><rect x='4' y='3' width='8' height='1'/><rect x='3' y='4' width='10' height='6'/><rect x='4' y='10' width='8' height='1'/><rect x='6' y='11' width='4' height='1'/></g><rect x='5' y='4' width='3' height='2' fill='#FFDE74'/><rect x='5' y='4' width='1' height='1' fill='#FFF7D2'/></svg>
+    </div>
+    <i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i>
+    <i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i>
+    <i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i><i class="sky-spark" aria-hidden="true"></i>
+
     <div class="topstrip">
       <div class="tabs" role="tablist">
         <button class="tab active" id="tabDash">🏠 루틴</button>
@@ -3243,15 +3298,66 @@ function toast(msg){
 const SKY_HDR = document.querySelector('header.sky');
 function skyPhaseNow(){
   const h = getNow().getHours();
-  if(h >= 5  && h < 17) return 'day';       // 05:00 ~ 16:59  (아침·오후 모두 맑은 낮 하늘 하나)
+  if(h >= 5  && h < 11) return 'morning';   // 05:00 ~ 10:59  (아침 — 해가 떠오르는 하늘)
+  if(h >= 11 && h < 17) return 'day';       // 11:00 ~ 16:59  (맑은 낮 하늘)
   if(h >= 17 && h < 20) return 'dusk';      // 17:00 ~ 19:59  (저녁 노을)
   return 'night';                            // 20:00 ~ 04:59  (밤하늘)
 }
 function renderSky(){
   if(!SKY_HDR) return;
   const ph = skyPhaseNow();
-  if(SKY_HDR.dataset.sky !== ph) SKY_HDR.dataset.sky = ph;
+  if(SKY_HDR.dataset.sky !== ph){
+    SKY_HDR.dataset.sky = ph;
+    if(ph === 'morning'){                 // 해·반짝이는 카드 배치가 끝난 뒤 자리를 잡는다
+      requestAnimationFrame(placeMorningSky);
+      setTimeout(placeMorningSky, 120);
+    }
+  }
 }
+/* 아침 해·반짝이 자리 — 시계 숫자 오른쪽 ~ 파트너 카드 왼쪽의 빈 하늘, 아래는 잔디에 살짝 잠기게 */
+function placeMorningSky(){
+  const hd = SKY_HDR;
+  if(!hd || hd.dataset.sky !== 'morning') return;
+  const sun = document.getElementById('skySun');
+  if(!sun) return;
+  const hr = hd.getBoundingClientRect();
+  if(!hr.width) return;
+  const rel = el => { if(!el) return null; const b = el.getBoundingClientRect();
+    return {l: b.left - hr.left, t: b.top - hr.top, r: b.right - hr.left, b: b.bottom - hr.top, w: b.width, h: b.height}; };
+  const clock = rel(document.getElementById('clock'));
+  const hxp = rel(document.getElementById('hxp'));
+  const tabs = rel(document.querySelector('.tabs'));
+  if(!clock || !hxp) return;
+  const size = Math.max(44, Math.min(84, Math.round(hr.height * 0.37)));
+  sun.style.width = size + 'px';
+  sun.style.height = size + 'px';
+  const gapCx = (clock.r + hxp.l) / 2;
+  sun.style.left = Math.round(Math.max(6, gapCx - size / 2)) + 'px';
+  sun.style.top = Math.round(hr.height - size * 0.96) + 'px';
+  /* 반짝이 — 탭 줄 오른쪽 빈 하늘과 해 주변에 흩뿌린다 */
+  const topY = tabs ? tabs.t + 2 : 10;
+  const spots = [
+    [tabs ? tabs.r + 40 : 420, topY + 2, 20],
+    [tabs ? tabs.r + 128 : 510, topY + 15, 12],
+    [tabs ? tabs.r + 224 : 600, topY + 0, 23],
+    [tabs ? tabs.r + 318 : 690, topY + 17, 11],
+    [tabs ? tabs.r + 396 : 770, topY + 3, 17],
+    [tabs ? tabs.r + 468 : 840, topY + 19, 12],
+    [gapCx - 54, hr.height - size - 46, 21],
+    [gapCx + 36, hr.height - size + 24, 13],
+    [gapCx - 8, hr.height - size - 12, 10],
+  ];
+  document.querySelectorAll('.sky-spark').forEach((el, i) => {
+    const [x, y, sz] = spots[i % spots.length];
+    el.style.left = Math.round(x) + 'px';
+    el.style.top = Math.round(y) + 'px';
+    el.style.width = sz + 'px';
+    el.style.height = sz + 'px';
+    el.style.animationDelay = (i * 0.42).toFixed(2) + 's';
+  });
+}
+window.addEventListener('resize', ()=> placeMorningSky());
+window.addEventListener('load', ()=> setTimeout(placeMorningSky, 200));
 
 const DAYS = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
 function renderClock(){
@@ -3736,7 +3842,13 @@ function renderPartner(){
     a.onerror = function(){ this.style.display = 'none'; };
   }
   const n = document.getElementById('partnerName');
-  if(n) n.textContent = pk.name;
+  if(n){
+    n.textContent = pk.name;
+    /* 이름이 길면(5·6자) 한 단씩 작게 — 2배로 키운 글씨도 카드 안에 꼭 들어가게 */
+    const len = [...String(pk.name)].length;
+    n.classList.toggle('l5', len === 5);
+    n.classList.toggle('l6', len >= 6);
+  }
 }
 /* 파트너 바꾸기 — 지금 파트너와 같으면 아무 것도 하지 않는다 */
 function setPartner(id){
@@ -6623,26 +6735,33 @@ function btSyncEntry(flash){
   const tray = document.getElementById('btTray');
   if(tray && flash){ tray.classList.remove('pulse'); void tray.offsetWidth; tray.classList.add('pulse'); }
   const go = document.getElementById('btGo');
-  go.disabled = btState.sel.length < btState.need;
-  go.textContent = btState.need ? `배틀 시작! (${btState.need}:${btState.need})` : '배틀 시작!';
+  /* 3:3 고정 — 도감에 3마리 이상 있고 엔트리에 딱 3마리를 고른 때만 시작할 수 있다 */
+  const ready = btCaughtIds().length >= 3 && btState.sel.length === 3;
+  go.disabled = !ready;
+  go.textContent = `배틀 시작! (3:3)`;
 }
 function btRenderEntry(){
   const ids = btCaughtIds();
-  btState.need = Math.min(3, ids.length);
-  if(ids.length <= 3) btState.sel = ids.slice();
-  else btState.sel = btState.sel.filter(id => ids.includes(id)).slice(0, 3);
+  /* v39 — 배틀은 무조건 3:3. 도감에 3마리 이상이 있어야 하고, 그중 딱 3마리를 골라야 시작된다. */
+  btState.need = 3;
+  btState.sel = btState.sel.filter(id => ids.includes(id)).slice(0, 3);
   const hint = document.getElementById('btHint'), grid = document.getElementById('btGrid'),
         tray = document.getElementById('btTray');
+  const short = ids.length < 3;
   if(!ids.length){
     hint.className = 'btHint empty';
-    hint.textContent = '도감에서 포켓몬을 먼저 1마리 이상 잡아 보세요!';
+    hint.innerHTML = '도감에 포켓몬이 <b>3마리 이상</b> 모여야 3:3 배틀을 할 수 있어요! (현재 <b>0/3</b>마리)';
     grid.innerHTML = ''; grid.style.display = 'none'; tray.style.display = 'none';
+    const go = document.getElementById('btGo');
+    if(go){ go.disabled = true; go.textContent = '배틀 시작! (3:3)'; }
     return;
   }
-  hint.className = 'btHint';
-  hint.innerHTML = ids.length <= 3
-    ? `잡은 포켓몬 <b>${ids.length}마리</b>로 <b>${ids.length}:${ids.length}</b> 배틀을 해요! 아래 <b>내 엔트리</b>에 담았어요.`
-    : '도감에서 잡은 포켓몬 중 <b>3마리</b>를 골라 주세요! 고른 포켓몬은 아래 <b>내 엔트리</b>에 바로 보여요.';
+  hint.className = 'btHint' + (short ? ' empty' : '');
+  hint.innerHTML = short
+    ? `도감에 포켓몬이 <b>3마리 이상</b> 모여야 3:3 배틀을 할 수 있어요! (현재 <b>${ids.length}/3</b>마리)`
+    : (btState.sel.length === 3
+        ? '엔트리 <b>3마리</b> 완성! <b>배틀 시작!</b> 을 눌러 주세요.'
+        : '도감에서 잡은 포켓몬 중 <b>3마리</b>를 골라 주세요! 고른 포켓몬은 아래 <b>내 엔트리</b>에 바로 보여요.');
   grid.style.display = ''; tray.style.display = '';
   grid.innerHTML = '';
   ids.forEach(id => grid.appendChild(btCardEl(id)));
@@ -6793,11 +6912,12 @@ function btGuardFx(side, on){
 
 /* ---------- 배틀 시작 · 진행 ---------- */
 function btStartBattle(){
-  if(btState.sel.length < btState.need) return;
+  /* v39 — 3:3 만. 3마리 미만이거나 엔트리가 3마리가 아니면 시작하지 않는다 */
+  if(btCaughtIds().length < 3 || btState.sel.length !== 3) return;
   const ids = btState.sel.slice(0, 3);
   btState.entryIds = ids.slice();          // 결과 화면의 강화 보상은 이 엔트리 전체(쓰러진 포켓몬 포함)
   btState.pTeam = ids.map(btStatsMine);
-  btState.fTeam = btFoeTeam(ids.length, btState.pTeam);
+  btState.fTeam = btFoeTeam(3, btState.pTeam);
   btState.pi = 0; btState.fi = 0; btState.turn = 1;
   btState.pGuard = false; btState.pBuff = 1; btState.busy = false; btState.won = false;
   btState.boosted = false;
@@ -6810,7 +6930,7 @@ function btStartBattle(){
   btRenderUnit('p'); btRenderUnit('f');
   btRenderHp(); btRenderBalls(); btGuardTag('p', false); btGuardTag('f', false);
   btEntrance('p'); btEntrance('f');
-  btSay(`상대 트레이너가 승부를 걸어왔다! (${ids.length}:${ids.length})`);
+  btSay(`상대 트레이너가 승부를 걸어왔다! (3:3)`);
   btSay('⚔️ 공격으로 때리고, 🛡️ 방어로 막아 보세요!');
   btSfx('open');
   btSetButtons(true); btUpdateTurn();
