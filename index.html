@@ -195,24 +195,32 @@
   header.sky .w-tiprow .w-tip{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   header.sky .w-fallback{font-size:.7em; color:#94a3ae; font-weight:900;}
 
-  /* --- 시계 오른쪽: 루틴 XP + ⚡ 강화 XP (위아래 2줄) ---
-     시계와 날씨 사이에 두고, 두 카드가 날씨 카드의 전체 높이를 정확히
-     반씩(사이 간격 포함) 나눠 채운다 — align-self:stretch 로 두 상자의 바깥 높이가 같아진다.
-     폭은 남는 공간을 받아 늘어나되 상한(17em)에서 멈춘다. */
+  /* --- 시계 오른쪽: (다음 목표 | 파트너) 위 줄 + ⚡ 강화 XP 아래 줄 ---
+     위 줄은 좌우 반반 2칸 — 왼쪽 '다음 목표'(아이콘·이름·XP 게이지), 오른쪽 '파트너'(아이콘·라벨·이름).
+     두 줄이 날씨 카드의 전체 높이를 정확히 반씩(사이 간격 포함) 나누어 채운다 — align-self:stretch 로
+     두 줄의 바깥 높이가 날씨 카드와 같아진다. 폭은 남는 공간을 받되 상한(26em)에서 멈춘다. */
   header.sky .hxp{position:relative; z-index:2; display:flex; flex-direction:column; align-items:stretch;
-    gap:.24em; flex:1 1 0; min-width:11em; max-width:17em; align-self:stretch; overflow:visible;
+    gap:.24em; flex:1 1 0; min-width:14em; max-width:26em; align-self:stretch; overflow:visible;
     margin-left:auto;}   /* 남는 폭은 시계↔XP 사이로 → XP+날씨는 오른쪽에 나란히 */
+  header.sky .hxp-top{display:flex; align-items:stretch; gap:.24em; flex:1 1 0; min-height:0; min-width:0;}
   header.sky .hxp-card{display:flex; align-items:center; gap:.3em; min-width:0; width:100%; flex:1 1 0; min-height:0;
     background:#fff; border:2px solid #2b3445; border-radius:.62em; padding:.16em .42em;
     box-shadow:0 .16em .34em rgba(20,60,90,.18); color:#152436;}
+  /* 위 줄의 두 칸은 반반 — 각자 자기 테두리를 가진 카드로 나눈다 */
+  header.sky .hxp-top .hxp-card{width:auto; flex:1 1 0;}
   header.sky .hxp-art{width:2.3em; height:2.3em; object-fit:contain; flex:0 0 auto;
     filter:drop-shadow(0 1px 1px rgba(20,50,80,.18));}
   header.sky .hxp-col{display:flex; flex-direction:column; justify-content:center; gap:.14em; min-width:0;
     flex:1 1 auto;}
   header.sky .hxp-lab{display:flex; align-items:baseline; gap:.24em; font-size:.76em; font-weight:900;
-    color:#6b7d68; white-space:nowrap; line-height:1.15; min-width:0;}
+    color:#6b7d68; white-space:nowrap; line-height:1.15; min-width:0; overflow:hidden;}
+  header.sky .hxp-lab .hxp-k{flex:0 0 auto;}
   header.sky .hxp-lab b{font-size:1.12em; color:#7a5b00; max-width:6em; overflow:hidden; text-overflow:ellipsis;}
+  /* 반반으로 나뉜 위 줄에서는 이름이 길어도 칸을 넘지 않게 조금 더 짧게 자른다 */
+  header.sky .hxp-top .hxp-lab b{max-width:5em;}
   header.sky .hxp-lab .tchip{display:none;}
+  /* ⚡ 파트너 칸 — 이름만 있는 한 줄, 아이콘은 다음 목표와 같은 크기 */
+  header.sky .hxp-partner .hxp-lab b{color:#1f6fd4;}
   /* 미니 XP 바 — wildbox 의 .xpbar 를 그대로 쓰고 크기만 줄인다 */
   header.sky .hxp-routine .xpbar{flex:1 1 auto; width:auto; min-width:5em; height:1.24em;}
   header.sky .hxp-routine .xpbar .xt{font-size:.68em; line-height:1.82em;}
@@ -273,13 +281,6 @@
   .runner img{width:56px;height:56px;}
   .runner .fallback{font-size:30px;line-height:56px;text-align:center;}
   .goal{position:absolute;right:-8px;top:-20px;font-size:32px;z-index:4;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18));}
-  .bubble{
-    position:absolute;left:52%;top:50%;transform:translate(-50%,-50%);z-index:5;   /* 글자가 피카츄에 가리지 않게 */
-    background:#fffdf7;border:2px solid #cfe0ea;border-radius:999px;
-    padding:0 12px;font-size:13.5px;font-weight:900;color:#2f5878;line-height:22px;
-    white-space:nowrap;max-width:64%;overflow:hidden;text-overflow:ellipsis;
-    box-shadow:0 1px 3px rgba(60,90,110,.12);
-  }
   .depart{font-size:11.5px;font-weight:800;color:#9a8d78;white-space:nowrap;text-align:right;line-height:1.3;padding-right:2px;}
 
   /* ===== Task cards ===== */
@@ -1140,11 +1141,22 @@
     font-size:max(calc(var(--k)*1.75), 12px);font-weight:900;color:#6b5a3e;background:#fff3c9;
     border-radius:calc(var(--k)*1.2);padding:calc(var(--k)*.7) calc(var(--k)*1.1);white-space:nowrap;}
   .ps-ticket b{font-size:max(calc(var(--k)*2.5), 16px);color:#b26a00;}
-  .ps-up{flex:1 1 auto;border:none;border-radius:999px;background:var(--yellow);color:#7a5b00;font-weight:900;
-    font-family:inherit;font-size:max(calc(var(--k)*2.2), 14px);padding:calc(var(--k)*1.4) calc(var(--k)*.8);cursor:pointer;
-    box-shadow:0 calc(var(--k)*.55) 0 #d4a900;white-space:nowrap;}
-  .ps-up:active{transform:translateY(calc(var(--k)*.35));box-shadow:none;}
+  /* 카드 아래 두 버튼 — 왼쪽 🎟 강화하기 · 오른쪽 ⚡ 너로 정했다! (반반, 줄바꿈 없음) */
+  .pbrow-2{gap:calc(var(--k)*1.1); align-items:stretch;}
+  .ps-btn{flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:center;
+    gap:calc(var(--k)*.55); border:none; border-radius:999px; font-family:inherit; font-weight:900;
+    font-size:max(calc(var(--k)*2.05), 13px); padding:calc(var(--k)*1.4) calc(var(--k)*.9); cursor:pointer;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.15;}
+  .ps-btn:active{transform:translateY(calc(var(--k)*.35)); box-shadow:none;}
+  .ps-up{background:var(--yellow);color:#7a5b00;box-shadow:0 calc(var(--k)*.55) 0 #d4a900;}
+  .ps-up .ps-cnt{font-size:max(calc(var(--k)*2.05), 13px); color:#a86000; background:#fff8e2;
+    border-radius:999px; padding:calc(var(--k)*.1) calc(var(--k)*.65);}
+  .ps-partner{background:linear-gradient(180deg,#6fc3ff,#2f8fe0);color:#fff;
+    box-shadow:0 calc(var(--k)*.55) 0 #1f6fae;}
+  .ps-partner.on{background:linear-gradient(180deg,#d3f6a8,#6cc63f);color:#2f6b1f;
+    box-shadow:0 calc(var(--k)*.55) 0 #4f9a2c;cursor:default;}
   .ps-up[disabled]{background:#e9e4d5;color:#a99f8c;box-shadow:0 calc(var(--k)*.55) 0 #d6cfbd;cursor:default;}
+  .ps-up[disabled] .ps-cnt{color:#a99f8c;}
   .ps-close{flex:0 0 auto;border:none;border-radius:999px;background:#efe7d6;color:#6b5a3e;font-weight:900;
     font-family:inherit;font-size:max(calc(var(--k)*1.85), 12px);padding:calc(var(--k)*1.4) calc(var(--k)*1.4);cursor:pointer;}
   .ps-back{flex:1 1 auto;min-width:0;font-size:max(calc(var(--k)*1.7), 11.5px);font-weight:800;color:#5b4a34;text-align:left;line-height:1.3;}
@@ -1195,7 +1207,6 @@
     .runner{width:44px;height:44px;top:-12px;}
     .runner img{width:44px;height:44px;}
     .runner .fallback{line-height:44px;font-size:24px;}
-    .bubble{font-size:12px;padding:4px 8px;}
     .self-banner{padding:6px 12px;gap:10px;}
     .self-btn{font-size:17px;padding:6px 14px 6px 8px;}
     .self-btn .box{width:32px;height:32px;font-size:19px;}
@@ -1252,7 +1263,6 @@
     .runner img{width:48px;height:48px;}
     .runner .fallback{line-height:48px;font-size:26px;}
     .school{font-size:28px;top:-18px;}
-    .bubble{font-size:13px;padding:4px 10px;}
     .wildbox img{width:40px;height:40px;}
     .wildbox .we{font-size:22px;}
     .xpbar{width:96px;height:12px;}
@@ -1331,7 +1341,6 @@
 
   /* 모드 버튼·대기 화면의 좁은 화면 대응 */
   @media (max-width:1120px){
-    .strip .bubble{display:none;}
     .modes .cap{display:none;}
     .mpill{padding:5px 9px;font-size:11.5px;}
     .strip{gap:8px;}
@@ -1774,15 +1783,24 @@
       </div>
       </div>
 
-      <!-- 시계 오른쪽: 루틴 XP + ⚡ 강화 XP (위아래 2줄) — 그 오른쪽에 날씨 카드 -->
+      <!-- 시계 오른쪽: (다음 목표 | 파트너) + ⚡ 강화 XP (위아래 2줄) — 그 오른쪽에 날씨 카드 -->
       <div class="hxp" id="hxp">
-        <div class="hxp-card hxp-routine" title="이번 목표 포켓몬까지의 루틴 경험치">
-          <img class="hxp-art" id="wildArt" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" alt="다음 목표 포켓몬" onerror="this.style.display='none'">
-          <div class="hxp-col">
-            <div class="hxp-lab">다음 목표 <b id="wildName">이상해씨</b><span class="tchip tt0" id="wildTier">일반</span></div>
-            <div class="xpbar"><div class="xf" id="wildXpFill" style="width:0%"></div><div class="xt" id="wildXpText">0/100 XP</div></div>
+        <!-- 위 줄 — 좌우 반반 2칸: 왼쪽 '다음 목표', 오른쪽 '파트너' -->
+        <div class="hxp-top">
+          <div class="hxp-card hxp-routine" title="이번 목표 포켓몬까지의 루틴 경험치">
+            <img class="hxp-art" id="wildArt" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" alt="다음 목표 포켓몬" onerror="this.style.display='none'">
+            <div class="hxp-col">
+              <div class="hxp-lab"><span class="hxp-k">다음 목표</span><b id="wildName">이상해씨</b></div>
+              <div class="xpbar"><div class="xf" id="wildXpFill" style="width:0%"></div><div class="xt" id="wildXpText">0/100 XP</div></div>
+            </div>
           </div>
-        </div>
+          <div class="hxp-card hxp-partner" id="hxpPartner" title="시간 바에서 같이 달리는 파트너 포켓몬">
+            <img class="hxp-art" id="partnerArt" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="파트너 포켓몬" onerror="this.style.display='none'">
+            <div class="hxp-col">
+              <div class="hxp-lab"><span class="hxp-k">파트너</span><b id="partnerName">피카츄</b></div>
+            </div>
+          </div>
+        </div>   <!-- /hxp-top -->
         <div class="hxp-card hxp-boost" id="hxpBoost" title="⚡ 강화 XP 8개를 모으면 포켓몬 강화권 1장">
           <div class="hxp-lab"><span>⚡ 강화 XP</span><b id="hxpCnt">0/8</b><span class="hxp-tk" id="hxpTicket">🎟 0장</span></div>
           <div class="hxp-gauge" id="hxpGauge" aria-hidden="true"></div>
@@ -1841,8 +1859,8 @@
     <div class="pbar">
       <div class="track" id="track">
         <div class="fill" id="fill" style="width:0%"></div>
-        <div class="bubble" id="bubble">LUKA 같이 준비하자!</div>
-        <div class="runner" id="runner" style="left:0%"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" alt="피카츄" id="pikaImg"><div class="fallback" style="display:none">⚡</div></div>
+        <!-- 시간 바 위를 달리는 포켓몬 = 지금 파트너 (기본 피카츄 #025) -->
+        <div class="runner" id="runner" style="left:0%"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" alt="피카츄" id="runnerImg"><div class="fallback" style="display:none">⚡</div></div>
         <div class="goal" id="goalIcon">🏫</div>
       </div>
       <div class="depart" id="departLabel">출발 오전 8:35</div>
@@ -1991,10 +2009,14 @@
   <!-- 카드 아래 조작 줄 -->
   <div class="pcardbar" id="pokeBar">
     <div id="pokeBarFront">
-      <div class="pbrow">
-        <span class="ps-ticket">🎟 강화권 <b id="pokeTicketN">0</b>장</span>
-        <button class="ps-up" id="pokeUp" type="button">🃏 강화하기</button>
-        <button class="ps-close" id="pokeClose2" type="button">닫기</button>
+      <div class="pbrow pbrow-2">
+        <!-- 왼쪽: 🎟 강화하기 (보유 강화권 수) · 오른쪽: ⚡ 너로 정했다! / ⭐ 현재 파트너 -->
+        <button class="ps-btn ps-up" id="pokeUp" type="button">
+          <span class="ps-lb">🎟 강화하기</span><b class="ps-cnt" id="pokeTicketN">0장</b>
+        </button>
+        <button class="ps-btn ps-partner" id="pokePartner" type="button">
+          <span class="ps-lb" id="pokePartnerTx">⚡ 너로 정했다!</span>
+        </button>
       </div>
     </div>
     <div id="pokeBarBack" hidden>
@@ -2280,7 +2302,6 @@ const MODE_DEFS = {
     id:'school', label:'🏫 등교', name:'등교',
     wake:7*60, deadline:8*60+35, deadlineLabel:'출발 오전 8:35', deadlineTip:'학교 출발',
     stripLabel:'LUKA의 아침 준비', emoji:'☀️', countdown:'등교까지',
-    bubble:'LUKA 같이 준비하자!', bubbleDone:'아침 완료! +50 XP!',
     alertToast:'🏫 가랏, 피카츄!',
     tasks: TASKS, xp: 50, hasAfter: true,
   },
@@ -2288,7 +2309,6 @@ const MODE_DEFS = {
     id:'afterschool', label:'🎒 방과후', name:'방과후',
     wake:8*60, deadline:8*60+45, deadlineLabel:'방과후 출발 8:45', deadlineTip:'방과후 출발',
     stripLabel:'LUKA의 방과후 아침 준비', emoji:'🎒', countdown:'방과후 수업까지',
-    bubble:'오늘은 방과후 가는 날!', bubbleDone:'아침 완료! 포켓몬!',
     alertToast:'🎒 출발 시간이에요! 가랏 피카츄!',
     tasks: AFTERSCHOOL_TASKS, xp: 100, hasAfter: false,
   },
@@ -2296,7 +2316,6 @@ const MODE_DEFS = {
     id:'vacation', label:'🏖️ 방학', name:'방학',
     wake:8*60, deadline:9*60, deadlineLabel:'완료 오전 9:00', deadlineTip:'아침 완료',
     stripLabel:'LUKA의 방학 아침', emoji:'🏖️', countdown:'아침루틴 종료까지',
-    bubble:'방학 아침도 신나게!', bubbleDone:'아침 완료! +50 XP!',
     alertToast:'🏖️ 아침 완료 시간이에요!',
     tasks: VACATION_TASKS, xp: 50, hasAfter: true,
   },
@@ -2311,7 +2330,6 @@ function buildRoutineTable(){
   ROUTINES = {
     morning: {
       key:'morning', emoji:M.emoji, stripLabel:M.stripLabel,
-      bubble:M.bubble, bubbleDone:M.bubbleDone,
       depart:M.deadlineLabel, deadlineTip:M.deadlineTip, countdown:M.countdown,
       alertToast:M.alertToast,
       tasks: M.tasks, xp: M.xp,
@@ -2320,20 +2338,17 @@ function buildRoutineTable(){
        '⚡ 강화 XP'는 여기가 아니라 오늘의 공부 탭에만 있다. */
     after: M.hasAfter ? {
       key:'after', emoji:'🎒', stripLabel:'LUKA의 하교 루틴',
-      bubble:'하교 후 정리 5가지! 다 하면 +50 XP!', bubbleDone:'하교 루틴 완료! +50 XP! 🎉',
       depart:'하교 오후 4시부터',
       tasks: AFTER_TASKS, xp: 50,
     } : null,
     /* 방과후 모드의 8:45~21:00 — 오후 루틴 없이 쉬는 화면 */
     rest: {
       key:'rest', emoji:'🎒', stripLabel:'LUKA의 방과후 하루',
-      bubble:'오늘은 방과후 수업 다녀오는 날!', bubbleDone:'아침 준비 완벽! 🎉',
       depart:'취침 오후 9시',
       tasks: [], xp: 0, panel:true,
     },
     night: {
       key:'night', emoji:'🌙', stripLabel:'LUKA의 취침 루틴',
-      bubble:'6가지 마무리하자!', bubbleDone:'오늘 하루 끝! 잘 자요 🌙',
       depart:'취침 오후 9시',
       tasks: NIGHT_TASKS, xp: 0,
     },
@@ -2719,6 +2734,10 @@ function migrate(s){
   /* 🕹️ 시트 '웹제어' 로 마지막으로 본 값 — 시트가 이 값에서 바뀔 때만 원격 반영한다.
      (앱에서 비밀번호로 직접 켜고 끈 것이 언제나 최우선) */
   if(s.lastSheetWebControl !== 'on' && s.lastSheetWebControl !== 'off') s.lastSheetWebControl = null;
+  /* ⚡ 파트너 포켓몬 — 도감에서 '너로 정했다!' 로 고른 포켓몬.
+     저장값이 없거나(처음) 그 포켓몬이 도감에 없거나 반납되었으면 null → 기본 파트너(피카추 #025). */
+  if(!Number.isInteger(s.partnerId) || !DEX_BY_ID[s.partnerId] || !s.caught[s.partnerId]) s.partnerId = null;
+  if(!Number.isInteger(s.partnerPrev) || !DEX_BY_ID[s.partnerPrev] || s.partnerPrev === s.partnerId) s.partnerPrev = null;
   /* 오늘 루틴 경험치로 잡은 포켓몬 기록 — 체크를 풀면 반납할 때 쓴다 */
   if(!s.routineCatch || typeof s.routineCatch !== 'object') s.routineCatch = null;
   return s;
@@ -2975,12 +2994,6 @@ function renderProgress(){
             : key === 'night' ? '취침 목표 오후 9:40'
             : R.depart;
   if(dl && dl.textContent !== dep) dl.textContent = dep;
-  const bub = document.getElementById('bubble');
-  const bt = (key === 'morning' && now < WAKE) ? 'LUKA 조금만 더 자요~ 🌙'
-    : (total > 0 && done === total) ? R.bubbleDone
-    : key === 'after' ? '천천히 정리해요!'
-    : R.bubble;
-  if(bub.textContent !== bt) bub.textContent = bt;
   return now;
 }
 
@@ -3287,6 +3300,12 @@ function returnCaughtPokemon(entry){
   if(entry.at) state.caughtAt[id] = entry.at; else delete state.caughtAt[id];
   const i = DEX.findIndex(p => p.id === id);
   if(i >= 0) state.wildIndex = i;   // 다음 목표를 그 포켓몬으로 → 다시 체크하면 같은 포켓몬을 잡는다
+  /* 파트너를 반낚했을 때 — 이전 파트너가 아직 도감에 있으면 그쪽으로, 아니면 기본 파트너(피카추)로 */
+  if(state.partnerId === id){
+    const prev = state.partnerPrev;
+    state.partnerId = (Number.isInteger(prev) && prev !== id && state.caught[prev]) ? prev : null;
+    state.partnerPrev = null;
+  }
   return DEX_BY_ID[id] || null;
 }
 function revokeRoutineReward(key){
@@ -3345,16 +3364,64 @@ document.getElementById('catchOk').addEventListener('click', ()=>{
   const img = document.getElementById('catchImg'); img.style.visibility='visible';
   if(state.xp >= 100) setTimeout(maybeCatch, 400); // queued celebrations
 });
+/* ---------- ⚡ 파트너 포켓몬 ----------
+   도감에서 잡은 포켓몬 카드의 '⚡ 너로 정했다!' 를 누르면 그 포켓몬이 파트너가 된다.
+   파트너는 상단 '파트너' 칸과 시간 바 위를 달리는 포켓몬에 그대로 쓰인다.
+   아직 고르지 않았으면 기본 파트너는 피카츄(#025). */
+const PARTNER_DEFAULT = 25;
+function partnerIdNow(){
+  const id = state.partnerId;
+  return (Number.isInteger(id) && DEX_BY_ID[id] && state.caught[id]) ? id : PARTNER_DEFAULT;
+}
+function partnerPk(){ return DEX_BY_ID[partnerIdNow()] || DEX_BY_ID[PARTNER_DEFAULT]; }
+/* 상단 '파트너' 칸 — 아이콘·이름 */
+function renderPartner(){
+  const pk = partnerPk();
+  if(!pk) return;
+  const a = document.getElementById('partnerArt');
+  if(a){
+    a.style.display = '';
+    a.alt = pk.name;
+    if(a.dataset.pid !== String(pk.id)){ a.dataset.pid = String(pk.id); a.src = art(pk.id); }
+    a.onerror = function(){ this.style.display = 'none'; };
+  }
+  const n = document.getElementById('partnerName');
+  if(n) n.textContent = pk.name;
+}
+/* 파트너 바꾸기 — 지금 파트너와 같으면 아무 것도 하지 않는다 */
+function setPartner(id){
+  if(!Number.isInteger(id) || !DEX_BY_ID[id] || !state.caught[id]) return false;
+  const before = partnerIdNow();
+  if(before === id) return false;
+  state.partnerPrev = state.caught[before] ? before : null;   // 반납될 때 되돌아갈 자리
+  state.partnerId = id;
+  save();
+  renderPartner();
+  renderWild();
+  return true;
+}
 function renderWild(){
-  // runner is always Pikachu
-  const img = document.getElementById('pikaImg');
-  img.style.display='';
-  img.src = sprite(25);
-  img.onerror = ()=>{
-    const r = document.getElementById('runner');
-    img.style.display='none';
-    r.querySelector('.fallback').style.display='block';
-  };
+  /* 시간 바 위를 달리는 포켓몬 = 지금 파트너 (기본 피카츄) */
+  const partner = partnerPk() || DEX[state.wildIndex];
+  const img = document.getElementById('runnerImg');
+  const r = document.getElementById('runner');
+  const fb = r ? r.querySelector('.fallback') : null;
+  if(img){
+    let ic = '⭐';
+    try{ ic = (TYPE_INFO[(partner.type || ['노말'])[0]] || {}).ic || ic; }catch(e){}
+    if(fb){ fb.style.display = 'none'; fb.textContent = ic; }
+    img.style.display = '';
+    img.alt = partner.name;
+    if(img.dataset.pid !== String(partner.id)){
+      img.dataset.pid = String(partner.id);
+      img.src = sprite(partner.id);
+    }
+    img.onerror = ()=>{
+      img.style.display='none';
+      if(fb) fb.style.display = 'block';
+    };
+  }
+  renderPartner();
   // current wild target + XP
   const pk = DEX[state.wildIndex];
   const wa = document.getElementById('wildArt');
@@ -4234,14 +4301,32 @@ function renderPokeCard(){
   updatePokeBar();
 }
 
-/* 카드 아래 🎟 강화하기 줄 — 강화권 수 · 강화하기 · 닫기 세 가지만 둔다 (v34: 설명 줄 제거) */
+/* 카드 아래 두 버튼 줄 — 왼쪽 🎟 강화하기(보유 강화권 수) · 오른쪽 ⚡ 너로 정했다!(현재 파트너면 ⭐ 현재 파트너) */
 function updatePokeBar(){
   const t = state.study.tickets || 0;
-  document.getElementById('pokeTicketN').textContent = t;
+  const cnt = document.getElementById('pokeTicketN');
+  if(cnt) cnt.textContent = `${t}장`;
   const btn = document.getElementById('pokeUp');
-  btn.disabled = !state.caught[pokeId] || t <= 0;
-  btn.textContent = t > 0 ? '🃏 강화하기' : '🎟 강화권이 없어요';
+  if(btn) btn.disabled = !state.caught[pokeId] || t <= 0;
+  const pb = document.getElementById('pokePartner');
+  if(pb){
+    const on = pokeId != null && !!state.caught[pokeId] && partnerIdNow() === pokeId;
+    pb.classList.toggle('on', on);
+    pb.disabled = on;
+    const tx = document.getElementById('pokePartnerTx');
+    if(tx) tx.textContent = on ? '⭐ 현재 파트너' : '⚡ 너로 정했다!';
+  }
 }
+/* ⚡ 너로 정했다! — 이 포켓몬을 파트너로. 상단 파트너 칸과 시간 바 러너가 바로 바뀐다. */
+document.getElementById('pokePartner').addEventListener('click', ()=>{
+  if(pokeId == null) return;
+  const pk = DEX_BY_ID[pokeId];
+  if(!pk || !state.caught[pokeId]) return;
+  if(!setPartner(pokeId)) return;                 // 이미 지금 파트너
+  updatePokeBar();
+  chime(); confetti();
+  toast(`⚡ ${pk.name}! 너로 정했다! 파트너가 바뀌었어요!`);
+});
 
 function openPoke(id){
   const pk = DEX_BY_ID[id];
@@ -4994,8 +5079,7 @@ function reloadWebApp(){
 }
 document.getElementById('webReloadBtn').addEventListener('click', reloadWebApp);
 document.getElementById('pokeClose').addEventListener('click', closePoke);
-document.getElementById('pokeClose2').addEventListener('click', closePoke);
-document.getElementById('pokeClose3').addEventListener('click', closePoke);
+document.getElementById('pokeClose3').addEventListener('click', closePoke);   // 카드 뒷면 줄의 닫기 (앞면은 ✕·배경 클릭으로 닫는다)
 document.getElementById('pokeUp').addEventListener('click', upgradePoke);
 document.getElementById('pokeOverlay').addEventListener('click', e=>{ if(e.target.id === 'pokeOverlay') closePoke(); });
 
