@@ -4174,12 +4174,17 @@ let cheerLastMsg = '';             // 바로 앞에 보여 준 대사
 let cheerQueue = { slot: null, greet: null, ask: null, cheer: null };
 let cheerTurn = 0;                 // 0 질문 → 1 응원 → 2 인사 → 다시 질문 (세 종류를 골고루)
 let cheerHideTimer = 0;
-/* v45 — 한 **루틴**에 새 대사는 3번까지. 그 뒤로는 '이따가 또 이야기하자' 안내만.
+/* v45 — 한 **루틴**에 새 대사는 3번까지. 그 뒤로는 마무리 인사 한 번만.
    날짜+루틴 키(예: 2026-11-20|morning)로 localStorage 에 세어 두어 새로고침해도 유지되고,
-   루틴이 바뀌거나(아침 → 오후 → 밤) 날짜가 바뀌면 그 키가 새로 시작되어 저절로 0이 된다. */
+   루틴이 바뀌거나(아침 → 오후 → 밤) 날짜가 바뀌면 그 키가 새로 시작되어 저절로 0이 된다.
+   v46 — 마무리 인사는 루틴을 따른다. 아침·오후는 '이따가 또', 밤(취침)은 '내일 또 … 잘 자'. */
 const CHEER_LIMIT = 3;                 // 한 루틴에 새 대사는 3번까지
 const CHEER_TAPS = 4;                  // 4번째는 마무리 인사 1회, 5번째부터는 말풍선을 띄우지 않는다
-const CHEER_CLOSING = '우리 이따가 또 이야기하자!';
+const CHEER_CLOSING_DAY = '우리 이따가 또 이야기하자!';
+const CHEER_CLOSING_NIGHT = '우리 내일 또 이야기하자! 잘 자!';
+function cheerClosing(){               // v46 — 취침 루틴은 내일을 기약하고 잘 자 인사
+  return cheerPhase() === 'night' ? CHEER_CLOSING_NIGHT : CHEER_CLOSING_DAY;
+}
 const CHEER_STORE = 'lukaPokemonDashboard.cheer.v1';
 function cheerStoreLoad(){
   try{
@@ -4233,8 +4238,8 @@ function cheerNextMsg(){
   }
   if(seen === CHEER_LIMIT){                         // 4번째 = 마무리 인사 한 번 (다음 루틴에서 또)
     cheerCountSet(seen + 1);
-    cheerLastMsg = CHEER_CLOSING;
-    return CHEER_CLOSING;
+    cheerLastMsg = cheerClosing();
+    return cheerLastMsg;
   }
   let m = '';
   if(seen === 0){                                   // 이 루틴 첫 대사 = 인사말
