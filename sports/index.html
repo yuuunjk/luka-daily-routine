@@ -372,8 +372,8 @@ addEventListener("unhandledrejection", (e) => window.__errs.push("rejection: " +
 const $ = (sel, root = document) => root.querySelector(sel);
 const WEEK = ["일","월","화","수","목","금","토"];
 const SPORT_EMOJI = {야구:"⚾", 해외야구:"⚾", 축구:"⚽", 해외축구:"⚽", "국제 대회":"🌍",
-                     농구:"🏀", 미식축구:"🏈", 배구:"🏐", 일반:"🏅"};
-const SPORTS = ["전체","야구","축구","농구","배구","해외축구","미식축구","국제 대회","해외야구","일반"];
+                     농구:"🏀", 미식축구:"🏈", 배구:"🏐", 기타:"🏅"};
+const SPORTS = ["전체","야구","축구","농구","배구","해외축구","미식축구","국제 대회","해외야구","기타"];
 const KST_OFFSET = 9 * 60 * 60 * 1000;
 
 /* 🎯 승부예측 저장 키 (state 를 만들 때 바로 쓰므로 먼저 둔다) */
@@ -1008,8 +1008,8 @@ function teamsBySport(){
   };
   for (const lg of state.standings?.leagues || []) for (const r of lg.rows) add(lg.sport, r.team);
   for (const g of gameList()){
-    if (g.away && g.away.name && g.sport !== "일반") add(g.sport, g.home?.name);
-    if (g.away && g.away.name && g.sport !== "일반") add(g.sport, g.away?.name);
+    if (g.away && g.away.name && g.sport !== "기타") add(g.sport, g.home?.name);
+    if (g.away && g.away.name && g.sport !== "기타") add(g.sport, g.away?.name);
   }
   return map;
 }
