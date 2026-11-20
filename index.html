@@ -198,7 +198,11 @@
     background:rgba(23,74,116,.24); color:#fff; font-family:inherit; font-weight:900;
     font-size:.9em; line-height:1.2; padding:.24em .62em; cursor:pointer; white-space:nowrap;
     text-shadow:0 1px 2px rgba(25,70,110,.35);}
-  header.sky .soundbtn.on{background:#eafbe9; border-color:#fff; color:#186b2a; text-shadow:none;}
+  header.sky .soundbtn.on{background:#eafbe9; border-color:#fff; color:#186b2a; text-shadow:none;
+    box-shadow:inset 0 0 0 2px #8ad374, 0 2px 0 rgba(20,70,40,.18);}
+  /* v43 — 꺼짐은 한 눈에 구분되게: 회색 캄셜 + 자물쇠 아이콘(🔇) */
+  header.sky .soundbtn.off, header.sky[data-sky] .soundbtn.off{background:#e7ecf1; border-color:#fff;
+    color:#5b6b7a; text-shadow:none; box-shadow:inset 0 0 0 2px #cfd8e0;}
   header.sky .gear{border:2px solid #fff; border-radius:.55em; background:#fff; color:#22384d;
     width:2em; height:2em; font-size:1em; line-height:1; cursor:pointer; flex:0 0 auto;
     display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(20,60,90,.2);}
@@ -430,9 +434,9 @@
   #partnerCheer{
     position:fixed; left:0; top:0; z-index:48; box-sizing:border-box;
     display:block;
-    width:max-content; max-width:min(17em, calc(100vw - 24px));
-    background:#fff; border:3px solid #2b3445; border-radius:14px;
-    padding:.46em .74em .5em;
+    width:max-content; min-width:184px; max-width:min(21em, calc(100vw - 24px));
+    background:#fff; border:3px solid #2b3445; border-radius:15px;
+    padding:.5em .82em .52em;
     box-shadow:0 10px 22px rgba(20,50,80,.26);
     color:#16283b; font-family:inherit; font-size:15px; line-height:1.34;
     opacity:0; transform:translateX(10px) scale(.95); transform-origin:right center;
@@ -447,7 +451,7 @@
     margin-top:-9px; background:#fff; border-right:3px solid #2b3445; border-top:3px solid #2b3445;
     border-top-right-radius:5px; transform:rotate(-45deg);}
   #partnerCheer .pc-msg{display:block; font-weight:900; color:#16283b; letter-spacing:-.01em; word-break:keep-all;
-    font-size:1.02em;}
+    overflow-wrap:break-word; line-height:1.38; font-size:1.02em;}
   @keyframes cheerPop{0%{transform:scale(.9);}55%{transform:scale(1.05);}100%{transform:scale(1);}}
   #partnerCheer.bump .pc-msg{animation:cheerPop .3s ease-out;}
 
@@ -2071,7 +2075,7 @@
       </div>
       <div class="spacer"></div>
       <span class="wakechip" id="wakeChip">🔆 화면 켜짐 유지</span>
-      <button class="soundbtn" id="soundBtn">🔊 소리 켜기</button>
+      <button class="soundbtn on" id="soundBtn" type="button" aria-pressed="true" title="효과음 켜기/끄기">🔊 소리 켜짐</button>
       <button class="powerbtn" id="powerBtn" type="button" aria-pressed="true" title="사용 ON · 부모 비밀번호로 끌 수 있어요">🟢 ON</button>
       <button class="gear" id="gearBtn" title="설정">⚙️</button>
     </div>
@@ -3343,8 +3347,14 @@ let simOffsetMs = 0;
 function getNow(){ return new Date(Date.now() + simOffsetMs); }
 function nowMinutes(){ const n = getNow(); return n.getHours()*60 + n.getMinutes() + n.getSeconds()/1000; }
 
-/* ---------- audio ---------- */
-let AC = null, soundOn = true, audioUnlocked = false;
+/* ---------- audio ----------
+   v43 — 소리는 오직 상단 '소리' 버튼이 켜져 있을 때(soundOn === true)만 난다.
+   모든 합성음(beep·tone)·MP3(playMissionSfx)·타이머 알람·배틀 효과음·파트너 터치가
+   soundOn 을 먼저 보고, 꺼져 있으면 단 하나도 재생되지 않는다.
+   이 선택은 state.sound 에 저장되어 새로고침해도 그대로 유지된다. */
+let AC = null;
+let soundOn = !(state && state.sound === false);
+let audioUnlocked = false;
 function ctx(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return AC; }
 function unlockAudio(){
   const c = ctx(); if(c && c.state === 'suspended') c.resume();
@@ -4138,17 +4148,10 @@ let cheerHideTimer = 0;
 /* v43 — 한 시간대에 새 대사는 3번까지. 그 뒤로는 '이따가 또 이야기하자' 안내만.
    날짜+시간대 키로 localStorage 에 세어 두어 새로고침해도 유지되고,
    시간대가 바뀌거나 날짜가 바뀌면 그 키가 새로 시작되어 저절로 0이 된다. */
-const CHEER_LIMIT = 3;
+const CHEER_LIMIT = 3;                 // 한 시간대에 새 대사는 3번까지
+const CHEER_TAPS = 4;                  // 4번째는 마무리 인사 1회, 5번째부터는 말풍선을 띄우지 않는다
+const CHEER_CLOSING = '우리 이따가 또 이야기하자!';
 const CHEER_STORE = 'lukaPokemonDashboard.cheer.v1';
-const PARTNER_LATER = [
-  '우리 이따가 또 이야기하자!',
-  '조금 있다가 다시 수다 떨자!',
-  '지금은 여기까지! 이따 또 얘기하자!'
-];
-const PARTNER_LATER_EVENING = [
-  '이제 푹 자자! 내일 아침에 또 이야기하자!',
-  '내일 또 수다 떨자! 오늘은 여기까지!'
-];
 function cheerStoreLoad(){
   try{
     const o = JSON.parse(localStorage.getItem(CHEER_STORE) || '{}');
@@ -4158,13 +4161,13 @@ function cheerStoreLoad(){
 function cheerCountKey(){ return affirmKeyOf(getNow()) + '|' + cheerSlot(); }
 function cheerCountGet(){
   const n = Number(cheerStoreLoad()[cheerCountKey()]) || 0;
-  return Math.max(0, Math.min(CHEER_LIMIT, n));
+  return Math.max(0, Math.min(CHEER_TAPS, n));
 }
 function cheerCountSet(n){
   const all = cheerStoreLoad(), today = affirmKeyOf(getNow()), key = cheerCountKey();
   const out = {};
   Object.keys(all).forEach(k => { if(k.slice(0, 10) === today) out[k] = all[k]; });  // 오늘 것만 남긴다
-  out[key] = Math.max(0, Math.min(CHEER_LIMIT, n));
+  out[key] = Math.max(0, Math.min(CHEER_TAPS, n));
   try{ localStorage.setItem(CHEER_STORE, JSON.stringify(out)); }catch(e){}
 }
 const CHEER_KINDS = ['ask', 'cheer', 'greet'];
@@ -4187,12 +4190,6 @@ function cheerTake(kind, slot){
   }
   return q.shift();
 }
-function cheerLaterMsg(slot){
-  const pool = slot === 'evening' ? PARTNER_LATER.concat(PARTNER_LATER_EVENING) : PARTNER_LATER;
-  let m = pool[Math.floor(Math.random() * pool.length)];
-  if(m === cheerLastMsg) m = pool[(pool.indexOf(m) + 1) % pool.length];
-  return m;
-}
 function cheerNextMsg(){
   const slot = cheerSlot();
   if(cheerQueue.slot !== slot){                     // 시간대가 바뀌면 대화 셔플도 새로
@@ -4202,10 +4199,13 @@ function cheerNextMsg(){
     cheerQueue.cheer = null;
   }
   const seen = cheerCountGet();
-  if(seen >= CHEER_LIMIT){                          // 이 시간대 3번 다 봤다 → 이따 다시
-    const m = cheerLaterMsg(slot);
-    cheerLastMsg = m;
-    return m;
+  if(seen >= CHEER_TAPS){                           // 이 시간대 5번째부터 → 말풍선 없음
+    return '';
+  }
+  if(seen === CHEER_LIMIT){                         // 4번째 = 마무리 인사 한 번
+    cheerCountSet(seen + 1);
+    cheerLastMsg = CHEER_CLOSING;
+    return CHEER_CLOSING;
   }
   let m = '';
   if(seen === 0){                                   // 이 시간대 첫 대사 = 인사말
@@ -4243,13 +4243,16 @@ function cheerPlace(){
   if(!el || !card || el.hidden) return;
   const cr = card.getBoundingClientRect();
   const vw = document.documentElement.clientWidth, vh = window.innerHeight;
-  /* 폭 — 시계 숫자 오른쪽과 카드 사이의 빈 하늘을 먼저 쓰고, 넓은 화면에서만 조금 더 넓힌다 */
+  /* 폭 — 시계 숫자 오른쪽과 카드 사이 빈 하늘을 우선 쓰되, 너무 좁아 세로그?아지지 않게
+     min-width 를 주고(짧은 대사는 한 줄) 최대 폭 안에서만 줄바꿈한다. */
   const clockEl = document.getElementById('clock');
   const clockRight = clockEl ? clockEl.getBoundingClientRect().right : 0;
-  const gap = Math.max(0, cr.left - 8 - clockRight);       // 시계와 카드 사이 빈 하늘
-  const room = Math.max(120, cr.left - 20);                // 카드 왼쪽으로 쓸 수 있는 전체 폭
-  const want = Math.min(340, Math.max(168, gap + 34));     // 시계를 34px만 스치는 정도
-  el.style.maxWidth = Math.max(120, Math.min(want, room, vw - 24)) + 'px';
+  const gap = Math.max(0, cr.left - 10 - clockRight);       // 시계와 카드 사이 빈 하늘
+  const room = Math.max(140, cr.left - 16);                 // 카드 왼쪽으로 쓸 수 있는 전체 폭
+  const maxW = Math.max(150, Math.min(340, Math.max(212, gap + 96), room, vw - 24));
+  const minW = Math.min(184, maxW);
+  el.style.minWidth = Math.round(minW) + 'px';
+  el.style.maxWidth = Math.round(maxW) + 'px';
   const w = el.offsetWidth, h = el.offsetHeight;
   let left = cr.left - 12 - w;                             // 카드 왼쪽에 12px 띄우고 오른쪽 정렬
   left = Math.max(8, Math.min(left, vw - w - 8));
@@ -4261,9 +4264,9 @@ function cheerPlace(){
   top = Math.max(8, Math.min(top, vh - h - 8));
   el.style.left = Math.round(left) + 'px';
   el.style.top = Math.round(top) + 'px';
-  /* 꼬리는 카드 세로 가운데를 향한다 */
+  /* 꼬리는 카드 세로 가운데를 향하고, 등근 모서리를 넘지 않게 안쪽으로 잡는다 */
   const mid = cr.top + cr.height / 2 - top;
-  const tail = Math.max(18, Math.min(h - 18, mid));
+  const tail = Math.max(Math.min(16, h / 2), Math.min(h - 16, mid));
   el.style.setProperty('--tail', Math.round(tail) + 'px');
 }
 function hidePartnerCheer(){
@@ -4278,9 +4281,13 @@ function partnerCheerTap(){
   const el = document.getElementById('partnerCheer');
   const pk = partnerPk();
   if(!el || !pk) return;
+  const msg = cheerNextMsg();
+  if(!msg){                                        // 한 시간대에 4번까지 — 5번째부터는 말풍선 없음
+    hidePartnerCheer();
+    return;
+  }
   partnerBounce();
   try{ if(soundOn) blip(); }catch(e){}
-  const msg = cheerNextMsg();
   el.setAttribute('aria-label', pk.name + '의 말: ' + msg);
   document.getElementById('cheerMsg').textContent = msg;
   el.hidden = false;
@@ -6671,10 +6678,7 @@ document.getElementById('restoreFile').addEventListener('change', e=>{
   e.target.value = '';
 });
 document.getElementById('toggleSoundSetting').addEventListener('click', parentOnly(()=>{
-  soundOn = !soundOn;
-  if(!soundOn) stopMissionSfx();
-  toast(soundOn ? '🔊 소리 켬' : '🔇 소리 끔');
-  updateSoundBtn();
+  setSoundOn(!soundOn);
 }));
 document.getElementById('resetAll').addEventListener('click', parentOnly(()=>{
   if(confirm('모든 기록(경험치·도감·오늘 할 일·공부 목록)을 지울까요?')){
@@ -6689,18 +6693,43 @@ document.getElementById('resetAll').addEventListener('click', parentOnly(()=>{
   }
 }));
 
-/* ---------- sound button ---------- */
+/* ---------- sound button ----------
+   v43 — 누를 때마다 켜기/끄기를 오가고, 라벨·색·aria-pressed 가 상태를 그대로 보여 준다.
+   켜짐(🔊 초록·눌린 모양) 에서만 효과음이 나고, 꺼짐(🔇 회색) 에서는 재생 중인 소리까지 즉시 멈춘다. */
 const soundBtn = document.getElementById('soundBtn');
+function muteAllAudio(){
+  stopMissionSfx();
+  try{
+    if(AC && AC.state === 'running') AC.suspend();
+  }catch(e){}
+  try{
+    document.querySelectorAll('audio').forEach(a => { try{ a.pause(); }catch(e){} });
+  }catch(e){}
+}
 function updateSoundBtn(){
-  soundBtn.textContent = audioUnlocked ? '🔊 소리 켜짐' : '🔊 소리 켜기';
-  soundBtn.classList.toggle('on', audioUnlocked);
+  if(!soundBtn) return;
+  soundBtn.textContent = soundOn ? '🔊 소리 켜짐' : '🔇 소리 꺼짐';
+  soundBtn.classList.toggle('on', !!soundOn);
+  soundBtn.classList.toggle('off', !soundOn);
+  soundBtn.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+  soundBtn.title = soundOn ? '효과음 켜짐 — 누르면 꺼져요' : '효과음 꺼짐 — 누르면 켜져요';
+}
+function setSoundOn(on, opts){
+  soundOn = !!on;
+  if(soundOn) unlockAudio();
+  state.sound = soundOn;
+  try{ save(); }catch(e){}
+  if(!soundOn) muteAllAudio();
+  updateSoundBtn();
+  if(!(opts && opts.silent)) toast(soundOn ? '🔊 소리 켜짐 — 이제 효과음이 나와요' : '🔇 소리 꺼짐 — 효과음이 나오지 않아요');
 }
 soundBtn.addEventListener('click', ()=>{
+  if(soundOn){ setSoundOn(false); return; }
   unlockAudio();
-  if(!audioUnlocked){ audioUnlocked = true; }
-  soundOn = true; updateSoundBtn();
-  playMissionSfx(pokeAlarm);   // 사용자 MP3 테스트 (실패하면 몬스터볼 + 팡파레)
+  setSoundOn(true);
+  playMissionSfx(pokeAlarm);      // 켰다는 걸 바로 들려 준다 (실패하면 8-bit 팡파레)
 });
+updateSoundBtn();
 
 /* ---------- confetti ---------- */
 /* 폭죽: 화면 중앙(크게) · 좌·우 두 곳(작게)에서 몬스터볼이 사방으로 팡 터진다 */
