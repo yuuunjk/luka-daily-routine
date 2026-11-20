@@ -86,6 +86,7 @@
   .subtabs .lbl{display:flex; align-items:center; gap:5px; margin:3px 8px 5px;
     font-size:14px; font-weight:900; color:#7c93bd; letter-spacing:-.2px;}
   .subtabs .lbl .br{font-size:16px; color:#b9caea;}
+  .subtabs.nolabel{padding-top:7px; padding-bottom:7px;}
   .subtabs .row{display:flex; align-items:center; justify-content:flex-start; gap:6px;
     overflow-x:auto; padding:2px; scrollbar-width:none;}
   .subtabs .row::-webkit-scrollbar{display:none;}
@@ -444,8 +445,7 @@
     <!-- 순위 -->
     <section id="tab-standings" class="hide">
       <div class="chips" id="standingSports"></div>
-      <div class="subtabs" id="leagueTabs">
-        <div class="lbl">리그 고르기</div>
+      <div class="subtabs nolabel" id="leagueTabs">
         <div class="row" id="leagueChips"></div>
       </div>
       <div id="standingsBody"></div>
