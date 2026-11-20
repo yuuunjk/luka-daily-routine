@@ -1097,20 +1097,21 @@
   .self-btn.on .box{background:var(--green);border-color:var(--green-dark);color:#fff;}
   /* '오늘의 공부' 제목 옆의 작은 체크 칩 — 예전 강화 XP 배너 자리 */
   /* v57 — 알약(999px) 대신 깔끔한 둥근 직사각형 10px */
+  /* v58 — 제목과 함께 한 단계 더 키운다 (12.5px → 15px) */
   .self-chip{
-    display:inline-flex;align-items:center;gap:6px;border:2px solid #e6d9b0;border-radius:10px;
-    background:#fff;color:#7a5b00;font-family:inherit;font-weight:900;font-size:12.5px;
-    padding:2px 9px 2px 3px;cursor:pointer;line-height:1.2;flex:0 0 auto;
+    display:inline-flex;align-items:center;gap:7px;border:2px solid #e6d9b0;border-radius:10px;
+    background:#fff;color:#7a5b00;font-family:inherit;font-weight:900;font-size:15px;
+    padding:4px 11px 4px 4px;cursor:pointer;line-height:1.2;flex:0 0 auto;
     box-shadow:0 1px 3px rgba(120,100,50,.12);transition:background .15s,border-color .15s,transform .12s;
   }
   .self-chip:active{transform:scale(.97);}
   .self-chip .box{
-    width:21px;height:21px;border-radius:7px;border:2px solid #d9c98f;background:#fff;
-    display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;flex:0 0 auto;
+    width:26px;height:26px;border-radius:7px;border:2px solid #d9c98f;background:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:15px;color:transparent;flex:0 0 auto;
   }
   .self-chip.on{background:#f3fbe9;border-color:#bfe3ab;color:#2e7d32;}
   .self-chip.on .box{background:var(--green);border-color:var(--green-dark);color:#fff;}
-  .self-chip .add{font-size:10.5px;font-weight:900;color:#a8791a;background:#fff7de;border-radius:6px;padding:1px 6px;}
+  .self-chip .add{font-size:12.5px;font-weight:900;color:#a8791a;background:#fff7de;border-radius:6px;padding:2px 7px;}
   .self-chip.on .add{background:#e6f7dc;color:#3f7a2a;}
   .self-prog{display:flex;align-items:center;gap:10px;min-width:0;}
   /* 게이지 칸 — 8칸을 다 채우면 ⚡강화권 1장. 설명 문구 없이 칸과 숫자만으로 읽힌다. */
@@ -1150,8 +1151,10 @@
     padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0;
   }
   .study-main h2,.study-side h3{margin:0;font-size:19px;font-weight:900;color:#54452f;display:flex;align-items:baseline;gap:8px;}
-  .study-main h2 .d{font-size:13px;font-weight:800;color:var(--ink2);}
-  .study-main h2{flex-wrap:wrap;row-gap:4px;}
+  /* v58 — 날짜·요일이 제목 앞으로 오고, 제목 글자를 시원하게 키운다 */
+  .study-main h2{font-size:22px;flex-wrap:wrap;row-gap:4px;}
+  .study-main h2 .hhd{min-width:0;}
+  .study-main h2 .d{font-size:17px;font-weight:900;color:#7a6849;}
   .study-foot{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding-top:1px;}
   .sf-bar{flex:1;height:11px;background:#eee7d2;border-radius:999px;overflow:hidden;}
   .sf-fill{height:100%;width:0;background:linear-gradient(90deg,#9fe06f,var(--green));border-radius:999px;transition:width .3s;}
@@ -1685,6 +1688,32 @@
     .dex-head .mile{font-size:11px;}
     .fpill{padding:5px 10px;font-size:12px;}
     .dex-search{font-size:12px;padding:5px 11px;}
+  }
+  /* v58 — 오늘의 공부 제목 줄(날짜·제목·스스로 했어요·시트 상태)이 좁은 화면에서 두 줄로 접히지 않도록
+     글자를 단계별로만 줄인다. 넓은 화면(1280 등)은 위 기본값 그대로 크게 보인다. */
+  @media (max-width:1160px){
+    .study-main h2{font-size:21px;}
+    .study-main h2 .d{font-size:16px;}
+    .self-chip{font-size:14px;gap:6px;padding:3px 9px 3px 3px;}
+    .self-chip .box{width:24px;height:24px;font-size:14px;}
+    .self-chip .add{font-size:11.5px;padding:1px 6px;}
+    .sheet-sync{gap:6px;}
+  }
+  @media (max-width:1060px){
+    .study-main h2{font-size:20px;}
+    .study-main h2 .d{font-size:15px;}
+    .self-chip{font-size:13.5px;}
+    .self-chip .box{width:23px;height:23px;font-size:13px;}
+    .self-chip .add{font-size:11px;}
+    .sheet-sync{gap:5px;font-size:11px;}
+    .sheet-sync #sheetTx{font-size:11px;padding:3px 9px;}
+    .sheet-btn{font-size:11px;padding:4px 10px;}
+  }
+  /* 휴대폰처럼 아주 좁은 화면: 카드 폭에 맞춰 칩을 예전 크기로 되돌린다 */
+  @media (max-width:560px){
+    .self-chip{font-size:12.5px;gap:5px;padding:2px 8px 2px 3px;}
+    .self-chip .box{width:21px;height:21px;font-size:12px;}
+    .self-chip .add{font-size:10.5px;padding:1px 5px;}
   }
   @media (max-width:880px){
     .dex-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:132px;}
@@ -2344,7 +2373,7 @@
   <div class="study" id="study">
     <div class="study-body">
       <div class="study-main">
-        <h2>📚 오늘의 공부 <span class="d" id="studyDate"></span>
+        <h2><span class="hhd">📚 <span class="d" id="studyDate"></span> 오늘의 공부</span>
           <button class="self-chip" id="selfBtn" type="button" title="오늘의 공부를 스스로 했어요 — ⚡ 강화 XP +1">
             <span class="box">✓</span><span>스스로 했어요</span><span class="add">+1 ⚡</span>
           </button>
