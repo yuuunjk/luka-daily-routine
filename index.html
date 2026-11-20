@@ -3195,13 +3195,13 @@ document.addEventListener('error', e => {
 /* ---------- battle stats (base HP / 공격 / 방어, DEX에서 가져옴) ----------
    능력치 = 기본값 × 희귀도 보정 × 개체값(IV) 보정 +  강화 보너스
    · 희귀·전설은 기본 능력치가 크고 IV 하한도 높다 (전설은 거의 항상 최상급 근처)
-   · 일반 포켓몬도 13% 확률로 IV 가 확 터진다 (✨ 최상급 개체) */
+   · 일반 포켓몬은 20% 확률로 IV 가 확 터진다 (✨ 최상급 개체) — v49 에서 13% → 20% */
 const DEX_BY_ID = {};
 DEX.forEach(p => { DEX_BY_ID[p.id] = p; });
 const LV_UP = [10,5,5];                    // 강화 1단계당 HP/공격/방어 상승
 const IV_MAX = 31;                          // 개체값 0~31 — 포획할 때 한 번 정해지고 강화해도 그대로
 const IV_MIN = [4, 14, 22];                 // 티어별 최소 개체값: 일반 / 희귀 / 전설·환상
-const IV_JACKPOT = [0.13, 0.30, 0.65];      // IV 가 28~31 로 터질 확률
+const IV_JACKPOT = [0.20, 0.30, 0.65];      // IV 가 28~31 로 터질 확률 (v49 — 일반 0.13 → 0.20)
 const TIER_STAT_MUL = [1.0, 1.12, 1.30];    // 희귀도별 기본 능력치 보정
 const IV_TOP = 28;                          // ✨ 최상급 개체 기준
 function rollIv(tier){
