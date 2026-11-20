@@ -940,6 +940,13 @@
   .pbadge.manual{background:#fff0cf;color:#a86a00;}
   .pnow{font-size:11.5px;font-weight:800;color:#6b5a3e;background:#fffdf0;
     border:1.5px dashed #e6dcc0;border-radius:9px;padding:6px 9px;margin-bottom:6px;line-height:1.35;}
+  /* 🍎 v48 — 부모 설정 과일 지급: +1 큰 버튼 옆에 작은 −1 (실수로 줄 때만, 0 아래로는 안 내려간다) */
+  .fgive .frow{display:flex;gap:5px;min-width:0;}
+  .fgive .fplus{flex:1 1 auto;min-width:0;}
+  .fgive .fminus{flex:0 0 auto;width:30px;padding:7px 0;background:#fdeceb;color:#c0392b;font-size:12px;}
+  .fgive .fminus:active{transform:translateY(1px);}
+  .fgive .fplus.sp{background:#fff6d8;color:#8a6a00;}
+  .fgive .fplus:disabled,.fgive .fminus:disabled{opacity:.4;}
   .ptext{width:100%;font-family:inherit;font-size:12.5px;font-weight:800;color:#4a5a44;background:#fff;
     border:2px solid #dfe5d4;border-radius:10px;padding:7px 9px;resize:none;line-height:1.35;}
   .ptext:focus{outline:3px solid rgba(255,217,77,.5);outline-offset:-1px;}
@@ -2766,7 +2773,17 @@
 
     <!-- 탭 3: 보상 · 도감 -->
     <div class="ppane" data-ppane="reward" role="tabpanel" aria-label="보상·도감">
-      <div class="pgrid" style="margin-top:2px">
+      <!-- v48 — 🍎 파트너 간식(과일) 직접 지급 · 실수로 줄 때만 −1 -->
+      <div class="psec first">🍎 파트너 간식(과일) 지급</div>
+      <div class="pnow" id="fruitNow">보유 🍎 0개 · 🌟 0개</div>
+      <div class="pgrid fgive">
+        <span class="frow"><button class="pbtn fplus" id="fruitPlus" type="button">🍎 과일 +1</button><button class="pbtn fminus" id="fruitMinus" type="button" aria-label="과일 1개 빼기" title="과일 1개 빼기">−1</button></span>
+        <span class="frow"><button class="pbtn fplus sp" id="specialPlus" type="button">🌟 스페셜 과일 +1</button><button class="pbtn fminus" id="specialMinus" type="button" aria-label="스페셜 과일 1개 빼기" title="스페셜 과일 1개 빼기">−1</button></span>
+      </div>
+      <span class="phint">누르면 바로 지급되고 헤더 파트너 카드 배지·저장까지 함께 바뀌어요. −1은 실수로 줬을 때만 쓰고, 0개 아래로는 내려가지 않아요.</span>
+
+      <div class="psec">보상 · 테스트</div>
+      <div class="pgrid">
         <button class="pbtn wide" id="resetTasks">🔄 오늘 할 일·경험치 리셋</button>
         <button class="pbtn" id="testXp">XP +50 테스트</button>
         <button class="pbtn" id="testSelf">⚡ 강화 XP +1</button>
@@ -6697,6 +6714,7 @@ function switchPanelTab(name, opts){
   panel.querySelectorAll('.ppane').forEach(p=> p.classList.toggle('show', p.dataset.ppane === name));
   if(name === 'say'){ renderAffirmSettings(); renderMissionSettings(); }
   if(name === 'time'){ renderPanelStatus(); renderPanelMode(); }
+  if(name === 'reward'){ renderFruitSettings(); }        // 🍎 v48 — 열 때마다 지금 보유량으로 맞춘다
   const body = document.getElementById('setBody');
   if(body && !(opts && opts.silent)) body.scrollTop = 0;
 }
@@ -7257,6 +7275,41 @@ document.getElementById('testPoke1').addEventListener('click', parentOnly(()=> r
 document.getElementById('testPoke3').addEventListener('click', parentOnly(()=> registerTestPokemon(3)));
 /* v45 — 🧪 테스트 탭: 루틴별 대화 횟수를 지금 처음으로 (설정창은 닫지 않는다) */
 document.getElementById('testCheerReset').addEventListener('click', parentOnly(()=> resetPartnerCheer()));
+
+/* ---------- 🍎 v48 — 🎁 보상·도감: 파트너 간식(과일) 직접 지급 · 차감 ----------
+   아이가 '오늘의 공부'로 모으는 과일을 부모가 필요할 때 바로 주거나 되돌린다.
+   state.fruits / state.specialFruits 를 그대로 고치므로 헤더 배지·파트너 팝업 버튼·저장이
+   한 번에 맞고, 설정창은 닫지 않는다(토스트만 잠깐 뜬다). */
+function renderFruitSettings(){
+  const el = document.getElementById('fruitNow');
+  if(!el) return;
+  const f = fruitCount(), sp = specialCount();
+  el.innerHTML = `보유 <b>🍎 ${f}개</b> · <b>🌟 ${sp}개</b>`;
+  /* 0개면 −1, 999개면 +1 을 잠가 둔다 — 눌러도 아무 일이 없는 버튼을 두지 않는다 */
+  const fm = document.getElementById('fruitMinus'), sm = document.getElementById('specialMinus');
+  const fp = document.getElementById('fruitPlus'), spb = document.getElementById('specialPlus');
+  if(fm) fm.disabled = f <= 0;
+  if(sm) sm.disabled = sp <= 0;
+  if(fp) fp.disabled = f >= FRUIT_MAX;
+  if(spb) spb.disabled = sp >= FRUIT_MAX;
+}
+function parentFruitStep(special, delta){
+  const cur = special ? specialCount() : fruitCount();
+  const next = cur + delta;
+  if(next < 0 || next > FRUIT_MAX){ renderFruitSettings(); return; }   // 최소 0 · 최대 999 유지
+  if(special) setSpecialFruits(next); else setFruits(next);
+  save();
+  fruitBumpBadge();
+  renderFruitSettings();
+  const what = special ? '🌟 스페셜 과일' : '🍎 과일';
+  toast(delta > 0 ? `${what} 1개를 선물했어요` : `${what} 1개를 되돌렸어요`);
+  return next;
+}
+document.getElementById('fruitPlus').addEventListener('click', parentOnly(()=> parentFruitStep(false, +1)));
+document.getElementById('fruitMinus').addEventListener('click', parentOnly(()=> parentFruitStep(false, -1)));
+document.getElementById('specialPlus').addEventListener('click', parentOnly(()=> parentFruitStep(true, +1)));
+document.getElementById('specialMinus').addEventListener('click', parentOnly(()=> parentFruitStep(true, -1)));
+renderFruitSettings();
 
 /* ---------- backup / restore ---------- */
 function backupData(){
