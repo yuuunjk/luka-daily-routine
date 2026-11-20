@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LUKA 스포츠 · 오늘 경기</title>
+<meta name="description" content="광고도 댓글도 없는 우리 아이 스포츠 앱. 오늘 경기, 순위, 주요 소식을 깔끔하게.">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./app-icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="./app-icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="LUKA 스포츠">
+<style>
+  :root{
+    --ink:#16213e; --sub:#5b6b8c; --line:#e3edfb;
+    --blue:#2563eb; --blue-dark:#1d4ed8; --sky:#eaf3ff;
+    --red:#ef4444; --green:#0f9d58; --amber:#f59e0b;
+    --card:#ffffff; --fav:#fff6d5; --fav-line:#f6c945;
+    --radius:26px;
+    --shadow:0 8px 22px rgba(28,68,140,.09);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,#e7f2ff 0%,#f4f9ff 32%,#ffffff 100%);
+    background-attachment:fixed;
+    font-size:20px; line-height:1.45;
+    padding-bottom:40px;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 16px;}
+
+  /* ── header ─────────────────────────────── */
+  header{padding:22px 0 6px;}
+  .top{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .brand{display:flex; align-items:center; gap:10px; font-size:32px; font-weight:900; letter-spacing:-.5px;}
+  .brand .ball{font-size:34px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.15));}
+  .brand small{font-size:16px; font-weight:700; color:var(--sub); display:block; letter-spacing:0;}
+  .hd-right{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+  .today-label{font-size:19px; font-weight:800; color:var(--sub); background:#fff; border:2px solid var(--line);
+    padding:8px 16px; border-radius:999px;}
+  button{font-family:inherit; font-size:19px; cursor:pointer; border:0; background:none; color:inherit;}
+  .btn-refresh{background:#fff; border:2px solid var(--line); border-radius:999px; padding:9px 16px;
+    font-weight:800; color:var(--blue); min-height:46px;}
+  .btn-refresh:active{transform:scale(.97);}
+
+  /* ── tabs ───────────────────────────────── */
+  .tabs{display:flex; gap:10px; margin:16px 0 4px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{background:#fff; border:2px solid var(--line); border-radius:999px; padding:12px 20px;
+    font-size:20px; font-weight:800; color:var(--sub); white-space:nowrap; min-height:56px;}
+  .tab.on{background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 6px 16px rgba(37,99,235,.28);}
+
+  /* ── chips ──────────────────────────────── */
+  .chips{display:flex; gap:8px; overflow-x:auto; padding:10px 2px 6px; scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{background:#fff; border:2px solid var(--line); border-radius:999px; padding:9px 16px;
+    font-size:19px; font-weight:700; color:var(--sub); white-space:nowrap; min-height:48px;}
+  .chip.on{background:#dbeafe; border-color:#93c5fd; color:var(--blue-dark);}
+  .chip .num{font-size:15px; font-weight:800; opacity:.7; margin-left:4px;}
+
+  /* ── cards ──────────────────────────────── */
+  .sectitle{display:flex; align-items:center; gap:10px; margin:26px 0 12px; font-size:23px; font-weight:900;}
+  .sectitle .count{font-size:16px; font-weight:800; color:var(--sub); background:#fff;
+    border:2px solid var(--line); border-radius:999px; padding:2px 12px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px;}
+  .card{background:var(--card); border:2px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px 14px; box-shadow:var(--shadow); position:relative; overflow:hidden;}
+  .card.live{border:3px solid #ffc9c9; background:linear-gradient(180deg,#fff8f8,#fff);}
+  .card.done{background:#fbfdff;}
+  .card.fav{border-color:var(--fav-line); background:linear-gradient(180deg,var(--fav),#fff);}
+  .card .hd{display:flex; align-items:center; gap:8px; justify-content:space-between;}
+  .league{font-size:17px; font-weight:800; color:var(--sub); display:flex; gap:6px; align-items:center;}
+  .badge{font-size:16px; font-weight:900; padding:4px 12px; border-radius:999px; white-space:nowrap;}
+  .badge.live{color:#fff; background:var(--red);}
+  .badge.live .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#fff;
+    margin-right:6px; vertical-align:2px; animation:blink 1.4s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  .badge.upcoming{color:#8a5b00; background:#fff1cf;}
+  .badge.done{color:#3d4a6b; background:#eef2f8;}
+  .badge.cancel{color:#7a7f8c; background:#f0f0f2;}
+
+  .match{display:flex; align-items:center; gap:6px; margin:12px 0 6px;}
+  .team{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0;}
+  .team .logo{position:relative; width:56px; height:56px; display:grid; place-items:center;}
+  .team .logo::before{content:attr(data-initial); position:absolute; inset:0; display:grid; place-items:center;
+    background:#e8eefb; color:#5b6b8c; border-radius:50%; font-size:22px; font-weight:900;}
+  .team .logo img{position:relative; width:100%; height:100%; object-fit:contain;}
+  .team .name{font-size:21px; font-weight:800; text-align:center; line-height:1.2;
+    word-break:keep-all; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+  .team.win .name{color:var(--blue-dark);}
+  .team .crown{font-size:14px; height:16px; line-height:1;}
+  .score{display:flex; align-items:center; gap:8px; font-size:46px; font-weight:900; letter-spacing:-1px;
+    min-width:120px; justify-content:center;}
+  .score .vs{font-size:26px; color:#a8b6ce; font-weight:800; letter-spacing:0;}
+  .card .ft{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px;
+    font-size:17px; color:var(--sub); border-top:1px dashed var(--line); padding-top:9px; flex-wrap:wrap;}
+  .card .ft .st{font-weight:800; color:#3d4a6b;}
+  .card.live .ft .st{color:var(--red);}
+  .event-title{font-size:22px; font-weight:800; margin:10px 0 4px; word-break:keep-all;}
+  .mytag{font-size:15px; font-weight:900; color:#8a5b00; background:#ffe9a8; border-radius:999px; padding:2px 10px;}
+
+  /* ── tables ─────────────────────────────── */
+  .tablewrap{background:#fff; border:2px solid var(--line); border-radius:var(--radius); overflow:auto;
+    box-shadow:var(--shadow); margin-top:12px;}
+  table{width:100%; border-collapse:collapse; font-size:19px; min-width:560px;}
+  th{position:sticky; top:0; background:#f2f7ff; color:var(--sub); font-size:16px; font-weight:800;
+    padding:12px 8px; text-align:center; border-bottom:2px solid var(--line); white-space:nowrap;}
+  td{padding:12px 8px; text-align:center; border-bottom:1px solid #f0f4fb; font-weight:700;}
+  tr:last-child td{border-bottom:0;}
+  tr.fav td{background:var(--fav);}
+  td.teamcell{text-align:left; font-weight:900; font-size:20px;}
+  td.teamcell .emb{width:30px; height:30px; object-fit:contain; vertical-align:middle; margin-right:8px;}
+  td.rank{font-weight:900; color:var(--blue);}
+  .grp{font-size:14px; font-weight:800; color:#7c8aa5; background:#eef3fb; border-radius:999px;
+    padding:1px 8px; margin-left:6px; vertical-align:2px;}
+  .last5{display:inline-flex; gap:3px;}
+  .last5 i{width:11px; height:11px; border-radius:50%; display:inline-block;}
+  .last5 .W{background:var(--green);} .last5 .L{background:#e0574a;} .last5 .D{background:#c3ccdd;}
+  .empty{background:#fff; border:2px dashed var(--line); border-radius:var(--radius); padding:34px 20px;
+    text-align:center; color:var(--sub); font-size:20px; font-weight:700; margin-top:14px;}
+
+  /* ── news ───────────────────────────────── */
+  .news{background:#fff; border:2px solid var(--line); border-radius:var(--radius); padding:18px 20px;
+    box-shadow:var(--shadow); margin-bottom:14px;}
+  .news .tagrow{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .news .sectag{font-size:15px; font-weight:900; color:var(--blue-dark); background:#e2efff;
+    border-radius:999px; padding:3px 12px;}
+  .news h3{margin:0 0 10px; font-size:25px; line-height:1.32; letter-spacing:-.4px; word-break:keep-all;}
+  .news ol{margin:0; padding-left:0; list-style:none; counter-reset:s;}
+  .news ol li{position:relative; padding-left:30px; margin:8px 0; font-size:20px; color:#2b3a55; word-break:keep-all;}
+  .news ol li::before{counter-increment:s; content:counter(s); position:absolute; left:0; top:1px;
+    width:22px; height:22px; background:#e2efff; color:var(--blue-dark); border-radius:50%;
+    font-size:14px; font-weight:900; display:grid; place-items:center;}
+  .news .nf{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px;
+    font-size:17px; color:var(--sub); flex-wrap:wrap;}
+  .news .nf a{color:var(--blue); font-weight:800; text-decoration:none;
+    border:2px solid #d6e6ff; border-radius:999px; padding:6px 14px; min-height:40px; display:inline-flex; align-items:center;}
+  .news .nf a:active{background:#eaf3ff;}
+
+  /* ── settings ───────────────────────────── */
+  .panel{background:#fff; border:2px solid var(--line); border-radius:var(--radius); padding:20px;
+    box-shadow:var(--shadow); margin-bottom:16px;}
+  .panel h3{margin:0 0 4px; font-size:23px; font-weight:900;}
+  .panel p.hint{margin:0 0 14px; color:var(--sub); font-size:17px; font-weight:700;}
+  .teams{display:flex; gap:8px; flex-wrap:wrap;}
+  .teambtn{border:2px solid var(--line); background:#fff; border-radius:999px; padding:9px 16px;
+    font-size:18px; font-weight:800; color:var(--sub); min-height:48px;}
+  .teambtn.on{background:#fff3c9; border-color:var(--fav-line); color:#7a5200;}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0;
+    border-bottom:1px solid #f0f4fb; flex-wrap:wrap;}
+  .row:last-child{border-bottom:0;}
+  .row .k{font-size:19px; font-weight:800;}
+  .row .v{font-size:18px; color:var(--sub); font-weight:700; text-align:right;}
+  .seg{display:flex; gap:6px; flex-wrap:wrap;}
+  .seg button{border:2px solid var(--line); background:#fff; border-radius:999px; padding:8px 14px;
+    font-size:17px; font-weight:800; color:var(--sub); min-height:44px;}
+  .seg button.on{background:var(--blue); border-color:var(--blue); color:#fff;}
+  .ghost{background:#fff; border:2px solid var(--line); border-radius:999px; padding:10px 18px;
+    font-weight:800; color:var(--red); min-height:48px;}
+
+  /* ── misc ───────────────────────────────── */
+  .banner{display:none; background:#fff4e5; border:2px solid #ffd9a8; color:#7a4a00;
+    border-radius:18px; padding:12px 16px; font-size:17px; font-weight:700; margin-top:12px;}
+  .banner.show{display:block;}
+  .livebar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px;
+    font-size:17px; color:var(--sub); font-weight:700; flex-wrap:wrap;}
+  .livetoggle{border:2px solid var(--line); background:#fff; border-radius:999px; padding:8px 16px;
+    font-size:17px; font-weight:800; color:var(--sub); min-height:44px;}
+  .livetoggle.on{background:#ffe8e8; border-color:#ffb3b3; color:#b91c1c;}
+  footer{margin-top:30px; text-align:center; color:#93a2bd; font-size:15px; font-weight:700; line-height:1.6;}
+  .hide{display:none !important;}
+  @media (max-width:520px){
+    body{font-size:19px;}
+    .brand{font-size:27px;}
+    .score{font-size:38px; min-width:96px;}
+    .news h3{font-size:22px;}
+    th,td{padding:10px 6px; font-size:17px;}
+    td.teamcell{font-size:18px;}
+    .grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <div class="brand"><span class="ball">⚽</span><span>LUKA 스포츠<small>광고 없음 · 댓글 없음</small></span></div>
+      <div class="hd-right">
+        <span class="today-label" id="todayLabel">오늘</span>
+        <button class="btn-refresh" id="refreshBtn">🔄 새로고침</button>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-tab="today">🔴 오늘 경기</button>
+      <button class="tab" data-tab="standings">🏆 순위</button>
+      <button class="tab" data-tab="news">📰 주요 소식</button>
+      <button class="tab" data-tab="settings">⚙️ 설정</button>
+    </nav>
+    <div class="banner" id="banner"></div>
+  </header>
+
+  <main>
+    <!-- 오늘 경기 -->
+    <section id="tab-today">
+      <div class="chips" id="sportChips"></div>
+      <div class="livebar">
+        <span id="liveInfo">5분마다 새로 받아요</span>
+        <button class="livetoggle" id="liveToggle">🔄 실시간</button>
+      </div>
+      <div id="todayBody"></div>
+    </section>
+
+    <!-- 순위 -->
+    <section id="tab-standings" class="hide">
+      <div class="chips" id="standingSports"></div>
+      <div class="chips" id="leagueChips"></div>
+      <div id="standingsBody"></div>
+    </section>
+
+    <!-- 주요 소식 -->
+    <section id="tab-news" class="hide">
+      <div class="chips" id="newsChips"></div>
+      <div id="newsBody"></div>
+    </section>
+
+    <!-- 설정 -->
+    <section id="tab-settings" class="hide">
+      <div class="panel">
+        <h3>⭐ 우리 팀</h3>
+        <p class="hint">응원하는 팀을 눌러 두면 카드와 순위에서 반짝반짝 표시돼요.</p>
+        <div id="favSports"></div>
+      </div>
+      <div class="panel">
+        <h3>⏱️ 자동 새로고침</h3>
+        <p class="hint">앱을 켜 두면 이 간격으로 새 소식을 받아요.</p>
+        <div class="seg" id="intervalSeg"></div>
+      </div>
+      <div class="panel">
+        <h3>ℹ️ 지금 상태</h3>
+        <div class="row"><span class="k">마지막 업데이트</span><span class="v" id="sUpdated">-</span></div>
+        <div class="row"><span class="k">실시간 직접 연결</span><span class="v" id="sDirect">확인 중…</span></div>
+        <div class="row"><span class="k">오늘 경기 수</span><span class="v" id="sGames">-</span></div>
+        <div class="row"><span class="k">소식 수</span><span class="v" id="sNews">-</span></div>
+      </div>
+      <div class="panel">
+        <h3>🧹 처음으로</h3>
+        <p class="hint">우리 팀과 설정을 지워요. 경기 정보는 그대로예요.</p>
+        <button class="ghost" id="resetBtn">설정 지우기</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    데이터: 네이버 스포츠 (경기·순위·기사 목록)<br>
+    기사는 제목과 3줄 요약, 원문 링크만 보여 줘요. 광고와 댓글은 없어요.
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* 화면에 보이지 않는 진단용 기록 — 오류 0건 확인에 쓴다 */
+window.__errs = [];
+addEventListener("error", (e) => window.__errs.push(String(e.message || e.error)));
+addEventListener("unhandledrejection", (e) => window.__errs.push("rejection: " + String(e.reason)));
+const $ = (sel, root = document) => root.querySelector(sel);
+const WEEK = ["일","월","화","수","목","금","토"];
+const SPORT_EMOJI = {야구:"⚾", 해외야구:"⚾", 축구:"⚽", 해외축구:"⚽", 농구:"🏀", 배구:"🏐", 골프:"⛳", 일반:"🏅"};
+const SPORTS = ["전체","야구","해외야구","축구","해외축구","농구","배구","골프","일반"];
+const KST_OFFSET = 9 * 60 * 60 * 1000;
+
+const state = {
+  tab: "today",
+  sport: "전체",
+  standingSport: null,
+  league: null,
+  newsSport: "전체",
+  today: null,
+  standings: null,
+  news: null,
+  favorites: loadFav(),
+  interval: Number(localStorage.getItem("sports.interval") ?? 5),
+  liveMode: localStorage.getItem("sports.live") === "1",
+  directOK: null,
+  teamsKo: null,
+  directTimer: null,
+  directGames: null,
+};
+
+/* ── 저장소 ─────────────────────────────── */
+function loadFav(){
+  try { return JSON.parse(localStorage.getItem("sports.fav") || "[]"); } catch { return []; }
+}
+function saveFav(){
+  localStorage.setItem("sports.fav", JSON.stringify(state.favorites));
+}
+const isFav = (team) => !!team && state.favorites.includes(team);
+
+/* ── 유틸 ──────────────────────────────── */
+function kstNow(){ return new Date(Date.now() + (new Date().getTimezoneOffset()*60000) + KST_OFFSET); }
+function fmtToday(){
+  const d = kstNow();
+  return `${d.getMonth()+1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`;
+}
+function relTime(iso){
+  if (!iso) return "";
+  const t = Date.parse(iso.length <= 19 ? iso : iso);
+  if (!t) return "";
+  const diff = Date.now() - t;
+  const min = Math.round(diff / 60000);
+  if (min < 1) return "방금 전";
+  if (min < 60) return `${min}분 전`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `${h}시간 전`;
+  const d = Math.round(h / 24);
+  if (d < 7) return `${d}일 전`;
+  const dt = new Date(t);
+  return `${dt.getMonth()+1}월 ${dt.getDate()}일`;
+}
+function fmtUpdated(iso){
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const hh = String(d.getHours()).padStart(2,"0");
+  const mm = String(d.getMinutes()).padStart(2,"0");
+  return `${d.getMonth()+1}월 ${d.getDate()}일 ${hh}:${mm}`;
+}
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function initial(name){ return name ? name.trim().slice(0,1) : "?"; }
+function rate3(x){
+  if (x === null || x === undefined || x === "") return "-";
+  const n = Number(x);
+  if (Number.isNaN(n)) return String(x);
+  return n.toFixed(3).replace(/^0/, "0");
+}
+async function getJSON(path){
+  const res = await fetch(`${path}?t=${Date.now()}`, {cache:"no-store"});
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+/* ── 데이터 받기 ────────────────────────── */
+async function loadAll(){
+  const banner = $("#banner");
+  banner.classList.remove("show");
+  const results = await Promise.allSettled([
+    getJSON("./data/today.json"),
+    getJSON("./data/standings.json"),
+    getJSON("./data/news.json"),
+    getJSON("./data/teams-ko.json"),
+  ]);
+  const [t, s, n, k] = results;
+  if (k.status === "fulfilled" && k.value) state.teamsKo = k.value;
+  if (t.status === "fulfilled") state.today = t.value;
+  if (s.status === "fulfilled") state.standings = s.value;
+  if (n.status === "fulfilled") state.news = n.value;
+
+  const failed = results.filter(r => r.status === "rejected").length;
+  if (failed >= 2){
+    banner.textContent = "지금 인터넷이 잘 안 되는 것 같아요. 잠시 뒤 🔄 새로고침을 눌러 보세요.";
+    banner.classList.add("show");
+  }
+  if (!state.standingSport && state.standings?.leagues?.length){
+    state.standingSport = state.standings.leagues[0].sport;
+    state.league = state.standings.leagues[0].id;
+  }
+  renderAll();
+}
+
+/* ── 오늘 경기 ─────────────────────────── */
+function gameList(){
+  const base = state.today?.games || [];
+  if (!state.directGames) return base;
+  const byId = new Map(base.map(g => [g.id, g]));
+  for (const g of state.directGames){
+    if (byId.has(g.id)){
+      const old = byId.get(g.id);
+      byId.set(g.id, {...old, ...g, sport: old.sport || g.sport, emoji: old.emoji || g.emoji});
+    }
+  }
+  return [...byId.values()];
+}
+function filteredGames(){
+  const all = gameList().filter(g => state.sport === "전체" || g.sport === state.sport);
+  return all;
+}
+function sportCounts(){
+  const out = {"전체": gameList().length};
+  for (const g of gameList()) out[g.sport] = (out[g.sport] || 0) + 1;
+  return out;
+}
+function renderSportChips(){
+  const counts = sportCounts();
+  const chips = SPORTS.slice();
+  $("#sportChips").innerHTML = chips.map(s => `
+    <button class="chip ${state.sport===s?"on":""}" data-sport="${esc(s)}">
+      ${s === "전체" ? "🏟️ 전체" : `${SPORT_EMOJI[s]||"🏅"} ${esc(s)}`}<span class="num">${counts[s]||0}</span>
+    </button>`).join("");
+  $("#sportChips").querySelectorAll(".chip").forEach(btn => {
+    btn.onclick = () => { state.sport = btn.dataset.sport; renderSportChips(); renderToday(); };
+  });
+}
+function teamBlock(t, win){
+  if (!t || !t.name) return "";
+  const logo = t.emblem
+    ? `<span class="logo" data-initial="${esc(initial(t.name))}"><img src="${esc(t.emblem)}" alt="" loading="lazy" onerror="this.remove()"></span>`
+    : `<span class="logo" data-initial="${esc(initial(t.name))}"></span>`;
+  return `<div class="team ${win?"win":""}">
+      ${logo}
+      <span class="name">${esc(t.name)}</span>
+      <span class="crown">${win ? "👑" : ""}</span>
+    </div>`;
+}
+function gameCard(g){
+  const fav = isFav(g.home?.name) || isFav(g.away?.name);
+  const cls = ["card", g.state, fav ? "fav" : ""].join(" ");
+  const badge = {
+    live: `<span class="badge live"><span class="dot"></span>LIVE</span>`,
+    upcoming: `<span class="badge upcoming">🕒 예정</span>`,
+    done: `<span class="badge done">✅ 종료</span>`,
+    cancel: `<span class="badge cancel">⛔ 취소</span>`,
+  }[g.state] || "";
+
+  const homeWin = g.winner === "HOME" && g.state === "done";
+  const awayWin = g.winner === "AWAY" && g.state === "done";
+
+  let middle;
+  if (!g.away || !g.away.name){
+    middle = "";
+  } else if (g.state === "upcoming"){
+    middle = `<div class="score"><span class="vs">vs</span></div>`;
+  } else {
+    const hs = g.home?.score ?? 0, as = g.away?.score ?? 0;
+    middle = `<div class="score">${hs}<span class="vs">:</span>${as}</div>`;
+  }
+
+  const match = (!g.away || !g.away.name)
+    ? `<div class="event-title">${esc(g.home?.name || g.leagueName)}</div>`
+    : `<div class="match">${teamBlock(g.home, homeWin)}${middle}${teamBlock(g.away, awayWin)}</div>`;
+
+  const st = g.state === "live" ? (g.status || "진행 중") : "";
+  const when = g.state === "upcoming" ? `⏰ ${g.time}` : (g.state === "done" ? (g.yesterday ? "어제" : g.time) : g.time);
+  const bits = [st, when, g.leagueName, g.stadium, g.channel].filter(Boolean);
+  return `<article class="${cls}">
+      <div class="hd">
+        <span class="league">${g.emoji || "🏅"} ${esc(g.leagueName)}</span>
+        <span style="display:flex;gap:6px;align-items:center">${fav?'<span class="mytag">⭐ 우리 팀</span>':""}${badge}</span>
+      </div>
+      ${match}
+      <div class="ft"><span class="st">${esc(bits.join(" · "))}</span></div>
+    </article>`;
+}
+function renderToday(){
+  const games = filteredGames();
+  const body = $("#todayBody");
+  if (!state.today){
+    body.innerHTML = `<div class="empty">경기 정보를 불러오는 중이에요…</div>`;
+    return;
+  }
+  if (!games.length){
+    const who = state.sport === "전체" ? "" : ` ${esc(state.sport)}`;
+    body.innerHTML = `<div class="empty">오늘은${who} 경기가 없어요 😴<br>다른 종목을 눌러 볼까요?</div>`;
+    return;
+  }
+  const live = games.filter(g => g.state === "live");
+  const up = games.filter(g => g.state === "upcoming");
+  const done = games.filter(g => g.state === "done");
+  const cancel = games.filter(g => g.state === "cancel");
+
+  let html = "";
+  if (live.length){
+    html += `<div class="sectitle">🔴 지금 하고 있어요! <span class="count">${live.length}경기</span></div>
+      <div class="grid">${live.map(gameCard).join("")}</div>`;
+  }
+  if (up.length){
+    html += `<div class="sectitle">🕒 이따 만나요 <span class="count">${up.length}경기</span></div>
+      <div class="grid">${up.slice(0, 6).map(gameCard).join("")}</div>`;
+    if (up.length > 6) html += `<div class="livebar"><span>예정 경기가 ${up.length - 6}경기 더 있어요</span></div>`;
+  }
+  if (done.length){
+    html += `<div class="sectitle">✅ 끝났어요 <span class="count">${done.length}경기</span></div>
+      <div class="grid">${done.slice(0, 6).map(gameCard).join("")}</div>`;
+    if (done.length > 6) html += `<div class="livebar"><span>끝난 경기가 ${done.length - 6}경기 더 있어요</span></div>`;
+  }
+  if (cancel.length){
+    html += `<div class="sectitle">⛔ 열리지 않았어요</div>
+      <div class="grid">${cancel.map(gameCard).join("")}</div>`;
+  }
+  body.innerHTML = html;
+  $("#liveInfo").textContent = state.directOK
+    ? (state.liveMode ? "실시간 연결 중 · 1분마다 새 소식" : "실시간 연결이 돼요. 🔄 를 눌러 켜 보세요")
+    : "저장된 데이터 · 🔄 누르면 다시 시도";
+}
+
+/* ── 순위 ──────────────────────────────── */
+function renderStandingChips(){
+  const leagues = state.standings?.leagues || [];
+  const sports = [...new Set(leagues.map(l => l.sport))];
+  if (!sports.length){
+    $("#standingSports").innerHTML = "";
+    $("#leagueChips").innerHTML = "";
+    return;
+  }
+  if (!sports.includes(state.standingSport)) {
+    state.standingSport = sports[0];
+    state.league = leagues.find(l => l.sport === state.standingSport)?.id;
+  }
+  $("#standingSports").innerHTML = sports.map(s => `
+    <button class="chip ${state.standingSport===s?"on":""}" data-sport="${esc(s)}">${SPORT_EMOJI[s]||"🏅"} ${esc(s)}</button>
+  `).join("");
+  $("#standingSports").querySelectorAll(".chip").forEach(b => {
+    b.onclick = () => {
+      state.standingSport = b.dataset.sport;
+      state.league = leagues.find(l => l.sport === state.standingSport)?.id;
+      renderStandingChips(); renderStandings();
+    };
+  });
+  const mine = leagues.filter(l => l.sport === state.standingSport);
+  $("#leagueChips").innerHTML = mine.map(l => `
+    <button class="chip ${state.league===l.id?"on":""}" data-id="${esc(l.id)}">${esc(l.name)}</button>
+  `).join("");
+  $("#leagueChips").querySelectorAll(".chip").forEach(b => {
+    b.onclick = () => { state.league = b.dataset.id; renderStandingChips(); renderStandings(); };
+  });
+}
+const GROUP_KOR = {EASTERN: "동부", WESTERN: "서부", EAST: "동부", WEST: "서부"};
+function groupTag(group){
+  if (!group) return "";
+  const label = GROUP_KOR[group] || group.replace(/파이널 그룹\s*/, "");
+  return `<span class="grp">${esc(label)}</span>`;
+}
+function renderStandings(){
+  const body = $("#standingsBody");
+  const leagues = state.standings?.leagues || [];
+  const lg = leagues.find(l => l.id === state.league) || leagues[0];
+  if (!lg){
+    body.innerHTML = `<div class="empty">순위표를 아직 못 받았어요.<br>잠시 뒤 새로고침을 눌러 주세요.</div>`;
+    return;
+  }
+  const metric = lg.metric === "pts" ? "승점" : "승률";
+  const hasLast5 = lg.rows.some(r => r.last5);
+  const rows = lg.rows.map(r => {
+    const fav = isFav(r.team);
+    const last5 = (r.last5 || "").split("").map(c => `<i class="${c}"></i>`).join("");
+    return `<tr class="${fav?"fav":""}">
+      <td class="rank">${esc(r.rank)}</td>
+      <td class="teamcell">${r.emblem?`<img class="emb" src="${esc(r.emblem)}" alt="" loading="lazy" onerror="this.remove()">`:""}${esc(r.team)} ${fav?"⭐":""}${groupTag(r.group)}</td>
+      <td>${r.games ?? "-"}</td>
+      <td>${r.w ?? "-"}</td>
+      <td>${r.d ?? "-"}</td>
+      <td>${r.l ?? "-"}</td>
+      <td><b>${lg.metric === "pts" ? (r.points ?? "-") : rate3(r.rate)}</b></td>
+      ${hasLast5?`<td><span class="last5">${last5 || "-"}</span></td>`:""}
+    </tr>`;
+  }).join("");
+  body.innerHTML = `
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>순위</th><th style="text-align:left">팀</th><th>경기</th><th>승</th><th>무</th><th>패</th>
+          <th>${metric}</th>${hasLast5?"<th>최근 5경기</th>":""}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="livebar"><span>${esc(lg.name)} · ${esc(lg.season)} 시즌 · ${lg.teamCount}팀 · ${metric}</span></div>`;
+}
+
+/* ── 소식 ──────────────────────────────── */
+function renderNewsChips(){
+  const sections = state.news?.sections || [];
+  const labels = ["전체", ...sections.map(s => s.label)];
+  $("#newsChips").innerHTML = labels.map(s => `
+    <button class="chip ${state.newsSport===s?"on":""}" data-s="${esc(s)}">${esc(s)}</button>
+  `).join("");
+  $("#newsChips").querySelectorAll(".chip").forEach(b => {
+    b.onclick = () => { state.newsSport = b.dataset.s; renderNewsChips(); renderNews(); };
+  });
+}
+function renderNews(){
+  const body = $("#newsBody");
+  const sections = state.news?.sections || [];
+  if (!sections.length){
+    body.innerHTML = `<div class="empty">소식을 불러오는 중이에요…</div>`;
+    return;
+  }
+  const pick = state.newsSport === "전체" ? sections : sections.filter(s => s.label === state.newsSport);
+  const items = [];
+  for (const s of pick) for (const it of (s.items || [])) items.push({...it, label: s.label});
+  if (!items.length){
+    body.innerHTML = `<div class="empty">아직 올라온 소식이 없어요.<br>조금 뒤 다시 받아 볼게요 😊</div>`;
+    return;
+  }
+  body.innerHTML = items.map(it => `
+    <article class="news">
+      <div class="tagrow"><span class="sectag">${esc(it.label)}</span></div>
+      <h3>${esc(it.title)}</h3>
+      <ol>${(it.summary || []).map(line => `<li>${esc(line)}</li>`).join("")}</ol>
+      <div class="nf">
+        <span>${esc(it.source || "")} · ${esc(relTime(it.time))}</span>
+        <a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">원문 보기 ↗</a>
+      </div>
+    </article>`).join("");
+}
+
+/* ── 설정 ──────────────────────────────── */
+function teamsBySport(){
+  const map = new Map();
+  const add = (sport, team) => {
+    if (!team) return;
+    if (!map.has(sport)) map.set(sport, new Set());
+    map.get(sport).add(team);
+  };
+  for (const lg of state.standings?.leagues || []) for (const r of lg.rows) add(lg.sport, r.team);
+  for (const g of gameList()){
+    if (g.away && g.away.name && g.sport !== "일반") add(g.sport, g.home?.name);
+    if (g.away && g.away.name && g.sport !== "일반") add(g.sport, g.away?.name);
+  }
+  return map;
+}
+function renderSettings(){
+  const map = teamsBySport();
+  const order = SPORTS.filter(s => s !== "전체" && map.has(s));
+  $("#favSports").innerHTML = order.map(sport => `
+    <div style="margin-bottom:14px">
+      <div style="font-size:17px;font-weight:900;color:#5b6b8c;margin-bottom:6px">${SPORT_EMOJI[sport]||"🏅"} ${esc(sport)}</div>
+      <div class="teams">
+        ${[...map.get(sport)].sort((a,b)=>a.localeCompare(b,"ko")).map(t => `
+          <button class="teambtn ${isFav(t)?"on":""}" data-team="${esc(t)}">${isFav(t)?"⭐ ":""}${esc(t)}</button>
+        `).join("")}
+      </div>
+    </div>`).join("") || `<p class="hint">순위나 경기 정보가 들어오면 팀 목록이 나타나요.</p>`;
+  $("#favSports").querySelectorAll(".teambtn").forEach(b => {
+    b.onclick = () => {
+      const t = b.dataset.team;
+      const i = state.favorites.indexOf(t);
+      if (i >= 0) state.favorites.splice(i, 1); else state.favorites.push(t);
+      saveFav(); renderSettings(); renderToday(); renderStandings();
+    };
+  });
+
+  const opts = [[1,"1분"],[5,"5분"],[15,"15분"],[0,"끔"]];
+  $("#intervalSeg").innerHTML = opts.map(([v,l]) =>
+    `<button class="${state.interval===v?"on":""}" data-v="${v}">${l}</button>`).join("");
+  $("#intervalSeg").querySelectorAll("button").forEach(b => {
+    b.onclick = () => {
+      state.interval = Number(b.dataset.v);
+      localStorage.setItem("sports.interval", String(state.interval));
+      setupTimer(); renderSettings();
+    };
+  });
+
+  $("#sUpdated").textContent = fmtUpdated(state.today?.updated || state.standings?.updated);
+  $("#sGames").textContent = (state.today?.total ?? "-") + "경기";
+  $("#sNews").textContent = (state.news?.total ?? "-") + "건";
+  $("#sDirect").textContent = state.directOK === null ? "확인 중…" : (state.directOK ? "가능 ✅ (1분 갱신)" : "차단됨 → 5분 자동 갱신");
+}
+
+/* ── 탭 & 새로고침 타이머 ─────────────── */
+function renderAll(){
+  renderSportChips(); renderToday();
+  renderStandingChips(); renderStandings();
+  renderNewsChips(); renderNews();
+  renderSettings();
+  $("#todayLabel").textContent = fmtToday();
+  window.__diag = {
+    games: state.today?.total ?? 0,
+    leagues: state.standings?.leagues?.length ?? 0,
+    news: state.news?.total ?? 0,
+    updated: state.today?.updated || "",
+    errs: window.__errs.length,
+  };
+}
+let dataTimer = null, liveTimer = null;
+function setupTimer(){
+  clearInterval(dataTimer);
+  if (state.interval > 0){
+    dataTimer = setInterval(() => loadAll().catch(()=>{}), state.interval * 60000);
+  }
+}
+function setupLive(){
+  clearInterval(liveTimer);
+  const toggle = $("#liveToggle");
+  toggle.classList.toggle("on", state.liveMode && !!state.directOK);
+  if (state.liveMode && state.directOK){
+    liveTimer = setInterval(refreshDirect, 60000);
+  }
+  renderToday();
+}
+
+/* ── 실시간 직접 연결 (ESPN 공개 API · CORS 열려 있음) ── */
+const ESPN_SITE = "https://site.api.espn.com/apis/site/v2/sports";
+const ESPN_LEAGUES = [
+  {espn:"baseball/mlb", sport:"야구", name:"MLB"},
+  {espn:"basketball/nba", sport:"농구", name:"NBA"},
+  {espn:"soccer/eng.1", sport:"해외축구", name:"프리미어리그"},
+  {espn:"soccer/esp.1", sport:"해외축구", name:"라리가"},
+  {espn:"soccer/ger.1", sport:"해외축구", name:"분데스리가"},
+  {espn:"soccer/ita.1", sport:"해외축구", name:"세리에A"},
+  {espn:"soccer/uefa.champions", sport:"해외축구", name:"챔피언스리그"},
+  {espn:"golf/pga", sport:"골프", name:"PGA"},
+];
+const KO_BY_LEAGUE = {
+  "soccer/ita.1": {MIL:"AC밀란", TOR:"토리노", ROM:"로마", INT:"인터밀란", JUV:"유벤투스",
+                   NAP:"나폴리", LAZ:"라치오", ATA:"아탈란타", FIO:"피오렌티나", BOL:"볼로냐",
+                   UDI:"우디네세", GEN:"제노아"},
+  "soccer/uefa.champions": {MIL:"AC밀란", TOR:"토리노", ROM:"로마", INT:"인터밀란",
+                            JUV:"유벤투스", NAP:"나폴리", LAZ:"라치오", ATA:"아탈란타"},
+};
+
+function teamName(team, leagueKey){
+  const abbr = (team?.abbreviation || "").toUpperCase();
+  const over = (KO_BY_LEAGUE[leagueKey] || {})[abbr];
+  if (over) return over;
+  const dict = state.teamsKo || {};
+  if (abbr && dict[abbr]) return dict[abbr];
+  return team?.shortDisplayName || team?.name || team?.displayName || "";
+}
+function logoOf(team){
+  const logos = team?.logos || [];
+  if (logos.length) return logos[0]?.href || "";
+  return team?.logo || "";
+}
+const KO_WEEK = (iso) => {
+  const d = new Date(iso);
+  return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+};
+function espnStatus(comp, sport){
+  const st = comp?.status || {};
+  const stype = st.type || {};
+  const stt = stype.state || "pre";
+  const period = st.period || 0;
+  const clock = (st.displayClock || "").trim();
+  if (stt === "pre") return ["upcoming", ""];
+  if (stt === "post") return ["done", "종료"];
+  let label = "진행 중";
+  if (sport === "농구") label = period ? `${period}쿼터` : "진행 중";
+  else if (sport === "야구") label = period ? `${period}회` : "진행 중";
+  else if (sport === "해외축구" || sport === "축구") label = (period >= 2 ? "후반" : "전반") + (clock ? ` ${clock}` : "");
+  else if (sport === "골프") label = period ? `${period}라운드` : "진행 중";
+  return ["live", label];
+}
+function espnToGame(ev, lg){
+  const comps = ev.competitions || [];
+  const comp = comps[0];
+  const name = ev.name || ev.shortName || "";
+  if (!comp){
+    if (!name) return null;
+    const stt = (ev.status?.type?.state) || "pre";
+    return {id: String(ev.id || name), sport: lg.sport, emoji: SPORT_EMOJI[lg.sport] || "🏅",
+      league: lg.espn, leagueName: lg.name, time: "", date: "", state: {pre:"upcoming", in:"live", post:"done"}[stt] || "upcoming",
+      status: "", home: {name, code:"", emblem:"", score: null}, away: {name:"", code:"", emblem:"", score:null},
+      winner:"DRAW", stadium:"", channel:"", onAir:false};
+  }
+  const cs = comp.competitors || [];
+  const home = cs.find(c => c.homeAway === "home");
+  const away = cs.find(c => c.homeAway === "away");
+  if (!home || !away) return null;
+  const [st, statusText] = espnStatus(comp, lg.sport);
+  const iso = ev.date || comp.date || "";
+  let time = "", date = "";
+  if (iso){
+    const d = new Date(iso);
+    time = String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+    date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+  const num = (v) => (v === null || v === undefined || v === "") ? null : Number(v);
+  return {
+    id: String(ev.id || comp.id || ""), sport: lg.sport, emoji: SPORT_EMOJI[lg.sport] || "🏅",
+    league: lg.espn, leagueName: lg.name, time, date, state: st, status: statusText,
+    home: {name: teamName(home.team, lg.espn), code: home.team?.abbreviation || "", emblem: logoOf(home.team), score: num(home.score)},
+    away: {name: teamName(away.team, lg.espn), code: away.team?.abbreviation || "", emblem: logoOf(away.team), score: num(away.score)},
+    winner: home.winner ? "HOME" : (away.winner ? "AWAY" : "DRAW"),
+    stadium: comp.venue?.fullName || "", channel: "", onAir: st === "live",
+  };
+}
+function espnDate(offset){
+  const d = kstNow();
+  d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+}
+async function fetchEspn(){
+  const dates = [espnDate(0), espnDate(-1)];
+  const jobs = [];
+  for (const d of dates) for (const lg of ESPN_LEAGUES) jobs.push({d, lg});
+  const results = await Promise.allSettled(jobs.map(({d, lg}) =>
+    fetch(`${ESPN_SITE}/${lg.espn}/scoreboard?dates=${d}&limit=50`, {cache:"no-store"})
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(r.status)))
+      .then(j => ({d, lg, events: j.events || []}))
+  ));
+  const games = [], seen = new Set();
+  let okCount = 0;
+  for (const r of results){
+    if (r.status !== "fulfilled") continue;
+    okCount++;
+    const {d, lg, events} = r.value;
+    for (const ev of events){
+      const g = espnToGame(ev, lg);
+      if (!g) continue;
+      if (d !== dates[0] && g.state !== "done") continue;
+      const key = g.id || `${g.home.name}-${g.away.name}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      games.push(g);
+    }
+  }
+  if (!okCount) return null;
+  return games;
+}
+async function probeDirect(){
+  const games = await fetchEspn().catch(() => null);
+  state.directOK = Array.isArray(games);
+  if (state.directOK && games.length){
+    state.directGames = games;
+    renderSportChips(); renderToday();
+  }
+  if (!state.directOK) state.liveMode = false;
+  renderSettings();
+  setupLive();
+}
+async function refreshDirect(){
+  const games = await fetchEspn().catch(() => null);
+  if (!games){ state.directOK = false; state.liveMode = false; setupLive(); renderSettings(); return; }
+  state.directGames = games;
+  renderSportChips(); renderToday(); renderSettings();
+}
+
+/* ── 이벤트 연결 ─────────────────────── */
+function bind(){
+  $("#tabs").querySelectorAll(".tab").forEach(t => {
+    t.onclick = () => {
+      state.tab = t.dataset.tab;
+      $("#tabs").querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+      for (const name of ["today","standings","news","settings"]){
+        $(`#tab-${name}`).classList.toggle("hide", name !== state.tab);
+      }
+      if (state.tab === "settings") renderSettings();
+      window.scrollTo({top:0, behavior:"smooth"});
+    };
+  });
+  $("#refreshBtn").onclick = async (e) => {
+    e.currentTarget.textContent = "⏳ 받는 중";
+    try { await loadAll(); if (state.liveMode) await refreshDirect(); }
+    finally { setTimeout(() => { $("#refreshBtn").textContent = "🔄 새로고침"; }, 700); }
+  };
+  $("#liveToggle").onclick = async () => {
+    if (!state.directOK){
+      alert("지금은 실시간 직접 연결이 안 돼요.\n저장된 경기 정보를 보여 주고 있고, 🔄 새로고침을 누르면 다시 시도해요.");
+      return;
+    }
+    state.liveMode = !state.liveMode;
+    localStorage.setItem("sports.live", state.liveMode ? "1" : "0");
+    if (state.liveMode) await refreshDirect();
+    setupLive();
+  };
+  $("#resetBtn").onclick = () => {
+    if (!confirm("우리 팀과 설정을 지울까요?")) return;
+    state.favorites = []; saveFav();
+    state.interval = 5; localStorage.setItem("sports.interval","5");
+    state.liveMode = false; localStorage.setItem("sports.live","0");
+    setupTimer(); setupLive(); renderAll();
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) loadAll().catch(()=>{});
+  });
+}
+
+/* ── 시작 ─────────────────────────────── */
+(async function start(){
+  bind();
+  $("#todayLabel").textContent = fmtToday();
+  await loadAll().catch(()=>{});
+  setupTimer();
+  setupLive();
+  probeDirect();
+  if ("serviceWorker" in navigator){
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
