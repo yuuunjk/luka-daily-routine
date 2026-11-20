@@ -185,6 +185,15 @@
     border:2px solid var(--line); border-radius:18px; padding:11px 14px; margin-bottom:8px;}
   .hrow .hm{font-size:17px; font-weight:800; min-width:0; word-break:keep-all;}
   .hrow .hm small{display:block; font-size:14px; font-weight:700; color:var(--sub); margin-top:2px;}
+  /* ── 📊 종목별 · 리그별 적중률 ────────────── */
+  .pstat{background:#fff; border:2px solid var(--line); border-radius:18px; padding:12px 14px; margin-bottom:8px;}
+  .pstat .prow{display:flex; align-items:center; gap:10px;}
+  .pstat .pname{font-size:16.5px; font-weight:900; color:#2b3a55; min-width:0; flex:0 0 auto;
+    max-width:42%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .pbar{flex:1 1 60px; min-width:44px; height:11px; background:#eef3fb; border-radius:999px; overflow:hidden;}
+  .pbar i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#93c5fd,#2563eb);}
+  .pval{font-size:15.5px; font-weight:900; color:var(--blue-dark); white-space:nowrap;}
+  .pval small{font-weight:800; color:var(--sub); font-size:13.5px;}
 
   /* ── tables ─────────────────────────────── */
   .tablewrap{background:#fff; border:2px solid var(--line); border-radius:var(--radius); overflow:auto;
@@ -805,6 +814,45 @@ function predHist(p, g){
       <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중" : "😅 아깝다"}</span>
     </div>`;
 }
+/* ── 📊 종목별 · 리그별 적중률 (채점된 예측만 모아서) ── */
+function predBreakdown(){
+  const graded = Object.values(state.preds).filter(p => p.res);
+  const sports = new Map(), leagues = new Map();
+  for (const p of graded){
+    const rows = [
+      [sports, p.sport || "기타", SPORT_EMOJI[p.sport] || p.emoji || "🏅"],
+      [leagues, p.leagueName || "기타 리그", p.emoji || "🏅"],
+    ];
+    for (const [map, name, emoji] of rows){
+      const cur = map.get(name) || {name, emoji, hits: 0, total: 0};
+      cur.total += 1;
+      if (p.res === "hit") cur.hits += 1;
+      map.set(name, cur);
+    }
+  }
+  const by = (a, b) => (b.total - a.total) || (b.hits - a.hits);
+  return {sports: [...sports.values()].sort(by), leagues: [...leagues.values()].sort(by)};
+}
+function pstatRow(r){
+  const pct = r.total ? Math.round(r.hits / r.total * 100) : 0;
+  return `<div class="pstat">
+      <div class="prow">
+        <span class="pname">${esc(r.emoji)} ${esc(r.name)}</span>
+        <span class="pbar"><i style="width:${pct}%"></i></span>
+        <span class="pval">${pct}%<small> · ${r.hits}/${r.total}</small></span>
+      </div>
+    </div>`;
+}
+function predStatsSection(){
+  const bd = predBreakdown();
+  const block = (title, rows) => `<div class="sectitle">${title}</div>${
+    rows.length
+      ? rows.map(pstatRow).join("")
+      : `<div class="empty">아직 채점된 경기가 없어요.<br>경기가 끝나면 종목·리그별로 모아서 보여 드릴게요 📊</div>`}`;
+  return `<div class="sectitle">📊 종목별 · 리그별 적중률</div>
+    ${block("🏅 종목별", bd.sports)}
+    ${block("🏆 리그별", bd.leagues)}`;
+}
 function renderPredict(){
   const st = predStats();
   const sTotal = $("#sPredTotal");
@@ -816,10 +864,6 @@ function renderPredict(){
   if (!body) return;
   const byId = new Map(gameList().map(g => [String(g.id), g]));
   const waiting = st.all.filter(p => !p.res).sort((a, b) => predStart(a) - predStart(b));
-  const open = gameList()
-    .filter(g => g.state === "upcoming" && g.away?.name && !predOf(g.id))
-    .sort((a, b) => (predStart({date: a.date, time: a.time}) - predStart({date: b.date, time: b.time})))
-    .slice(0, 6);
 
   let html = `<div class="psum">
       <h2>🎯 내 승부예측</h2>
@@ -831,15 +875,12 @@ function renderPredict(){
       </div>
     </div>`;
 
+  html += predStatsSection();
+
   html += `<div class="sectitle">⏳ 기다리는 내 예측 <span class="count">${waiting.length}경기</span></div>`;
   html += waiting.length
     ? waiting.map(p => predMini(p, byId.get(p.id))).join("")
-    : `<div class="empty">아직 기다리는 예측이 없어요.<br>아래 경기에서 이길 팀을 찍어 보세요 😊</div>`;
-
-  if (open.length){
-    html += `<div class="sectitle">🕒 예측해 볼 경기 <span class="count">${open.length}경기</span></div>
-      <div class="grid">${open.map(gameCard).join("")}</div>`;
-  }
+    : `<div class="empty">아직 기다리는 예측이 없어요.<br>오늘 경기의 <b>예정</b> 경기 카드에서 이길 팀을 찍어 보세요 😊</div>`;
 
   html += `<div class="sectitle">✅ 채점 결과 <span class="count">${st.graded.length}경기</span></div>`;
   html += st.graded.length
