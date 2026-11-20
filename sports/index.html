@@ -37,8 +37,9 @@
   /* ── header ─────────────────────────────── */
   header{padding:22px 0 6px;}
   .top{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
-  .brand{display:flex; align-items:center; gap:10px; font-size:32px; font-weight:900; letter-spacing:-.5px;}
-  .brand .ball{font-size:34px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.15));}
+  .brand{display:flex; align-items:center; gap:11px; font-size:32px; font-weight:900; letter-spacing:-.5px;}
+  .brand .appicon{width:36px; height:36px; border-radius:11px; display:block; flex:none;
+    box-shadow:0 3px 9px rgba(28,68,140,.22);}
   .brand h1{margin:0; font-size:inherit; font-weight:inherit; line-height:1.15; letter-spacing:inherit;}
   .brand small{font-size:16px; font-weight:700; color:var(--sub); display:block; letter-spacing:0;}
   .hd-right{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
@@ -252,6 +253,7 @@
   @media (max-width:520px){
     body{font-size:19px;}
     .brand{font-size:27px;}
+    .brand .appicon{width:32px; height:32px; border-radius:10px;}
     .score{font-size:38px; min-width:96px;}
     .news h3{font-size:22px;}
     th,td{padding:10px 6px; font-size:17px;}
@@ -264,7 +266,7 @@
 <div class="wrap">
   <header>
     <div class="top">
-      <div class="brand"><span class="ball">⚽</span><h1>오늘의 경기장</h1></div>
+      <div class="brand"><img class="appicon" src="./app-icon-180.png" alt="오늘의 경기장 앱 아이콘" width="36" height="36"><h1>오늘의 경기장</h1></div>
       <div class="hd-right">
         <span class="today-label" id="todayLabel">오늘</span>
         <button class="btn-refresh" id="refreshBtn">🔄 새로고침</button>
