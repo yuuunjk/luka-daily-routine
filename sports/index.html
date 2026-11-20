@@ -366,7 +366,7 @@
   .livebar{display:flex; align-items:center; justify-content:flex-start; gap:10px; margin-top:6px;
     font-size:17px; color:var(--sub); font-weight:700; flex-wrap:wrap;}
   .livetoggle{border:2px solid var(--line); background:#fff; border-radius:999px; padding:8px 16px;
-    font-size:17px; font-weight:800; color:var(--sub); min-height:44px;}
+    font-size:17px; font-weight:800; color:var(--sub); min-height:46px; white-space:nowrap;}
   .livetoggle.on{background:#ffe8e8; border-color:#ffb3b3; color:#b91c1c;}
   footer{margin-top:30px; text-align:center; color:#93a2bd; font-size:15px; font-weight:700; line-height:1.6;}
   .hide{display:none !important;}
@@ -390,7 +390,7 @@
     .brand{font-size:27px;}
     .brand .appicon{width:32px; height:32px; border-radius:10px;}
     .hd-right{gap:6px;}
-    .btn-fav,.btn-refresh,.btn-power{padding:8px 12px; font-size:17px; min-height:44px;}
+    .btn-fav,.btn-refresh,.btn-power,.livetoggle{padding:8px 12px; font-size:17px; min-height:44px;}
     .today-label{font-size:17px; padding:6px 12px;}
     .score{font-size:38px; min-width:96px;}
     .news h3{font-size:22px;}
@@ -407,6 +407,7 @@
       <div class="brand"><img class="appicon" src="./app-icon-180.png" alt="오늘의 경기장 앱 아이콘" width="36" height="36"><h1>오늘의 경기장</h1></div>
       <div class="hd-right">
         <span class="today-label" id="todayLabel">오늘</span>
+        <button class="livetoggle" id="liveToggle">🔄 실시간</button>
         <button class="btn-refresh" id="refreshBtn">🔄 새로고침</button>
         <button class="btn-fav" id="favBtn" type="button" aria-haspopup="dialog">⭐ 우리 팀</button>
         <button class="btn-power" id="powerBtn" type="button" aria-pressed="true"
@@ -428,13 +429,10 @@
     <section id="tab-today">
       <div class="chips" id="sportChips"></div>
       <div class="subtabs" id="todayStateTabs">
-        <div class="lbl"><span class="br">└</span> 경기 상태</div>
+        <div class="lbl">경기상태</div>
         <div class="row" id="todayStateChips"></div>
       </div>
-      <div class="livebar">
-        <button class="livetoggle" id="liveToggle">🔄 실시간</button>
-        <span id="liveInfo">5분마다 새로 받아요</span>
-      </div>
+      <div class="livebar"><span id="liveInfo">5분마다 새로 받아요</span></div>
       <div id="todayBody"></div>
     </section>
 
