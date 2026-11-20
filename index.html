@@ -451,7 +451,8 @@
     margin-top:-9px; background:#fff; border-right:3px solid #2b3445; border-top:3px solid #2b3445;
     border-top-right-radius:5px; transform:rotate(-45deg);}
   #partnerCheer .pc-msg{display:block; font-weight:900; color:#16283b; letter-spacing:-.01em; word-break:keep-all;
-    overflow-wrap:break-word; line-height:1.38; font-size:1.02em;}
+    overflow-wrap:break-word; line-height:1.38; font-size:1.02em;
+    text-wrap:balance; text-align:center;}
   @keyframes cheerPop{0%{transform:scale(.9);}55%{transform:scale(1.05);}100%{transform:scale(1);}}
   #partnerCheer.bump .pc-msg{animation:cheerPop .3s ease-out;}
 
@@ -4249,7 +4250,7 @@ function cheerPlace(){
   const clockRight = clockEl ? clockEl.getBoundingClientRect().right : 0;
   const gap = Math.max(0, cr.left - 10 - clockRight);       // 시계와 카드 사이 빈 하늘
   const room = Math.max(140, cr.left - 16);                 // 카드 왼쪽으로 쓸 수 있는 전체 폭
-  const maxW = Math.max(150, Math.min(340, Math.max(212, gap + 96), room, vw - 24));
+  const maxW = Math.max(150, Math.min(340, Math.max(224, gap + 96), room, vw - 24));
   const minW = Math.min(184, maxW);
   el.style.minWidth = Math.round(minW) + 'px';
   el.style.maxWidth = Math.round(maxW) + 'px';
