@@ -36,9 +36,9 @@ SITE = "https://site.api.espn.com/apis/site/v2/sports"
 CORE = "https://site.api.espn.com/apis/v2/sports"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36"
 
-SPORT_ORDER = ["야구", "축구", "농구", "배구", "해외축구", "미식축구", "국제 대회", "해외야구", "일반"]
+SPORT_ORDER = ["야구", "축구", "농구", "배구", "해외축구", "미식축구", "국제 대회", "해외야구", "기타"]
 SPORT_EMOJI = {"야구": "⚾", "해외야구": "⚾", "축구": "⚽", "해외축구": "⚽", "국제 대회": "🌍",
-               "농구": "🏀", "미식축구": "🏈", "배구": "🏐", "일반": "🏅"}
+               "농구": "🏀", "미식축구": "🏈", "배구": "🏐", "기타": "🏅"}
 
 LEAGUES = [
     {"espn": "baseball/mlb", "sport": "야구", "name": "MLB", "season": "2026"},
@@ -941,7 +941,7 @@ KR_FEEDS = [
     ("동아일보", "https://rss.donga.com/sports.xml"),
     ("한겨레", "https://www.hani.co.kr/rss/sports/"),
 ]
-KR_LABELS = {"야구": "KBO", "축구": "K리그", "농구": "KBL", "배구": "V리그", "일반": "한국 스포츠"}
+KR_LABELS = {"야구": "KBO", "축구": "K리그", "농구": "KBL", "배구": "V리그", "기타": "한국 스포츠"}
 # 종목에서 빀 골프는 소식에도 올리지 않는다
 KR_DROP = ["골프", "KPGA", "KLPGA", "PGA", "LPGA"]
 SPORT_WORDS = {
@@ -957,7 +957,7 @@ SPORT_WORDS = {
              "정관장", "DB", "KT", "한국가스공사", "KCC", "소노", "삼성 썬더스", "퀵"] ,
     "배구": ["배구", "V리그", "대한항공", "현대캐피탈", "흥국생명", "GS칼텍스", "IBK", "도로공사",
              "우리카드", "KB손해보험", "OK저축은행", "세터", "리베로", "블로킹", "한국전력"],
-    "일반": ["쇼트트랙", "스피드스케이팅", "피겨", "컬링", "아이스하키", "수영", "육상", "마라톤",
+    "기타": ["쇼트트랙", "스피드스케이팅", "피겨", "컬링", "아이스하키", "수영", "육상", "마라톤",
              "탁구", "배드민턴", "테니스", "양공", "펜싱", "유도", "태권도", "역도", "바둑",
              "당구", "핸드볼", "사이클", "e스포츠", "체조", "클라이밍", "서핑", "스쿼시", "보치아"],
 }
@@ -965,8 +965,8 @@ SPORT_WORDS = {
 
 def classify_sport(text: str) -> str:
     if "핸드볼" in text and not any(w in text for w in ("축구", "K리그", "손흥민", "월드컵")):
-        return "일반"
-    best, best_score = "일반", 0
+        return "기타"
+    best, best_score = "기타", 0
     for sport, words in SPORT_WORDS.items():
         score = sum(1 for w in words if w in text)
         if score > best_score:
@@ -1068,7 +1068,7 @@ def build_kr_news(now: datetime, cache: dict, new_cache: dict, max_body: int = 1
             new_cache[key] = item
             buckets.setdefault(sport, []).append(item)
     sections = []
-    order = ["야구", "축구", "농구", "배구", "일반"]
+    order = ["야구", "축구", "농구", "배구", "기타"]
     for sport in order:
         items = (buckets.get(sport) or [])[:6]
         if not items:
