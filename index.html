@@ -402,6 +402,51 @@
     header.sky .hxp-boost .hxp-lab{gap:.18em;}
   }
 
+  /* ===== v42 — 파트너 터치 응원: 카드를 누르면 파트너가 폴짝 뛰고 말풍선이 뜬다 ===== */
+  header.sky .hxp-partner{cursor:pointer; -webkit-tap-highlight-color:transparent;
+    transition:transform .12s ease, box-shadow .12s ease;}
+  header.sky .hxp-partner:active{transform:scale(.96);}
+  header.sky .hxp-partner:focus-visible{outline:3px solid #ffd75e; outline-offset:2px;}
+  header.sky .hxp-partner .hxp-art.hop{animation:partnerHop .68s cubic-bezier(.34,1.45,.5,1);}
+  @keyframes partnerHop{
+    0%{transform:translateY(0) scale(1,1);}
+    16%{transform:translateY(-.46em) scale(.95,1.07);}
+    36%{transform:translateY(.02em) scale(1.09,.9);}
+    54%{transform:translateY(-.19em) scale(.98,1.03);}
+    72%{transform:translateY(0) scale(1.05,.95);}
+    100%{transform:translateY(0) scale(1,1);}
+  }
+  /* 말풍선 — 파트너 카드 바로 아래. 화면 밖으로 나가지 않고 시간 바는 살짝만 스친다 */
+  #partnerCheer{
+    position:fixed; left:0; top:0; z-index:48; box-sizing:border-box;
+    display:flex; flex-direction:column; gap:.2em;
+    width:max-content; max-width:min(21em, calc(100vw - 20px));
+    background:#fff; border:3px solid #2b3445; border-radius:15px;
+    padding:.5em .76em .58em;
+    box-shadow:0 10px 22px rgba(20,50,80,.26);
+    color:#152436; font-family:inherit; font-size:15px; line-height:1.3;
+    opacity:0; transform:translateY(-8px) scale(.94); transform-origin:top center;
+    pointer-events:none;
+    transition:opacity .16s ease, transform .18s cubic-bezier(.34,1.5,.6,1);
+    will-change:opacity, transform;
+  }
+  #partnerCheer[hidden]{display:none;}
+  #partnerCheer.show{opacity:1; transform:none; pointer-events:auto; cursor:pointer;}
+  #partnerCheer .pc-tail{position:absolute; top:-11px; left:var(--tail,50%); width:18px; height:18px;
+    margin-left:-9px; background:#fff; border-left:3px solid #2b3445; border-top:3px solid #2b3445;
+    border-top-left-radius:5px; transform:rotate(45deg);}
+  #partnerCheer .pc-head{display:flex; align-items:center; gap:.3em; font-size:.82em;}
+  #partnerCheer .pc-ic{font-size:1.2em; line-height:1;}
+  #partnerCheer .pc-title{font-weight:900; color:#1f6fd4; font-size:1.14em; white-space:nowrap;}
+  #partnerCheer .pc-badge{margin-left:auto; flex:0 0 auto; font-weight:900; font-size:.9em;
+    color:#7a5200; background:linear-gradient(180deg,#ffe89a,#ffd75e); border:1.5px solid #eec44b;
+    border-radius:999px; padding:.1em .55em; white-space:nowrap;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
+  #partnerCheer .pc-badge.alt{color:#1f5aa8; background:#eaf4ff; border-color:#a8cdf0;}
+  #partnerCheer .pc-msg{font-weight:900; color:#16283b; letter-spacing:-.01em; word-break:keep-all;}
+  @keyframes cheerPop{0%{transform:scale(.9);}55%{transform:scale(1.05);}100%{transform:scale(1);}}
+  #partnerCheer.bump .pc-msg{animation:cheerPop .3s ease-out;}
+
   /* ===== 오늘 모드 (등교 / 방과후 / 방학) ===== */
   .modes{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;justify-content:center;}
   .modes .cap{font-size:10.5px;font-weight:900;color:var(--ink2);padding-left:5px;letter-spacing:.2px;}
@@ -433,7 +478,7 @@
     /* v39 — 시간 바 위를 달리는 파트너 포켓몬을 2배로 키웠다(48→96 등).
        바 위아래로 잘리지 않고 위(마음 스킬 배너)·아래(과제 카드)와도 붙지 않게
        띠 높이를 포켓몬 크기에 맞춰 늘린다: --run + 20px (위·아래 숨 쉴 여백) */
-    --run:112px; min-height:calc(var(--run) + 20px);
+    --run:158px; min-height:calc(var(--run) + 12px);   /* v42 — 달리는 파트너를 1.4배 더 크게 */
   }
   .pblock{flex:0 0 auto;min-width:196px;margin-right:18px;display:flex;flex-direction:column;gap:0;}   /* 달리는 피카츄가 왼쪽 글씨를 가리지 않게 */
   .pblock .plabel{font-size:15px;font-weight:900;color:#5b4a34;letter-spacing:.2px;white-space:nowrap;line-height:1.25;}
@@ -600,13 +645,14 @@
     transition:transform .12s ease, box-shadow .12s ease;
   }
   .dex-card:hover{transform:translateY(-2px);}
-  .dex-card.t1{box-shadow:0 0 0 2px #7ab8ff, 0 4px 12px rgba(40,110,200,.16);background:linear-gradient(#f5faff,#fffdf7);}
-  .dex-card.t2{box-shadow:0 0 0 2px #b98cff, 0 0 16px rgba(140,80,240,.30), 0 4px 12px rgba(80,40,160,.16);background:linear-gradient(#faf4ff,#fffdf7);}
+  /* 희귀·전설 타일 테두리도 오로라 빛 — 희귀는 시안·에메랄드, 전설은 보라·핑크 (v42) */
+  .dex-card.t1{box-shadow:0 0 0 2px #63d8d0, 0 0 12px rgba(90,220,200,.26), 0 4px 12px rgba(40,110,200,.14);background:linear-gradient(160deg,#f1fffb,#fffdf7);}
+  .dex-card.t2{box-shadow:0 0 0 2px #a98bff, 0 0 14px rgba(150,120,255,.34), 0 0 22px rgba(90,230,220,.20), 0 4px 12px rgba(80,40,160,.16);background:linear-gradient(160deg,#f6f1ff,#f0fffb 58%,#fffdf7);}
   .dex-card .art{flex:1 1 0;min-height:0;min-width:0;max-width:100%;max-height:100%;
     width:auto;object-fit:contain;margin:1px 0 2px;}
   .dex-card.locked .art{filter:brightness(0) opacity(.26);}
-  .dex-card.locked.t1 .art{filter:brightness(0) opacity(.30) drop-shadow(0 0 5px rgba(90,150,255,.65));}
-  .dex-card.locked.t2 .art{filter:brightness(0) opacity(.34) drop-shadow(0 0 7px rgba(150,90,255,.75));}
+  .dex-card.locked.t1 .art{filter:brightness(0) opacity(.30) drop-shadow(0 0 5px rgba(80,220,205,.7));}
+  .dex-card.locked.t2 .art{filter:brightness(0) opacity(.34) drop-shadow(0 0 7px rgba(150,110,255,.75));}
   .dex-card .pk-name{font-size:clamp(11px,1.55vh,14px);font-weight:800;line-height:1.15;flex:0 0 auto;
     max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .dex-card.locked .pk-name{color:#a99f8d;}
@@ -615,15 +661,15 @@
   .dex-card .pk-no{position:absolute;left:7px;top:5px;font-size:10px;font-weight:800;color:#b5ab9b;line-height:1}
   .dex-card .pk-tier{position:absolute;right:6px;top:5px;font-size:8.5px;font-weight:900;border-radius:999px;
     padding:2px 6px;line-height:1.1;color:#fff;background:#bdb3a1;letter-spacing:-.2px;}
-  .dex-card .pk-tier.tt1{background:#2b7fd4;}
-  .dex-card .pk-tier.tt2{background:linear-gradient(90deg,#7b3fd4,#c356d8);box-shadow:0 0 6px rgba(150,90,255,.6);}
+  .dex-card .pk-tier.tt1{background:linear-gradient(90deg,#22b8ab,#3ea6d8);}
+  .dex-card .pk-tier.tt2{background:linear-gradient(90deg,#7b5bd6,#b46ae0 55%,#ef86c4);box-shadow:0 0 6px rgba(140,140,255,.6);}
   .dex-card .pk-pow{font-size:10px;font-weight:800;color:#8a7a66;white-space:nowrap;}
   .dex-card .pk-pow.locked{color:#c0b7a6;}
 
   /* 다음 목표 티어 칩 */
   .tchip{font-size:9.5px;font-weight:900;border-radius:999px;padding:2px 7px;color:#fff;background:#bdb3a1;vertical-align:2px;}
-  .tchip.tt1{background:#2b7fd4;}
-  .tchip.tt2{background:linear-gradient(90deg,#7b3fd4,#c356d8);box-shadow:0 0 6px rgba(150,90,255,.55);}
+  .tchip.tt1{background:linear-gradient(90deg,#22b8ab,#3ea6d8);}
+  .tchip.tt2{background:linear-gradient(90deg,#7b5bd6,#b46ae0 55%,#ef86c4);box-shadow:0 0 6px rgba(140,140,255,.55);}
 
   /* ===== Modal / toast ===== */
   .overlay{
@@ -1149,23 +1195,24 @@
     box-shadow:0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62), 0 0 calc(var(--k)*3) rgba(255,206,110,.4);
     animation:cardIn .42s cubic-bezier(.3,1.5,.6,1);}
   @keyframes cardIn{0%{transform:scale(.82) translateY(14px);opacity:0;}100%{transform:scale(1) translateY(0);opacity:1;}}
-  /* 희귀·전설은 실버 홀로 테두리 */
-  .pcard.t1{background:linear-gradient(150deg,#ffffff 0%,#c9d7e4 11%,#7f93a8 23%,#f2f8ff 37%,#a6b7c8 50%,#fcfeff 62%,#8597ab 76%,#e6eef8 89%,#6b7e93 100%);
-    box-shadow:0 0 0 calc(var(--k)*.2) rgba(160,215,255,.75), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62), 0 0 calc(var(--k)*3.4) rgba(120,190,255,.6);}
-  .pcard.t2{background:linear-gradient(150deg,#ffffff 0%,#d3e2f2 11%,#7c8fa6 23%,#f6fbff 37%,#aabccd 50%,#ffffff 62%,#8798ad 76%,#eef5fd 89%,#697c92 100%);
-    animation:cardIn .42s cubic-bezier(.3,1.5,.6,1), legGlow 3.4s ease-in-out infinite;}
-  @keyframes legGlow{0%,100%{box-shadow:0 0 calc(var(--k)*2.2) rgba(190,176,255,.30), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62);}
-    50%{box-shadow:0 0 calc(var(--k)*3.4) rgba(216,206,255,.46), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62);}}
-  /* 테두리 위를 도는 홀로그램 무늬 (카드 안쪽이 덮어서 테두리 띠에만 보인다) */
+  /* 희귀·전설은 오로라 빛 테두리 — 은색 대신 에메랄드·시안·보라·핑크가 금속처럼 흐른다 (v42)
+     희귀는 밝고 은은하게, 전설·환상은 한 단계 더 깊고 영롱하게. */
+  .pcard.t1{background:linear-gradient(150deg,#ffffff 0%,#a8efdf 10%,#3f97b4 21%,#eafaff 33%,#7fc0e2 45%,#f4efff 57%,#bda6ec 69%,#ffe6f4 81%,#79a8c4 91%,#6b73b8 100%);
+    box-shadow:0 0 0 calc(var(--k)*.2) rgba(140,238,216,.8), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62), 0 0 calc(var(--k)*3.2) rgba(100,215,255,.55);}
+  .pcard.t2{background:linear-gradient(150deg,#f6fffc 0%,#66e0c4 8%,#237f9e 18%,#e8e0ff 29%,#7a5cd0 40%,#ffd8ef 51%,#4fa8c8 62%,#b48cff 73%,#2f6f9e 84%,#1e4a76 92%,#7fe6d8 100%);
+    animation:cardIn .42s cubic-bezier(.3,1.5,.6,1), legGlow 3.6s ease-in-out infinite;}
+  @keyframes legGlow{0%,100%{box-shadow:0 0 0 calc(var(--k)*.2) rgba(160,220,255,.35), 0 0 calc(var(--k)*2.4) rgba(120,240,215,.28), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62);}
+    50%{box-shadow:0 0 0 calc(var(--k)*.2) rgba(190,170,255,.5), 0 0 calc(var(--k)*3.6) rgba(180,150,255,.44), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62);}}
+  /* 테두리 위를 도는 오로라 무늬 (카드 안쪽이 덮어서 테두리 띠에만 보인다) */
   .pring{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,246,214,.5) 20%, rgba(216,226,240,.45) 42%,
-      rgba(226,214,255,.45) 62%, rgba(255,250,232,.4) 82%, rgba(255,255,255,0) 100%);
+    background:linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(160,255,230,.5) 16%, rgba(150,225,255,.45) 36%,
+      rgba(196,170,255,.5) 56%, rgba(255,180,225,.45) 76%, rgba(255,255,255,0) 100%);
     mix-blend-mode:soft-light;opacity:0;transition:opacity .3s;}
-  /* 테두리 홀로그램은 금·은·라벤더가 은은하게 흐르는 정도로만 — 무지개 원색은 쓰지 않는다 (v34) */
-  .pcard.t1 .pring{opacity:.26;filter:saturate(.9) brightness(1.04);}
-  .pcard.t2 .pring{opacity:.34;filter:saturate(.95) brightness(1.06);animation:holoSpin 16s linear infinite;}
-  /* 전설·환상은 테두리 바깥으로 무지개 빛이 번진다 */
-  .pcard.t2{filter:drop-shadow(0 0 calc(var(--k)*2.2) rgba(196,178,255,.32)) drop-shadow(0 0 calc(var(--k)*3.6) rgba(170,214,255,.22));}
+  /* 오로라도 원색 무지개 줄무늬가 아니라, 시안·보라·핑크가 은은하게 흐르는 빛으로만 (v34 취향 유지) */
+  .pcard.t1 .pring{opacity:.34;filter:saturate(.95) brightness(1.05);}
+  .pcard.t2 .pring{opacity:.42;filter:saturate(1.02) brightness(1.08);animation:holoSpin 18s linear infinite;}
+  /* 전설·환상은 테두리 바깥으로 오로라 빛이 번진다 */
+  .pcard.t2{filter:drop-shadow(0 0 calc(var(--k)*2.2) rgba(196,168,255,.36)) drop-shadow(0 0 calc(var(--k)*3.6) rgba(130,240,220,.26));}
   /* 잡지 않은 포켓몬 = 로열 블루 테두리 (색·두께는 아래 ⑥ 카드 뒷면 규칙에서 정한다) */
   .pcard.backmode .pring{opacity:0;}
 
@@ -1220,8 +1267,8 @@
     transition:transform .3s cubic-bezier(.3,1.4,.6,1);}
   .pholo{position:absolute;left:-40%;top:-40%;width:180%;height:180%;z-index:3;pointer-events:none;
     mix-blend-mode:color-dodge;opacity:.15;
-    background:conic-gradient(from 0deg, rgba(255,70,160,.75), rgba(70,255,225,.55) 20%, rgba(255,255,90,.6) 38%,
-      rgba(120,90,255,.7) 58%, rgba(90,200,255,.6) 76%, rgba(255,70,160,.75) 100%);
+    background:conic-gradient(from 0deg, rgba(120,255,215,.55), rgba(110,225,255,.5) 22%, rgba(180,150,255,.6) 44%,
+      rgba(255,150,220,.55) 66%, rgba(130,240,230,.5) 84%, rgba(120,255,215,.55) 100%);
     animation:holoSpin 9s linear infinite;}
   @keyframes holoSpin{to{transform:rotate(360deg);}}
   .pcard.up .part img{animation:pokePop .6s cubic-bezier(.3,1.6,.6,1);}
@@ -1230,14 +1277,14 @@
     background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.7) 48%, rgba(255,255,255,0) 100%);
     animation:sheenSweep 5s ease-in-out infinite;}
   @keyframes sheenSweep{0%,52%{left:-70%;}88%,100%{left:135%;}}
-  .pcard.t1 .pholo{opacity:.20;mix-blend-mode:soft-light;filter:saturate(.9);animation-duration:14s;}
-  .pcard.t2 .pholo{opacity:.24;mix-blend-mode:soft-light;filter:saturate(.95) brightness(1.03);animation-duration:12s;}
+  .pcard.t1 .pholo{opacity:.20;mix-blend-mode:soft-light;filter:saturate(1) brightness(1.02);animation-duration:15s;}
+  .pcard.t2 .pholo{opacity:.28;mix-blend-mode:soft-light;filter:saturate(1.05) brightness(1.05);animation-duration:12s;}
   /* 최상급 개체(✨)의 은은한 반짝임 — 희귀·전설은 위의 더 강한 홀로그램을 그대로 쓴다 */
   .pcard.iv3:not(.t1):not(.t2) .pholo{opacity:.24;animation-duration:12s;}
   .pcard.t2 .part{box-shadow:inset 0 0 0 calc(var(--k)*.45) #ffffff,
-      inset 0 0 0 calc(var(--k)*1) rgba(150,90,240,.55),
+      inset 0 0 0 calc(var(--k)*1) rgba(120,90,230,.55),
       inset 0 0 0 calc(var(--k)*1.45) rgba(255,255,255,.9),
-      0 0 calc(var(--k)*2) rgba(160,100,255,.55);}
+      0 0 calc(var(--k)*2) rgba(120,220,255,.5);}
   .pcard.iv3 .part::after{content:'';position:absolute;inset:0;z-index:5;pointer-events:none;
     background:radial-gradient(circle at 16% 20%, rgba(255,255,255,.9) 0 1.6%, transparent 6%),
       radial-gradient(circle at 84% 28%, rgba(255,255,255,.85) 0 1.3%, transparent 5%),
@@ -1251,15 +1298,15 @@
      희귀=은은하게, 전설·환상=더 선명하고 빠르게. 일반 카드에는 보이지 않는다(opacity 0). */
   .pcard-in > .pfoil{position:absolute;inset:0;z-index:6;border-radius:inherit;pointer-events:none;opacity:0;
     mix-blend-mode:soft-light;
-    background:linear-gradient(115deg, rgba(255,255,255,0) 0%, rgba(255,244,206,.55) 16%, rgba(228,218,255,.5) 34%,
-      rgba(214,234,255,.45) 52%, rgba(255,228,244,.42) 70%, rgba(255,250,224,.38) 86%, rgba(255,255,255,0) 100%);
+    background:linear-gradient(115deg, rgba(255,255,255,0) 0%, rgba(170,255,235,.5) 16%, rgba(160,225,255,.45) 34%,
+      rgba(200,175,255,.5) 52%, rgba(255,185,228,.42) 70%, rgba(180,255,240,.4) 86%, rgba(255,255,255,0) 100%);
     background-size:260% 260%;background-position:0% 50%;}
   @keyframes foilSlide{0%{background-position:0% 50%;}100%{background-position:130% 50%;}}
   /* 여러 색 띠가 한때에 같이 보이도록 hue 회전은 쓰지 않고, 찬란한 무지개 띠만 흘려 보낸다 */
   /* v34 — 원색 무지개 필름은 걷어 내고 금·은·라벤더가 사선으로 은은히 흐르는 빛줄기만 남긴다.
      일러스트와 글씨가 가리지 않을 만큼만(0.12~0.16) 얹는다. */
-  .pcard.t1 .pfoil{opacity:.12;filter:saturate(.9);animation:foilSlide 16s linear infinite;}
-  .pcard.t2 .pfoil{opacity:.16;filter:saturate(.95);animation:foilSlide 13s linear infinite;}
+  .pcard.t1 .pfoil{opacity:.14;filter:saturate(1);animation:foilSlide 17s linear infinite;}
+  .pcard.t2 .pfoil{opacity:.19;filter:saturate(1.05);animation:foilSlide 13s linear infinite;}
 
   .pspark{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;transition:opacity .3s;}
   /* 카드 위를 지나가는 반짝 빛줄기 — 가끔 번쩍하고 훑고 간다 */
@@ -1347,8 +1394,8 @@
   .ptier{flex:0 0 auto;font-size:calc(var(--k)*1.6);font-weight:900;color:#fff;border-radius:999px;
     padding:calc(var(--k)*.24) calc(var(--k)*.95);line-height:1.35;white-space:nowrap;
     background:#b3a894;box-shadow:0 calc(var(--k)*.2) calc(var(--k)*.6) rgba(0,0,0,.25);}
-  .ptier.tt1{background:#2b7fd4;}
-  .ptier.tt2{background:linear-gradient(90deg,#7b3fd4,#c356d8);}
+  .ptier.tt1{background:linear-gradient(90deg,#22b8ab,#3ea6d8);}
+  .ptier.tt2{background:linear-gradient(90deg,#7b5bd6,#b46ae0 55%,#ef86c4);}
   .pcard .iv-badge{font-size:calc(var(--k)*1.6);padding:calc(var(--k)*.22) calc(var(--k)*.9);gap:calc(var(--k)*.35);
     border-width:calc(var(--k)*.2);flex:0 0 auto;}
   /* 포획 날짜 칩 — 이전에 잡아 둔 포켓몬은 '📅 도감 등록'으로 보인다 */
@@ -1458,7 +1505,7 @@
     .strip .label{min-width:120px;}
     .strip .label .main{font-size:18px;}
     .wildbox .xpbar{width:76px;}
-    .strip{--run:88px;}   /* v39 — 달리는 파트너 2배 (44 → 88) */
+    .strip{--run:124px;}   /* v42 — v39(88)의 1.4배 */
     .self-banner{padding:6px 12px;gap:10px;}
     .self-btn{font-size:17px;padding:6px 14px 6px 8px;}
     .self-btn .box{width:32px;height:32px;font-size:19px;}
@@ -1510,7 +1557,7 @@
     .pblock .plabel{font-size:14px;}
     .pblock .pmain{font-size:25px;}
     .track{height:26px;}
-    .strip{--run:96px;}   /* v39 — 달리는 파트너 2배 (48 → 96) */
+    .strip{--run:134px;}   /* v42 — v39(96)의 1.4배 */
     .school{font-size:28px;top:-18px;}
     .wildbox img{width:40px;height:40px;}
     .wildbox .we{font-size:22px;}
@@ -1558,7 +1605,7 @@
     .pblock .pmain{font-size:21px;}
     .depart{font-size:10.5px;}
     .track{height:22px;}
-    .strip{--run:84px;}   /* v39 — 달리는 파트너 2배 (42 → 84) */
+    .strip{--run:118px;}   /* v42 — v39(84)의 1.4배 */
     .card{padding:24px 8px 7px;border-radius:14px;}
     .tname{font-size:clamp(12px,2.4vh,16px);}
     .card img{width:72%;}
@@ -2044,7 +2091,8 @@
            그 오른쪽에 날씨 카드. 왼쪽 카드 높이 = 오른쪽 두 줄 합친 높이 = 날씨 카드 높이 -->
       <div class="hxp" id="hxp">
         <!-- 왼쪽 열 — 파트너 포켓몬 (그림 → '파트너' → 이름 세로 가운데 정렬) -->
-        <div class="hxp-card hxp-partner" id="hxpPartner" title="시간 바에서 같이 달리는 파트너 포켓몬">
+        <div class="hxp-card hxp-partner" id="hxpPartner" role="button" tabindex="0"
+             title="파트너 포켓몬 — 누르면 응원해 줘요" aria-label="파트너 포켓몬 — 눌러서 오늘의 응원 보기">
           <img class="hxp-art" id="partnerArt" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="파트너 포켓몬" onerror="this.style.display='none'">
           <div class="hxp-col">
             <div class="hxp-lab"><span class="hxp-k">파트너</span><b id="partnerName">피카츄</b></div>
@@ -2420,6 +2468,17 @@
 <!-- 8:35 burst -->
 <div class="burst" id="burst"></div>
 <div id="toast"></div>
+
+<!-- v42 — 파트너 응원 말풍선: 상단 파트너 카드를 누르면 그 포켓몬 이름으로 응원이 뜬다 -->
+<div id="partnerCheer" role="status" aria-live="polite" aria-atomic="true" hidden>
+  <span class="pc-tail" aria-hidden="true"></span>
+  <span class="pc-head">
+    <span class="pc-ic" id="cheerIc" aria-hidden="true">⚡</span>
+    <b class="pc-title" id="cheerTitle">피카츄의 응원</b>
+    <span class="pc-badge" id="cheerBadge">오늘의 응원</span>
+  </span>
+  <span class="pc-msg" id="cheerMsg"></span>
+</div>
 
 <!-- 화면 켜짐 유지 대체 수단 (wakeLock 이 막히는 file:// 환경용, 무음·반복) -->
 <video id="keepAlive" src="data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwEAAAAAAATEEU2bdLpNu4tTq4QVSalmU6yBbk27i1OrhBZUrmtTrIGTTbuMU6uEH0O2dVOsggETTbuMU6uEHFO7a1OsggSx7K0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmoCrXsYMPQkBEiYRFBUszTYCGQ2hyb21lV0GGQ2hyb21lFlSua/uuuteBAXPFh6O16CqzCEODgQFV7oEBhoVWX1ZQOeCdsIEguoEgU8CBAVWwkFWxgQFVuYECVbqBDVW7gQGuvdeBAnPFh2d+gGegQO6DgQKGhkFfT1BVU2Oik09wdXNIZWFkAQIAAIC7AAAAAADhjbWERzuAAJ+BAmJkgSAfQ7Z1AQAAAAAAA5LngQCgQLuh3YEAAACCSYNCUAHwAfYIOCQcGGIAACBAACLb//917obXxX/GW2l8HU/F3OnL6lbM5I6yEWOeiDGLD2F///lbAPGtJKZ+EhOuYxVJN3UAdp6gTLvA0nl5YncuNqYAAHWh2abX7oEBpdKCSYNCAAHwAfYaOCQcGPwAACBAACe///vWE9nUjMO97U0O4fb5HUrocukI8vbakmvXDUP//zZEJfjfhLgq8B6va/XpKpYYVja0npV/AWMHgAAAo5OCACOAGAL5LmgvIUrMS8Rw4DOoo5KCAF2AGAHxrMOM2AvXBba9ENKjkoIAooAYAfGsw4zYC9cFtr0Q0qOSggDWgBgB8azDjNgL1wW2vRDSo5KCARGAGAHxrMOM2AvXBba9ENKjkoIBVoAYAfGsw4zYC9cFtr0Q0qOSggGKgBgB8azDjNgL1wW2vRDSo5KCAcWAGAHxrMOM2AvXBba9ENKjkoICCoAYAfGsw4zYC9cFtr0Q0qOSggI+gBgB8azDjNgL1wW2vRDSo5KCAnmAGAHxrMOM2AvXBba9ENKjkoICvoAYAfGsw4zYC9cFtr0Q0qOSggLygBgB8azDjNgL1wW2vRDSo5KCAy2AGAHxrMOM2AvXBba9ENKjkoIDcoAYAfGsw4zYC9cFtr0Q0qOSggOmgBgB8azDjNgL1wW2vRDSo5KCA+GAGAHxrMOM2AvXBba9ENKjkoIEJoAYAfGsw4zYC9cFtr0Q0qOSggRagBgB8azDjNgL1wW2vRDSo5KCBJWAGAHxrMOM2AvXBba9ENKjkoIE2oAYAfGsw4zYC9cFtr0Q0qOSggUOgBgB8azDjNgL1wW2vRDSo5KCBUmAGAHxrMOM2AvXBba9ENKjkoIFhIAYAfGsw4zYC9cFtr0Q0qOSggXCgBgB8azDjNgL1wW2vRDSo5KCBf2AGAHxrMOM2AvXBba9ENKjkoIGOIAYAfGsw4zYC9cFtr0Q0qOSggZ2gBgB8azDjNgL1wW2vRDSo5KCBrGAGAHxrMOM2AvXBba9ENKjkoIG7YAYAfGsw4zYC9cFtr0Q0qOSggcrgBgB8azDjNgL1wW2vRDSo5KCB2aAGAHxrMOM2AvXBba9ENKjkoIHoYAYAfGsw4zYC9cFtr0Q0qOSggfegBgB8azDjNgL1wW2vRDSo5KCCBmAGAHxrMOM2AvXBba9ENKjkoIIVIAYAfGsw4zYC9cFtr0Q0hxTu2uOu4yzgQC3h/eBAfGCARM=" loop playsinline preload="auto" aria-hidden="true"
@@ -3867,6 +3926,8 @@ function renderPartner(){
     n.classList.toggle('l5', len === 5);
     n.classList.toggle('l6', len >= 6);
   }
+  const card = document.getElementById('hxpPartner');
+  if(card) card.setAttribute('aria-label', `파트너 ${pk.name} — 눌러서 오늘의 응원 보기`);
 }
 /* 파트너 바꾸기 — 지금 파트너와 같으면 아무 것도 하지 않는다 */
 function setPartner(id){
@@ -3919,6 +3980,146 @@ function renderWild(){
   const xnum = document.getElementById('wildXpText');
   if(xnum) xnum.textContent = `${state.xp}/100 XP`;
 }
+
+/* ---------- ⚡ 파트너 터치 응원 (v42) ----------
+   상단 '파트너' 카드(그림·라벨·이름)를 누르면 파트너가 폴짝 뛰고, 그 포켓몬 이름으로
+   응원 말풍선이 뜬다. 첫 터치는 오늘 날짜의 응원(같은 날·같은 파트너면 늘 같은 문구),
+   다시 누르면 나머지 문구가 한 바퀴 돌며 바로 앞 문구와 겹치지 않게 나온다.
+   말풍선은 4.6초 뒤 저절로 사라지고, 말풍선을 누르면 바로 닫힌다. */
+const PARTNER_CHEERS = [
+  'LUKA! 오늘도 우리 같이 멋지게 해내자!',
+  '작은 일도 끝까지 해내는 넌 진짜 챔피언이야!',
+  '실수해도 괜찮아, 다시 도전하면 더 강해지니까!',
+  '너는 할 수 있어! 내가 옆에서 같이 뛸게!',
+  '오늘의 너는 어제의 너보다 한 뼘 더 강해!',
+  '친구에게 잘해 주는 너, 그게 진짜 트레이너야!',
+  '힘들 때 한 번 더 해 보는 게 진짜 실력이야!',
+  '너의 웃는 얼굴이 제일 강한 기술이야!',
+  '천천히 해도 괜찮아, 끝까지 가면 이기는 거야!',
+  '준비물 잘 챙기는 너, 정말 멋진 트레이너야!',
+  '오늘도 스스로 해내는 너를 내가 응원할게!',
+  '어려운 문제도 너는 꼭 풀어낼 수 있어!',
+  '하루에 하나씩만 잘해도 일 년이면 엄청 커져!',
+  '네가 최선을 다하면 그게 바로 1등이야!',
+  '혼자서도 잘하는 너, 같이 하면 더 잘해!',
+  '넘어져도 다시 일어나면 더 튼튼해져!',
+  '너의 작은 용기가 큰 힘이 되어 줄 거야!',
+  '오늘도 최고로 멋진 하루를 만들자!',
+  '너는 생각보다 훨씬 더 강한 아이야!',
+  '친구를 도와주는 너의 마음이 정말 빛나!',
+  '포기하지 않는 너에게 전설의 배지를 줄게!',
+  '잘 모르겠으면 물어보는 것도 용기야!',
+  '오늘 한 번만 더 힘내면 더 멋져질 거야!',
+  '내가 제일 좋아하는 트레이너는 바로 너야!',
+  '네가 해낸 건 분명히 너의 힘이야!',
+  '하루를 힘차게 시작하면 좋은 일이 와!',
+  '화가 나도 숨 고르는 너, 정말 대단해!',
+  '너의 속도로 가도 괜찮아, 내가 기다려 줄게!'
+];
+let cheerFirstDone = false;        // 이번 화면에서 '오늘의 응원'을 이미 보여 줬는지
+let cheerLastIdx = -1;             // 바로 앞에 보여 준 문구
+let cheerOrder = null, cheerPos = 0;
+let cheerHideTimer = 0;
+/* 오늘의 응원 — 날짜와 파트너로 뽑아 같은 날에는 새로고침해도 같은 문구 */
+function cheerTodayIdx(){
+  return affirmHash('cheer:' + affirmKeyOf(getNow()) + ':' + partnerIdNow()) % PARTNER_CHEERS.length;
+}
+function cheerShuffle(){
+  const n = PARTNER_CHEERS.length, a = [];
+  for(let i = 0; i < n; i++) a.push(i);
+  for(let i = n - 1; i > 0; i--){        // 피셔–예이츠
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function cheerNextIdx(){
+  const n = PARTNER_CHEERS.length;
+  if(!cheerFirstDone){                   // 오늘 첫 터치 = 오늘의 응원
+    cheerFirstDone = true;
+    cheerLastIdx = cheerTodayIdx();
+    return cheerLastIdx;
+  }
+  if(!cheerOrder){ cheerOrder = cheerShuffle(); cheerPos = 0; }
+  let idx = cheerOrder[cheerPos++ % n];
+  if(idx === cheerLastIdx && n > 1) idx = cheerOrder[cheerPos++ % n];   // 바로 앞 문구는 건너뛰기
+  cheerLastIdx = idx;
+  return idx;
+}
+function cheerTypeIcon(pk){
+  try{ return (TYPE_INFO[(pk.type || ['노말'])[0]] || {}).ic || '⭐'; }catch(e){ return '⭐'; }
+}
+function partnerBounce(){
+  const a = document.getElementById('partnerArt');
+  if(!a) return;
+  a.classList.remove('hop');
+  void a.offsetWidth;                    // 같은 애니메이션을 처음부터 다시
+  a.classList.add('hop');
+  clearTimeout(a._hop);
+  a._hop = setTimeout(()=> a.classList.remove('hop'), 720);
+}
+/* 말풍선 자리 — 카드 바로 아래, 화면 밖으로 나가지 않고 시간 바는 30px 까지만 스친다 */
+function cheerPlace(){
+  const el = document.getElementById('partnerCheer');
+  const card = document.getElementById('hxpPartner');
+  if(!el || !card || el.hidden) return;
+  const cr = card.getBoundingClientRect();
+  const vw = document.documentElement.clientWidth, vh = window.innerHeight;
+  const w = el.offsetWidth, h = el.offsetHeight;
+  let left = cr.left + cr.width / 2 - Math.min(w * .38, 120);
+  left = Math.max(10, Math.min(left, vw - w - 10));
+  const strip = document.querySelector('.strip');
+  const stripTop = strip ? strip.getBoundingClientRect().top : vh;
+  /* 카드 아래 10px 부터, 시간 바는 8px 까지만 스치게 — 높은 화면·낮은 화면 모두 같게 */
+  const top = Math.min(cr.bottom + 10, Math.max(cr.bottom + 4, stripTop + 8 - h));
+  el.style.left = Math.round(left) + 'px';
+  el.style.top = Math.round(Math.max(8, Math.min(top, vh - h - 8))) + 'px';
+  const tail = Math.max(22, Math.min(w - 22, cr.left + cr.width / 2 - left));
+  el.style.setProperty('--tail', Math.round(tail) + 'px');
+}
+function hidePartnerCheer(){
+  const el = document.getElementById('partnerCheer');
+  if(!el) return;
+  clearTimeout(cheerHideTimer); cheerHideTimer = 0;
+  el.classList.remove('show', 'bump');
+  setTimeout(()=>{ if(!el.classList.contains('show')) el.hidden = true; }, 220);
+}
+function partnerCheerTap(){
+  const el = document.getElementById('partnerCheer');
+  const pk = partnerPk();
+  if(!el || !pk) return;
+  partnerBounce();
+  try{ if(soundOn) blip(); }catch(e){}
+  const today = !cheerFirstDone;
+  const msg = PARTNER_CHEERS[cheerNextIdx()];
+  const ic = cheerTypeIcon(pk);
+  document.getElementById('cheerIc').textContent = ic;
+  document.getElementById('cheerTitle').textContent = pk.name + '의 응원';
+  const badge = document.getElementById('cheerBadge');
+  badge.textContent = today ? '오늘의 응원' : '또 하나!';
+  badge.classList.toggle('alt', !today);
+  document.getElementById('cheerMsg').textContent = msg;
+  el.hidden = false;
+  el.classList.add('show');
+  cheerPlace();
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
+  clearTimeout(cheerHideTimer);
+  cheerHideTimer = setTimeout(hidePartnerCheer, 4600);
+}
+(function bindPartnerCheer(){
+  const card = document.getElementById('hxpPartner');
+  const el = document.getElementById('partnerCheer');
+  if(card){
+    card.addEventListener('click', e => { e.preventDefault(); partnerCheerTap(); });
+    card.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); partnerCheerTap(); }
+    });
+  }
+  if(el) el.addEventListener('click', hidePartnerCheer);   // 말풍선을 누르면 바로 닫힌다
+  window.addEventListener('resize', ()=>{ if(el && el.classList.contains('show')) cheerPlace(); });
+})();
 
 /* ---------- meal timer ---------- */
 let meal = { remain: 30*60, running:false, int:null };
