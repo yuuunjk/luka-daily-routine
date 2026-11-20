@@ -90,8 +90,9 @@
   .team .logo::before{content:attr(data-initial); position:absolute; inset:0; display:grid; place-items:center;
     background:#e8eefb; color:#5b6b8c; border-radius:50%; font-size:22px; font-weight:900;}
   .team .logo img{position:relative; width:100%; height:100%; object-fit:contain;}
-  .team .name{font-size:21px; font-weight:800; text-align:center; line-height:1.2;
-    word-break:keep-all; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+  .team .name{font-size:20px; font-weight:800; text-align:center; line-height:1.22;
+    overflow-wrap:anywhere; word-break:break-all; overflow:hidden;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
   .team.win .name{color:var(--blue-dark);}
   .team .crown{font-size:14px; height:16px; line-height:1;}
   .score{display:flex; align-items:center; gap:8px; font-size:46px; font-weight:900; letter-spacing:-1px;
