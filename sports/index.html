@@ -139,9 +139,31 @@
     font-size:14px; font-weight:900; display:grid; place-items:center;}
   .news .nf{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px;
     font-size:17px; color:var(--sub); flex-wrap:wrap;}
-  .news .nf a{color:var(--blue); font-weight:800; text-decoration:none;
-    border:2px solid #d6e6ff; border-radius:999px; padding:6px 14px; min-height:40px; display:inline-flex; align-items:center;}
-  .news .nf a:active{background:#eaf3ff;}
+  .news .readbtn{color:var(--blue); font-weight:900; text-decoration:none;
+    border:2px solid #d6e6ff; border-radius:999px; padding:7px 16px; min-height:42px; display:inline-flex; align-items:center; background:#f5f9ff;}
+  .news:active .readbtn{background:#e6f1ff;}
+  .news .src{font-weight:800;}
+
+  /* ── 기사 읽기 창 (앱 안에서만 읽기 · 광고·댓글 없음) ── */
+  .modal{position:fixed; inset:0; z-index:90; display:none; background:rgba(15,32,64,.55);
+    backdrop-filter:blur(3px); padding:14px; overflow-y:auto;}
+  .modal.show{display:block;}
+  .sheet{background:#fff; border-radius:26px; max-width:760px; margin:0 auto; padding:22px 22px 26px;
+    box-shadow:0 24px 60px rgba(10,30,70,.28);}
+  .sheet .sh-top{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;}
+  .sheet .sh-tag{font-size:15px; font-weight:900; color:var(--blue-dark); background:#e2efff;
+    border-radius:999px; padding:4px 12px; white-space:nowrap;}
+  .sheet .sh-close{border:2px solid var(--line); background:#fff; color:var(--sub); font-weight:900;
+    border-radius:999px; padding:8px 16px; min-height:44px; font-size:18px;}
+  .sheet h2{margin:6px 0 10px; font-size:26px; line-height:1.32; letter-spacing:-.4px; word-break:keep-all;}
+  .sheet .sh-meta{font-size:16px; color:var(--sub); font-weight:800; margin-bottom:14px;}
+  .sheet .sh-body p{font-size:20px; line-height:1.62; color:#22304c; margin:0 0 14px; word-break:keep-all;}
+  .sheet .sh-note{margin-top:18px; padding-top:12px; border-top:1px dashed var(--line);
+    font-size:15px; color:#93a2bd; font-weight:700;}
+  .sheet .btn-close-all{margin-top:16px; width:100%; background:var(--blue); color:#fff; font-weight:900;
+    border-radius:999px; padding:14px; min-height:52px; font-size:19px;}
+
+  body.modal-open{overflow:hidden;}
 
   /* ── settings ───────────────────────────── */
   .panel{background:#fff; border:2px solid var(--line); border-radius:var(--radius); padding:20px;
@@ -226,6 +248,7 @@
     <!-- 주요 소식 -->
     <section id="tab-news" class="hide">
       <div class="chips" id="newsChips"></div>
+      <div class="chips" id="newsLeagueChips"></div>
       <div id="newsBody"></div>
     </section>
 
@@ -257,9 +280,24 @@
   </main>
 
   <footer>
-    데이터: ESPN 공개 API (경기·순위·소식) · 한국어로 옮겨서 보여 줘요<br>
-    기사는 제목과 3줄 요약, 원문 링크만 보여 줘요. 광고와 댓글은 없어요.
+    데이터: ESPN · K리그 · KBO · KBL · KOVO 공개 정보를 한국어로 옮겨서 보여 줘요<br>
+    기사는 앱 안에서만 읽어요. 광고와 댓글, 다른 사이트로 나가는 링크는 없어요.
   </footer>
+</div>
+
+<!-- 기사 읽기 창 -->
+<div class="modal" id="articleModal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+    <div class="sh-top">
+      <span class="sh-tag" id="shTag">기사</span>
+      <button class="sh-close" id="shClose">✕ 닫기</button>
+    </div>
+    <h2 id="shTitle">기사</h2>
+    <div class="sh-meta" id="shMeta"></div>
+    <div class="sh-body" id="shBody"></div>
+    <div class="sh-note">광고·댓글 없이 LUKA 스포츠 안에서만 보여 줘요.</div>
+    <button class="btn-close-all" id="shDone">다 읽었어요</button>
+  </div>
 </div>
 
 <script>
@@ -270,8 +308,9 @@ addEventListener("error", (e) => window.__errs.push(String(e.message || e.error)
 addEventListener("unhandledrejection", (e) => window.__errs.push("rejection: " + String(e.reason)));
 const $ = (sel, root = document) => root.querySelector(sel);
 const WEEK = ["일","월","화","수","목","금","토"];
-const SPORT_EMOJI = {야구:"⚾", 해외야구:"⚾", 축구:"⚽", 해외축구:"⚽", 농구:"🏀", 배구:"🏐", 골프:"⛳", 일반:"🏅"};
-const SPORTS = ["전체","야구","해외야구","축구","해외축구","농구","배구","골프","일반"];
+const SPORT_EMOJI = {야구:"⚾", 해외야구:"⚾", 축구:"⚽", 해외축구:"⚽", "국제 대회":"🌍",
+                     농구:"🏀", 미식축구:"🏈", 배구:"🏐", 일반:"🏅"};
+const SPORTS = ["전체","야구","축구","농구","배구","해외축구","미식축구","국제 대회","해외야구","일반"];
 const KST_OFFSET = 9 * 60 * 60 * 1000;
 
 const state = {
@@ -279,7 +318,8 @@ const state = {
   sport: "전체",
   standingSport: null,
   league: null,
-  newsSport: "전체",
+  newsRegion: "전체",
+  newsLeague: "전체",
   today: null,
   standings: null,
   news: null,
@@ -288,8 +328,10 @@ const state = {
   liveMode: localStorage.getItem("sports.live") === "1",
   directOK: null,
   teamsKo: null,
+  koTeams: null,
   directTimer: null,
   directGames: null,
+  newsFlat: [],
 };
 
 /* ── 저장소 ─────────────────────────────── */
@@ -334,6 +376,20 @@ function esc(s){
   return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 function initial(name){ return name ? name.trim().slice(0,1) : "?"; }
+/* 경기 날짜가 오늘·내일·어제 중 어디인지 (KST 기준) */
+function dayLabel(dateStr){
+  if (!dateStr) return "";
+  const today = kstNow();
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const t0 = iso(today);
+  const t1 = new Date(today.getTime() + 86400000);
+  const t_1 = new Date(today.getTime() - 86400000);
+  if (dateStr === t0) return "";
+  if (dateStr === iso(t1)) return "내일 ";
+  if (dateStr === iso(t_1)) return "어제 ";
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${Number(m[2])}월 ${Number(m[3])}일 ` : "";
+}
 function rate3(x){
   if (x === null || x === undefined || x === "") return "-";
   const n = Number(x);
@@ -355,9 +411,11 @@ async function loadAll(){
     getJSON("./data/standings.json"),
     getJSON("./data/news.json"),
     getJSON("./data/teams-ko.json"),
+    getJSON("./data/ko-teams.json"),
   ]);
-  const [t, s, n, k] = results;
+  const [t, s, n, k, kk] = results;
   if (k.status === "fulfilled" && k.value) state.teamsKo = k.value;
+  if (kk.status === "fulfilled" && kk.value) state.koTeams = kk.value;
   if (t.status === "fulfilled") state.today = t.value;
   if (s.status === "fulfilled") state.standings = s.value;
   if (n.status === "fulfilled") state.news = n.value;
@@ -446,7 +504,8 @@ function gameCard(g){
     : `<div class="match">${teamBlock(g.home, homeWin)}${middle}${teamBlock(g.away, awayWin)}</div>`;
 
   const st = g.state === "live" ? (g.status || "진행 중") : "";
-  const when = g.state === "upcoming" ? `⏰ ${g.time}` : (g.state === "done" ? (g.yesterday ? "어제" : g.time) : g.time);
+  const when = g.state === "upcoming" ? `⏰ ${dayLabel(g.date)}${g.time}` :
+    (g.state === "done" ? `${dayLabel(g.date)}${g.time}` : `${dayLabel(g.date)}${g.time}`);
   const bits = [st, when, g.leagueName, g.stadium, g.channel].filter(Boolean);
   return `<article class="${cls}">
       <div class="hd">
@@ -466,7 +525,7 @@ function renderToday(){
   }
   if (!games.length){
     const who = state.sport === "전체" ? "" : ` ${esc(state.sport)}`;
-    body.innerHTML = `<div class="empty">오늘은${who} 경기가 없어요 😴<br>다른 종목을 눌러 볼까요?</div>`;
+    body.innerHTML = `<div class="empty">오늘은${who} 경기가 없어요 😴<br>시즌이 끝났거나 쉬는 날이에요. 다른 종목을 눌러 볼까요?</div>`;
     return;
   }
   const live = games.filter(g => g.state === "live");
@@ -574,40 +633,94 @@ function renderStandings(){
 }
 
 /* ── 소식 ──────────────────────────────── */
+function newsSections(){
+  return (state.news && state.news.sections) || [];
+}
+function regionOf(sec){
+  return sec.lang === "ko" ? "한국 스포츠" : "해외 스포츠";
+}
 function renderNewsChips(){
-  const sections = state.news?.sections || [];
-  const labels = ["전체", ...sections.map(s => s.label)];
-  $("#newsChips").innerHTML = labels.map(s => `
-    <button class="chip ${state.newsSport===s?"on":""}" data-s="${esc(s)}">${esc(s)}</button>
-  `).join("");
+  const sections = newsSections();
+  if (!sections.length){
+    $("#newsChips").innerHTML = "";
+    $("#newsLeagueChips").innerHTML = "";
+    return;
+  }
+  const regions = ["전체", ...new Set(sections.map(regionOf))];
+  if (!regions.includes(state.newsRegion)) state.newsRegion = "전체";
+  $("#newsChips").innerHTML = regions.map(r => `
+    <button class="chip ${state.newsRegion===r?"on":""}" data-r="${esc(r)}">
+      ${r === "한국 스포츠" ? "🇰🇷" : r === "해외 스포츠" ? "🌍" : "📰"} ${esc(r)}
+    </button>`).join("");
   $("#newsChips").querySelectorAll(".chip").forEach(b => {
-    b.onclick = () => { state.newsSport = b.dataset.s; renderNewsChips(); renderNews(); };
+    b.onclick = () => { state.newsRegion = b.dataset.r; state.newsLeague = "전체"; renderNewsChips(); renderNews(); };
+  });
+
+  const mine = state.newsRegion === "전체" ? [] : sections.filter(s => regionOf(s) === state.newsRegion);
+  const labels = ["전체", ...new Set(mine.map(s => s.label))];
+  if (!labels.includes(state.newsLeague)) state.newsLeague = "전체";
+  $("#newsLeagueChips").innerHTML = mine.length ? labels.map(l => `
+    <button class="chip ${state.newsLeague===l?"on":""}" data-l="${esc(l)}">${esc(l)}</button>
+  `).join("") : "";
+  $("#newsLeagueChips").querySelectorAll(".chip").forEach(b => {
+    b.onclick = () => { state.newsLeague = b.dataset.l; renderNewsChips(); renderNews(); };
   });
 }
 function renderNews(){
   const body = $("#newsBody");
-  const sections = state.news?.sections || [];
+  const sections = newsSections();
   if (!sections.length){
     body.innerHTML = `<div class="empty">소식을 불러오는 중이에요…</div>`;
     return;
   }
-  const pick = state.newsSport === "전체" ? sections : sections.filter(s => s.label === state.newsSport);
+  let pick = sections.filter(s => state.newsRegion === "전체" || regionOf(s) === state.newsRegion);
+  if (state.newsRegion !== "전체" && state.newsLeague !== "전체"){
+    pick = pick.filter(s => s.label === state.newsLeague);
+  }
   const items = [];
-  for (const s of pick) for (const it of (s.items || [])) items.push({...it, label: s.label});
+  for (const s of pick) for (const it of (s.items || [])) items.push({...it, label: it.label || s.label, sport: it.sport || s.sport, lang: it.lang || s.lang});
+  state.newsFlat = items;
   if (!items.length){
     body.innerHTML = `<div class="empty">아직 올라온 소식이 없어요.<br>조금 뒤 다시 받아 볼게요 😊</div>`;
     return;
   }
-  body.innerHTML = items.map(it => `
-    <article class="news">
-      <div class="tagrow"><span class="sectag">${esc(it.label)}</span></div>
+  body.innerHTML = items.map((it, i) => `
+    <article class="news" data-idx="${i}">
+      <div class="tagrow"><span class="sectag">${SPORT_EMOJI[it.sport]||"🏅"} ${esc(it.label)}</span></div>
       <h3>${esc(it.title)}</h3>
       <ol>${(it.summary || []).map(line => `<li>${esc(line)}</li>`).join("")}</ol>
       <div class="nf">
-        <span>${esc(it.source || "")} · ${esc(relTime(it.time))}</span>
-        <a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">원문 보기 ↗</a>
+        <span class="src">${esc(it.source || "")}${it.time ? " · " + esc(relTime(it.time)) : ""}</span>
+        <span class="readbtn">📖 기사 읽기</span>
       </div>
     </article>`).join("");
+  body.querySelectorAll(".news").forEach(el => {
+    el.onclick = () => openArticle(Number(el.dataset.idx));
+  });
+}
+
+/* ── 기사 읽기 창 ───────────────────────── */
+function openArticle(idx){
+  const it = state.newsFlat[idx];
+  if (!it) return;
+  $("#shTag").textContent = `${SPORT_EMOJI[it.sport] || "🏅"} ${it.label || "기사"}`;
+  $("#shTitle").textContent = it.title || "기사";
+  $("#shMeta").textContent = [it.source, relTime(it.time)].filter(Boolean).join(" · ");
+  const paras = (Array.isArray(it.body) && it.body.length) ? it.body : (it.summary || []);
+  $("#shBody").innerHTML = paras.length
+    ? paras.map(p => `<p>${esc(p)}</p>`).join("")
+    : `<p>본문을 아직 못 받았어요. 잠시 뒤 다시 열어 주세요.</p>`;
+  const modal = $("#articleModal");
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+  modal.scrollTop = 0;
+  document.body.classList.add("modal-open");
+}
+function closeArticle(){
+  const modal = $("#articleModal");
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
 }
 
 /* ── 설정 ──────────────────────────────── */
@@ -700,13 +813,23 @@ const ESPN_SITE = "https://site.api.espn.com/apis/site/v2/sports";
 const ESPN_LEAGUES = [
   {espn:"baseball/mlb", sport:"야구", name:"MLB"},
   {espn:"basketball/nba", sport:"농구", name:"NBA"},
+  {espn:"football/nfl", sport:"미식축구", name:"NFL"},
   {espn:"soccer/eng.1", sport:"해외축구", name:"프리미어리그"},
   {espn:"soccer/esp.1", sport:"해외축구", name:"라리가"},
   {espn:"soccer/ger.1", sport:"해외축구", name:"분데스리가"},
   {espn:"soccer/ita.1", sport:"해외축구", name:"세리에A"},
+  {espn:"soccer/tur.1", sport:"해외축구", name:"튀르키예 쉬페르리그"},
   {espn:"soccer/uefa.champions", sport:"해외축구", name:"챔피언스리그"},
-  {espn:"golf/pga", sport:"골프", name:"PGA"},
+  {espn:"soccer/fifa.world", sport:"국제 대회", name:"월드컵", intl:true},
+  {espn:"soccer/fifa.worldq.afc", sport:"국제 대회", name:"월드컵 아시아 예선", intl:true},
+  {espn:"soccer/afc.asian.cup", sport:"국제 대회", name:"아시안컵", intl:true},
+  {espn:"soccer/uefa.nations", sport:"국제 대회", name:"네이션스리그", intl:true},
+  {espn:"soccer/uefa.euro", sport:"국제 대회", name:"유로", intl:true},
+  {espn:"soccer/caf.nations", sport:"국제 대회", name:"아프리카 네이션스컵", intl:true},
+  {espn:"soccer/conmebol.america", sport:"국제 대회", name:"코파 아메리카", intl:true},
+  {espn:"soccer/fifa.friendly", sport:"국제 대회", name:"국가대표 평가전", intl:true},
 ];
+const INT_LEAGUES = new Set(ESPN_LEAGUES.filter(l => l.intl).map(l => l.espn));
 const KO_BY_LEAGUE = {
   "soccer/ita.1": {MIL:"AC밀란", TOR:"토리노", ROM:"로마", INT:"인터밀란", JUV:"유벤투스",
                    NAP:"나폴리", LAZ:"라치오", ATA:"아탈란타", FIO:"피오렌티나", BOL:"볼로냐",
@@ -715,9 +838,19 @@ const KO_BY_LEAGUE = {
                             JUV:"유벤투스", NAP:"나폴리", LAZ:"라치오", ATA:"아탈란타"},
 };
 
+/* 리그별 한국어 이름표 (수집기가 만든 data/ko-teams.json) */
+function koFor(leagueKey){
+  const by = (state.koTeams && state.koTeams.byLeague) || {};
+  const base = {...(by[leagueKey] || {}), ...(KO_BY_LEAGUE[leagueKey] || {})};
+  if (INT_LEAGUES.has(leagueKey) && state.koTeams && state.koTeams.intl){
+    return {...state.koTeams.intl, ...base};
+  }
+  return base;
+}
+
 function teamName(team, leagueKey){
   const abbr = (team?.abbreviation || "").toUpperCase();
-  const over = (KO_BY_LEAGUE[leagueKey] || {})[abbr];
+  const over = koFor(leagueKey)[abbr];
   if (over) return over;
   const dict = state.teamsKo || {};
   if (abbr && dict[abbr]) return dict[abbr];
@@ -743,8 +876,14 @@ function espnStatus(comp, sport){
   let label = "진행 중";
   if (sport === "농구") label = period ? `${period}쿼터` : "진행 중";
   else if (sport === "야구") label = period ? `${period}회` : "진행 중";
-  else if (sport === "해외축구" || sport === "축구") label = (period >= 2 ? "후반" : "전반") + (clock ? ` ${clock}` : "");
-  else if (sport === "골프") label = period ? `${period}라운드` : "진행 중";
+  else if (sport === "해외축구" || sport === "축구" || sport === "국제 대회")
+    label = (period >= 2 ? "후반" : "전반") + (clock ? ` ${clock}` : "");
+  else if (sport === "미식축구"){
+    const words = `${stype.description || ""} ${stype.shortDetail || ""}`.toLowerCase();
+    if (words.includes("half")) label = "하프타임";
+    else if (period > 4) label = "연장";
+    else if (period) label = `${period}쿼터` + (clock ? ` ${clock}` : "");
+  }
   return ["live", label];
 }
 function espnToGame(ev, lg){
@@ -867,6 +1006,14 @@ function bind(){
     state.liveMode = false; localStorage.setItem("sports.live","0");
     setupTimer(); setupLive(); renderAll();
   };
+  $("#shClose").onclick = closeArticle;
+  $("#shDone").onclick = closeArticle;
+  $("#articleModal").addEventListener("click", (e) => {
+    if (e.target && e.target.id === "articleModal") closeArticle();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && $("#articleModal").classList.contains("show")) closeArticle();
+  });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) loadAll().catch(()=>{});
   });
@@ -881,7 +1028,7 @@ function bind(){
   setupLive();
   probeDirect();
   if ("serviceWorker" in navigator){
-    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    navigator.serviceWorker.register("./sw.js", {scope: "./"}).catch(()=>{});
   }
 })();
 </script>

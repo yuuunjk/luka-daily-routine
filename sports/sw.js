@@ -2,7 +2,7 @@
    - 앱 껍데기(index.html, 아이콘, 매니페스트): 캐시 먼저 (빠른 실행)
    - data/*.json: 네트워크 먼저 (늘 새 데이터), 실패할 때만 캐시
 */
-const VERSION = "sports-v1";
+const VERSION = "sports-v2";
 const SHELL = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const SHELL = [
   "./app-icon-192.png",
   "./app-icon-512.png",
   "./app-icon-180.png",
+  "./app-icon-maskable-192.png",
 ];
 
 self.addEventListener("install", (event) => {
