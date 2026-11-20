@@ -1096,8 +1096,9 @@
   .self-btn.on{background:#f3fbe9;color:#2e7d32;}
   .self-btn.on .box{background:var(--green);border-color:var(--green-dark);color:#fff;}
   /* '오늘의 공부' 제목 옆의 작은 체크 칩 — 예전 강화 XP 배너 자리 */
+  /* v57 — 알약(999px) 대신 깔끔한 둥근 직사각형 10px */
   .self-chip{
-    display:inline-flex;align-items:center;gap:6px;border:2px solid #e6d9b0;border-radius:999px;
+    display:inline-flex;align-items:center;gap:6px;border:2px solid #e6d9b0;border-radius:10px;
     background:#fff;color:#7a5b00;font-family:inherit;font-weight:900;font-size:12.5px;
     padding:2px 9px 2px 3px;cursor:pointer;line-height:1.2;flex:0 0 auto;
     box-shadow:0 1px 3px rgba(120,100,50,.12);transition:background .15s,border-color .15s,transform .12s;
@@ -1109,7 +1110,7 @@
   }
   .self-chip.on{background:#f3fbe9;border-color:#bfe3ab;color:#2e7d32;}
   .self-chip.on .box{background:var(--green);border-color:var(--green-dark);color:#fff;}
-  .self-chip .add{font-size:10.5px;font-weight:900;color:#a8791a;background:#fff7de;border-radius:999px;padding:1px 6px;}
+  .self-chip .add{font-size:10.5px;font-weight:900;color:#a8791a;background:#fff7de;border-radius:6px;padding:1px 6px;}
   .self-chip.on .add{background:#e6f7dc;color:#3f7a2a;}
   .self-prog{display:flex;align-items:center;gap:10px;min-width:0;}
   /* 게이지 칸 — 8칸을 다 채우면 ⚡강화권 1장. 설명 문구 없이 칸과 숫자만으로 읽힌다. */
