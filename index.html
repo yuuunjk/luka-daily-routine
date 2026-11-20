@@ -494,7 +494,7 @@
     object-fit:contain;object-position:center;pointer-events:none;}
   .card .emoji-fallback{flex:0 1 auto;align-items:center;justify-content:center;
     font-size:clamp(40px,7vh,64px);line-height:1;}
-  /* 제목 줄 — '완료!' 배지는 그림을 가리지 않고 제목 왼쪽에 나란히 붙는다 */
+  /* 제목 줄 — '완료!' 배지는 그림을 가리지 않고 제목 오른쪽에 나란히 붙는다 (v41) */
   .tname{font-size:clamp(14px,2.2vh,20px);font-weight:800;flex:0 0 auto;padding-top:4px;
     display:flex;align-items:center;justify-content:center;gap:.34em;max-width:100%;min-width:0;}
   .tname .ttx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -716,6 +716,7 @@
     line-height:1.2;text-align:center;text-decoration:none;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis;}
   .pbtn.warn{background:#fdeceb;color:#c0392b;}
+  .pbtn:disabled{opacity:.45;cursor:default;box-shadow:none;}
   .pin-src{font-size:11.5px;font-weight:800;color:#9a8d78;}
   .panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;flex:0 0 auto;}
   .panel-head h4{margin:0;}
@@ -2512,6 +2513,16 @@
       </div>
       <span class="phint">수동은 내가 쓴 문장이 매일 그대로 나오고, 자동은 날짜마다 46문장 중 하나가 나와요. (40자 이내)</span>
 
+      <!-- v41 — 내일 문구 미리보기 + 내일 하루만 직접 지정 -->
+      <div class="psec">📅 내일 문구 미리보기 <span class="pbadge" id="affirmTomorrowBadge">🤖 자동 예정</span></div>
+      <div class="pnow" id="affirmTomorrow"></div>
+      <textarea class="ptext" id="affirmTomorrowInput" rows="2" maxlength="40" placeholder="내일 나올 문장을 직접 입력하세요" aria-label="내일의 긍정 확언 직접 지정"></textarea>
+      <div class="pgrid" style="margin-top:6px">
+        <button class="pbtn" id="affirmTomorrowSave" type="button">내일 문구 저장</button>
+        <button class="pbtn" id="affirmTomorrowReset" type="button">자동으로 되돌리기</button>
+      </div>
+      <span class="phint">저장하면 내일 하루만 그 문장이 나오고, 모레부터는 위 자동/수동 설정 그대로 이어져요. (40자 이내)</span>
+
       <div class="psec">🏥 포켓몬센터 미션 (집안일) <span class="pbadge" id="missionCount">3개</span></div>
       <div id="missionRows"></div>
       <div class="pgrid">
@@ -3106,6 +3117,17 @@ function migrate(s){
     const c = s.customAffirmation.replace(/\s+/g, ' ').trim().slice(0, 40);
     s.customAffirmation = c || null;
   }
+  /* 📅 v41 — 날짜별 긍정 확언 지정 {'YYYY-MM-DD': '문장'}. 그 날 하루만 나오고 다음 날부터는 위 설정대로.
+     비었거나 잘못된 값은 지우고, 지난 날짜 키도 정리해 둔다(다시 나올 일이 없다). */
+  if(!s.affirmByDate || typeof s.affirmByDate !== 'object' || Array.isArray(s.affirmByDate)) s.affirmByDate = {};
+  else {
+    const todayK = affirmKeyOf(new Date());
+    Object.keys(s.affirmByDate).forEach(k => {
+      const v = typeof s.affirmByDate[k] === 'string' ? s.affirmByDate[k].replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k) || !v || k < todayK) delete s.affirmByDate[k];
+      else s.affirmByDate[k] = v;
+    });
+  }
   if(!Array.isArray(s.study.nightDates)) s.study.nightDates = [];   // 9:40 전에 취침 루틴을 끝낸 날
   if(!Array.isArray(s.study.restDates)) s.study.restDates = [];
   if(typeof s.xpDate !== 'string'){   // 하루 단위 경험치 기준일 (여기선 getNow를 쓰지 않는다)
@@ -3540,7 +3562,7 @@ function buildTasks(){
       <div class="checkmark">✅</div>
       <img src="${t.img}" alt="${t.name}" onerror="this.style.display='none';this.parentElement.querySelector('.emoji-fallback').style.display='flex'">
       <div class="emoji-fallback" style="display:none">${t.emoji}</div>
-      <div class="tname"><span class="stamp">완료!</span><span class="ttx">${t.name}</span></div>
+      <div class="tname"><span class="ttx">${t.name}</span><span class="stamp">완료!</span></div>
       ${withTimer ? `
       <div class="timer" id="mealTimer">
         <span class="tval" id="tval">30:00</span>
@@ -5683,6 +5705,82 @@ function renderPanelMode(){
   });
 }
 
+/* ---------- 📅 v41 — 내일 문구 미리보기 · 내일 하루만 직접 지정 ----------
+   우선순위: 그 날짜 지정(state.affirmByDate[key]) > 전체 수동 고정(state.customAffirmation) > 날짜 해시 자동.
+   날짜 키(YYYY-MM-DD)로만 저장해서 내일 하루 뒤에 자연스럽게 기존 규칙으로 돌아간다. */
+function affirmTomorrowDate(){
+  const d = getNow();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 12, 0, 0);   // 정오 기준 = 자정 넘김이 안전
+}
+function affirmTomorrowKey(){ return affirmKeyOf(affirmTomorrowDate()); }
+function affirmDayLabel(key){
+  const p = n => (n < 10 ? '0' : '') + n;
+  const y = Number(key.slice(0, 4)), m = Number(key.slice(5, 7)), d = Number(key.slice(8, 10));
+  return `${p(m)}/${p(d)}(${DAYS_SHORT[new Date(y, m - 1, d, 12, 0, 0).getDay()]})`;
+}
+function affirmDayShortLabel(key){ return affirmDayLabel(key).replace(/\(.*\)$/, ''); }
+function affirmDayOverride(key){
+  const m = state.affirmByDate;
+  if(!m || typeof m !== 'object') return '';
+  const v = m[key];
+  return typeof v === 'string' ? v.trim() : '';
+}
+/* 그 날짜에 실제로 나올 문장 */
+function affirmTextForDate(key){
+  const own = affirmDayOverride(key);
+  if(own) return own;
+  const c = typeof state.customAffirmation === 'string' ? state.customAffirmation.trim() : '';
+  if(c) return c;
+  return AFFIRMATIONS[affirmIndexFor(key)];
+}
+/* 그 문장이 어디서 왔는가 — 'day'(날짜 지정) / 'manual'(전체 수동 고정) / 'auto'(자동 예정) */
+function affirmSourceForDate(key){
+  if(affirmDayOverride(key)) return 'day';
+  if(typeof state.customAffirmation === 'string' && state.customAffirmation.trim()) return 'manual';
+  return 'auto';
+}
+function renderAffirmTomorrow(){
+  const badge = document.getElementById('affirmTomorrowBadge');
+  const box = document.getElementById('affirmTomorrow');
+  const inp = document.getElementById('affirmTomorrowInput');
+  const reset = document.getElementById('affirmTomorrowReset');
+  if(!badge || !box || !inp) return;
+  const key = affirmTomorrowKey();
+  const text = affirmTextForDate(key);
+  const src = affirmSourceForDate(key);
+  badge.textContent = src === 'day' ? '✏️ 수동 지정됨' : src === 'manual' ? '✏️ 전체 수동 고정' : '🤖 자동 예정';
+  badge.classList.toggle('manual', src !== 'auto');
+  box.textContent = '';
+  const head = document.createElement('b');
+  head.textContent = affirmDayLabel(key);
+  box.appendChild(head);
+  box.appendChild(document.createTextNode(' ' + text));
+  const own = affirmDayOverride(key);
+  if(document.activeElement !== inp) inp.value = own;
+  inp.placeholder = text;
+  if(reset) reset.disabled = !own;
+}
+function saveAffirmTomorrow(){
+  const inp = document.getElementById('affirmTomorrowInput');
+  if(!inp) return;
+  const key = affirmTomorrowKey();
+  const v = inp.value.replace(/\s+/g, ' ').trim().slice(0, 40);
+  if(!v){ toast('📅 내일 문구를 먼저 입력해 주세요'); inp.focus(); return; }
+  if(!state.affirmByDate || typeof state.affirmByDate !== 'object') state.affirmByDate = {};
+  state.affirmByDate[key] = v;
+  save();
+  renderAffirm(); renderAffirmSettings();     // renderAffirmSettings → renderAffirmTomorrow
+  toast(`📅 내일(${affirmDayShortLabel(key)}) 문구가 저장됐어요`);
+}
+function resetAffirmTomorrow(){
+  const key = affirmTomorrowKey();
+  if(!affirmDayOverride(key)){ toast('📅 내일은 원래 자동 문구예요'); renderAffirmTomorrow(); return; }
+  delete state.affirmByDate[key];
+  save();
+  renderAffirm(); renderAffirmSettings();
+  toast(`📅 내일(${affirmDayShortLabel(key)}) 문구를 자동으로 되돌렸어요`);
+}
+
 /* ---------- 💬 오늘의 긍정 확언 (자동 / 수동) ---------- */
 function renderAffirmSettings(){
   const badge = document.getElementById('affirmMode');
@@ -5695,6 +5793,7 @@ function renderAffirmSettings(){
   if(document.activeElement !== inp) inp.value = manual ? state.customAffirmation : '';
   inp.placeholder = manual ? '다른 문장으로 바꾸려면 입력하세요' : affirmAutoText();
   if(now) now.textContent = `지금 배너: ${currentAffirmText()}`;
+  renderAffirmTomorrow();
 }
 function applyCustomAffirm(){
   const inp = document.getElementById('affirmInput');
@@ -6031,6 +6130,12 @@ document.getElementById('affirmAuto').addEventListener('click', useAutoAffirm);
 document.getElementById('affirmInput').addEventListener('keydown', e=>{
   if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); applyCustomAffirm(); }
 });
+/* 📅 v41 — 내일 문구 저장 / 자동으로 되돌리기 (설정창은 닫지 않는다) */
+document.getElementById('affirmTomorrowSave').addEventListener('click', saveAffirmTomorrow);
+document.getElementById('affirmTomorrowReset').addEventListener('click', resetAffirmTomorrow);
+document.getElementById('affirmTomorrowInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); saveAffirmTomorrow(); }
+});
 /* 🏥 미션 목록 편집 — 이름 입력·삭제·추가·기본값 */
 const missionRowsEl = document.getElementById('missionRows');
 missionRowsEl.addEventListener('input', e=>{
@@ -6354,8 +6459,7 @@ let curAffirmDay = '';
    수동 문장은 날짜가 바뀌어도 그대로 나온다 (자동으로 돌리면 다시 날짜별 문장). */
 function affirmAutoText(){ return AFFIRMATIONS[affirmIndexFor(affirmKeyOf())]; }
 function currentAffirmText(){
-  const c = typeof state.customAffirmation === 'string' ? state.customAffirmation.trim() : '';
-  return c || affirmAutoText();
+  return affirmTextForDate(affirmKeyOf());
 }
 /* 한 줄에 다 들어오게 — 기기 글꼴이 넓어 넘치면 글자 크기를 조금씩 줄인다 (14px 까지) */
 function fitAffirm(){
@@ -6397,7 +6501,10 @@ function tick(force){
     curMissionDay = todayKey();
     if(curTab === 'center') renderMission();
   }
-  if(curAffirmDay !== affirmKeyOf()) renderAffirm();   // 자정을 넘기면 긍정 확언도 새 문장으로
+  if(curAffirmDay !== affirmKeyOf()){   // 자정을 넘기면 긍정 확언도 새 문장으로
+    renderAffirm();
+    if(panel.classList.contains('show') && panelTab === 'say') renderAffirmTomorrow();
+  }
   const now = renderProgress();
   /* 아침 마감 알림 — 방과후 모드는 8:45에 대기 화면으로 넘어가지만 알림은 그대로 울린다 */
   if(now < DEPART + 15) checkDepartAlert(now);
