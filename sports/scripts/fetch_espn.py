@@ -1051,6 +1051,7 @@ def build_news(now: datetime) -> None:
     new_cache = {}
     sections = []
     total = 0
+    used_ids: set[str] = set()
     for league in LEAGUES:
         if not budget_ok(START):
             break
@@ -1066,6 +1067,8 @@ def build_news(now: datetime) -> None:
             headline = (art.get("headline") or "").strip()
             desc = re.sub(r"<[^>]+>", " ", art.get("description") or "").strip()
             aid = str(art.get("id") or headline[:20])
+            if aid in used_ids:
+                continue  # 같은 기사가 두 리그 소식에 같이 올라오는 경우가 있어 한 번만
             if not headline or not is_safe(headline) or not is_safe(desc):
                 continue
             if "fantasy" in headline.lower() or "betting" in headline.lower():
@@ -1073,6 +1076,7 @@ def build_news(now: datetime) -> None:
             if aid in cache:
                 items.append(cache[aid])
                 new_cache[aid] = cache[aid]
+                used_ids.add(aid)
             else:
                 ko_title = translate(headline)
                 if not is_safe(ko_title) or not re.search(r"[가-힣]", ko_title):
@@ -1095,6 +1099,7 @@ def build_news(now: datetime) -> None:
                 }
                 items.append(item)
                 new_cache[aid] = item
+                used_ids.add(aid)
             if len(items) >= 2:
                 break
         if items:
