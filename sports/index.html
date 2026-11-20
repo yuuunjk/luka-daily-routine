@@ -68,8 +68,8 @@
   .chip .num{font-size:15px; font-weight:800; opacity:.7; margin-left:4px;}
 
   /* ── 하위 탭 (고른 종목 안의 리그) ───────── */
-  .subtabs{position:relative; margin:2px 0 16px; padding:6px 6px 7px; border:2px solid #dbe7fb;
-    border-radius:18px; background:linear-gradient(180deg,#f4f8ff,#eaf2fe);}
+  .subtabs{position:relative; width:fit-content; max-width:100%; margin:2px 0 16px; padding:6px 6px 7px;
+    border:2px solid #dbe7fb; border-radius:18px; background:linear-gradient(180deg,#f4f8ff,#eaf2fe);}
   .subtabs::before{content:""; position:absolute; left:22px; top:-9px; width:3px; height:9px;
     background:#dbe7fb; border-radius:2px;}
   .subtabs .lbl{display:flex; align-items:center; gap:5px; margin:3px 8px 5px;
@@ -218,6 +218,66 @@
 
   body.modal-open{overflow:hidden;}
 
+  /* ── 🌙 밤 9시 ~ 아침 8시 자동 잠금 ───────── */
+  body.night-lock{overflow:hidden;}
+  .nightlock{position:fixed; inset:0; z-index:200; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:13px; padding:26px 22px; text-align:center;
+    background:linear-gradient(180deg,#101d33 0%,#0a1220 100%); color:#fff;
+    overscroll-behavior:contain;}
+  body.night-lock .nightlock{display:flex;}
+  .nightlock .nl-ico{font-size:clamp(54px,9vh,86px); line-height:1; filter:drop-shadow(0 6px 16px rgba(0,0,0,.45));}
+  .nightlock h2{margin:0; font-size:clamp(21px,3.2vh,30px); font-weight:900; letter-spacing:-.5px;}
+  .nightlock p{margin:0; font-size:clamp(15px,2.05vh,19px); font-weight:800; color:#c7daf0; line-height:1.62;}
+  .nightlock .nl-btn{margin-top:10px; border:2px solid #8fd0ff; border-radius:999px;
+    background:rgba(255,255,255,.13); color:#eaf7ff; font-family:inherit; font-weight:900;
+    font-size:19px; padding:13px 34px; min-height:54px;}
+  .nightlock .nl-btn:active{transform:scale(.97);}
+  .nightlock .nl-clock{font-size:15px; font-weight:800; color:#8ea7c6; letter-spacing:-.2px;}
+
+  /* ── 부모님 확인 (비밀번호 4자리 · 구글 시트 비밀번호) ── */
+  .pinwrap{position:fixed; inset:0; z-index:300; display:none; padding:14px; overflow-y:auto;
+    background:rgba(9,19,36,.68); backdrop-filter:blur(3px);}
+  .pinwrap.show{display:flex; align-items:center; justify-content:center;}
+  .pinbox{background:#fff; border-radius:26px; width:min(94vw,382px); padding:20px 22px 16px;
+    box-shadow:0 24px 60px rgba(8,20,50,.34); text-align:center;}
+  .pinbox .pi-ic{font-size:30px; line-height:1;}
+  .pinbox h3{margin:6px 0 2px; font-size:24px; font-weight:900; letter-spacing:-.5px;}
+  .pinbox .pi-sub{margin:0 0 13px; font-size:15px; font-weight:800; color:var(--sub);}
+  .pinfield{position:relative; width:190px; height:58px; margin:0 auto;}
+  .pindots{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:13px;
+    background:#fff; border:3px solid #dfe9f8; border-radius:16px;}
+  .pindots span{width:20px; height:20px; border-radius:50%; background:#eef3fb; box-shadow:inset 0 0 0 2px #dde7f6;}
+  .pindots span.on{background:var(--blue); box-shadow:inset 0 0 0 2px var(--blue-dark); transform:scale(1.06);}
+  .pinfield.bad .pindots{border-color:#ffb3b3; box-shadow:0 0 0 4px #ffe6e5;}
+  .pinfield.bad .pindots span.on{background:#ff9a9a; box-shadow:inset 0 0 0 2px #f08383;}
+  .pinfield.bad{animation:pinshake .32s;}
+  @keyframes pinshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}60%{transform:translateX(8px)}}
+  .pinfield input{position:absolute; inset:0; width:100%; height:100%; border:0; background:transparent;
+    color:transparent; caret-color:transparent; font-size:16px; border-radius:16px; cursor:pointer;
+    -webkit-text-security:disc;}
+  .pinfield input:focus{outline:none;}
+  .pin-err{min-height:19px; margin:7px 0 0; font-size:15px; font-weight:800; color:#d9534f;}
+  .pinpad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:100%; max-width:286px; margin:6px auto 8px;}
+  .pinpad button{height:52px; border:0; border-radius:14px; background:#f1f6ff; color:#22304c;
+    font-family:inherit; font-size:24px; font-weight:900; box-shadow:0 2px 0 #dde7f6; cursor:pointer;}
+  .pinpad button:active{transform:translateY(1px); box-shadow:none; background:#e4eefc;}
+  .pinpad button.del{background:#fff1ef; color:#c0392b; box-shadow:0 2px 0 #f2d8d3; font-size:21px;}
+  .pinpad button.ok{background:var(--blue); color:#fff; box-shadow:0 2px 0 var(--blue-dark); font-size:19px;}
+  .pinpad button.ok[disabled]{background:#e9eef7; color:#aab6c9; box-shadow:none; cursor:default;}
+  .pin-cancel{border:2px solid var(--line); background:#fff; color:var(--sub); font-weight:900;
+    border-radius:999px; padding:10px 22px; min-height:46px; font-size:17px;}
+  /* 밤에 부모님이 열어 준 동안에만 보이는 작은 '다시 잠그기' */
+  .relock{display:none; background:#eef4ff; border:2px solid #cddffb; border-radius:999px;
+    padding:8px 14px; font-size:16px; font-weight:800; color:#3d5f9e; min-height:44px;}
+  body.night-open .relock{display:inline-flex; align-items:center;}
+
+  /* ── 잠깐 알려 주는 말풍선 ──────────────── */
+  .toast{position:fixed; left:50%; bottom:26px; transform:translate(-50%,16px); z-index:400;
+    background:#16213e; color:#fff; font-size:17px; font-weight:800; padding:12px 20px;
+    border-radius:999px; box-shadow:0 12px 30px rgba(10,25,55,.3); opacity:0;
+    pointer-events:none; transition:opacity .2s, transform .2s; max-width:92vw; text-align:center;}
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+
   /* ── settings ───────────────────────────── */
   .panel{background:#fff; border:2px solid var(--line); border-radius:var(--radius); padding:20px;
     box-shadow:var(--shadow); margin-bottom:16px;}
@@ -262,6 +322,8 @@
   @media (max-width:400px){
     .tab{font-size:15px; padding:10px 2px; letter-spacing:-.6px;}
     .tab .te{display:none;}
+    .subtab{font-size:16px; padding:9px 12px;}
+    .subtabs .lbl{font-size:13px;}
   }
   @media (max-width:520px){
     body{font-size:19px;}
@@ -282,6 +344,7 @@
       <div class="brand"><img class="appicon" src="./app-icon-180.png" alt="오늘의 경기장 앱 아이콘" width="36" height="36"><h1>오늘의 경기장</h1></div>
       <div class="hd-right">
         <span class="today-label" id="todayLabel">오늘</span>
+        <button class="relock" id="relockBtn" type="button">🌙 다시 잠그기</button>
         <button class="btn-refresh" id="refreshBtn">🔄 새로고침</button>
         <button class="btn-refresh" id="settingsBtn" aria-label="설정">⚙ 설정</button>
       </div>
@@ -382,6 +445,49 @@
   </div>
 </div>
 
+<!-- 🌙 밤 9시 ~ 아침 8시 자동 잠금 — 아이가 앱의 어느 것도 누를 수 없다 -->
+<div class="nightlock" id="nightLock" role="dialog" aria-modal="true"
+     aria-labelledby="nightLockTitle" aria-hidden="true">
+  <div class="nl-ico" aria-hidden="true">🔒</div>
+  <h2 id="nightLockTitle">지금은 사용 시간이 아니에요</h2>
+  <p>🌙 밤 9시 ~ 아침 8시는 잠금 시간이에요<br>아침 8시가 되면 저절로 열려요</p>
+  <button class="nl-btn" id="nightUnlockBtn" type="button">부모님 확인</button>
+  <div class="nl-clock" id="nightLockClock"></div>
+</div>
+
+<!-- 부모님 확인 (비밀번호 4자리) -->
+<div class="pinwrap" id="pinModal" aria-hidden="true">
+  <div class="pinbox" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+    <div class="pi-ic" aria-hidden="true">🔒</div>
+    <h3 id="pinTitle">부모님 확인</h3>
+    <p class="pi-sub" id="pinSub">부모님만 열 수 있어요<br>비밀번호 4자리를 눌러 주세요</p>
+    <div class="pinfield" id="pinField">
+      <div class="pindots" id="pinDots" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             aria-label="부모 비밀번호 4자리">
+    </div>
+    <div class="pin-err" id="pinErr" role="status" aria-live="polite"></div>
+    <div class="pinpad" id="pinPad">
+      <button type="button" data-k="1">1</button>
+      <button type="button" data-k="2">2</button>
+      <button type="button" data-k="3">3</button>
+      <button type="button" data-k="4">4</button>
+      <button type="button" data-k="5">5</button>
+      <button type="button" data-k="6">6</button>
+      <button type="button" data-k="7">7</button>
+      <button type="button" data-k="8">8</button>
+      <button type="button" data-k="9">9</button>
+      <button type="button" data-k="del" class="del" aria-label="한 자리 지우기">⌫</button>
+      <button type="button" data-k="0">0</button>
+      <button type="button" data-k="ok" class="ok" id="pinOk" disabled>확인</button>
+    </div>
+    <button class="pin-cancel" id="pinCancel" type="button">취소</button>
+  </div>
+</div>
+
+<div class="toast" id="sportsToast" role="status" aria-live="polite"></div>
+
 <script>
 "use strict";
 /* 화면에 보이지 않는 진단용 기록 — 오류 0건 확인에 쓴다 */
@@ -414,6 +520,8 @@ const state = {
   preds: loadPreds(),
   interval: Number(localStorage.getItem("sports.interval") ?? 5),
   liveMode: localStorage.getItem("sports.live") === "1",
+  nightUnlockKey: loadNightUnlockKey(),
+  parentPin: loadPinCache(),
   directOK: null,
   teamsKo: null,
   koTeams: null,
@@ -612,7 +720,10 @@ function renderPredict(){
 }
 
 /* ── 유틸 ──────────────────────────────── */
-function kstNow(){ return new Date(Date.now() + (new Date().getTimezoneOffset()*60000) + KST_OFFSET); }
+function kstNow(){
+  /* window.__sportsNowOffset 는 점검용 시각 이동 훅 (기기 시계는 그대로) */
+  return new Date(Date.now() + (window.__sportsNowOffset || 0) + (new Date().getTimezoneOffset()*60000) + KST_OFFSET);
+}
 function fmtToday(){
   const d = kstNow();
   return `${d.getMonth()+1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`;

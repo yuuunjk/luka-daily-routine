@@ -2694,7 +2694,7 @@
 <div class="applock" id="appLock" role="dialog" aria-modal="true" aria-labelledby="appLockTitle" aria-hidden="true">
   <div class="lockico" aria-hidden="true">🔒</div>
   <h2 id="appLockTitle">지금은 사용 시간이 아니에요</h2>
-  <p id="appLockMsg">부모님이 ON으로 켜 주시면 다시 사용할 수 있어요!</p>
+  <p>부모님이 ON으로 켜 주시면 다시 사용할 수 있어요!</p>
   <button class="lbtn" id="appLockBtn" type="button">부모님 확인</button>
 </div>
 
@@ -3463,8 +3463,6 @@ function migrate(s){
   if(!MODE_DEFS[s.mode]) s.mode = 'school';   // 오늘 모드 (등교 / 방과후 / 방학)
   /* 🟢 ON / 🔴 OFF — 부모님이 사용 시간을 끄고 켜는 스위치 (처음엔 ON) */
   if(typeof s.appEnabled !== 'boolean') s.appEnabled = true;
-  /* 🌙 야간 자동 OFF 잠금(21:00~07:59)을 부모 비밀번호로 푼 밤 구간 키 — 그 밤에만 ON 을 유지한다 */
-  if(s.nightUnlockKey != null && !/^\d{4}-\d{2}-\d{2}$/.test(String(s.nightUnlockKey))) s.nightUnlockKey = null;
   /* 🕹️ 시트 '웹제어' 로 마지막으로 본 값 — 시트가 이 값에서 바뀔 때만 원격 반영한다.
      (앱에서 비밀번호로 직접 켜고 끈 것이 언제나 최우선) */
   if(s.lastSheetWebControl !== 'on' && s.lastSheetWebControl !== 'off') s.lastSheetWebControl = null;
@@ -7220,52 +7218,16 @@ function parentOnly(fn){
 /* ---------- 🟢 ON / 🔴 OFF — 부모님이 사용 시간을 끄고 켜는 스위치 ----------
    기본값은 ON. 버튼을 누르면 부모 비밀번호를 받고, 맞아야만 켜짐/꺼짐이 바뀐다.
    OFF 이면 잠금 화면이 웹앱 전체를 덮어 아이가 루틴·탭·공부·도감·배틀 아무것도 누를 수 없다.
-   (위쪽 OFF 버튼과 잠금 화면의 '부모님 확인' 버튼만 부모 비밀번호를 받는다)
-
-   🌙 v52 — 야간 자동 OFF 잠금 (밤 21:00 ~ 아침 07:59)
-   ① state.appEnabled 에는 '부모님이 정한 사용 상태'만 담고, 야간 잠금은 그 위에 계산으로 얹는다.
-      → 08:00 이 되면 야간 잠금이 저절로 풀려 ON 으로 돌아오고(부모가 OFF 로 잠가 두었으면 그대로 OFF),
-        21:00 이 지나면 다시 잠긴다. 저장값을 잠금 때문에 고치지 않으므로 30초 폴링·새로고침·시간 이동이
-        서로 덮어쓸 일이 없다.
-   ② 야간 잠금 중 부모 비밀번호로 켜면 그 밤 구간 키(nightWindowKeyOf)를 state.nightUnlockKey 에 적어
-      그 구간 동안만 ON 을 유지한다. 다음 날 밤 21:00 은 새 구간이라 다시 잠긴다.
-      (21:00~23:59 는 그날 날짜, 00:00~07:59 는 어제 날짜로 묶어 한 밤을 같은 구간으로 본다)
-   ③ 🧪 테스트의 시뮬레이션 시각도 getNow() 로만 판단하므로 그대로 따라온다. */
-const NIGHT_OFF_FROM_HOUR = 21;      // 21:00 부터 잠근다
-const NIGHT_OFF_TO_HOUR = 8;         // 08:00 부터는 풀린다
-function nightHoursNow(now){
-  const h = (now || getNow()).getHours();
-  return h >= NIGHT_OFF_FROM_HOUR || h < NIGHT_OFF_TO_HOUR;
-}
-function nightWindowKeyOf(now){
-  now = now || getNow();
-  if(!nightHoursNow(now)) return null;
-  const d = new Date(now.getTime());
-  if(d.getHours() < NIGHT_OFF_TO_HOUR) d.setDate(d.getDate() - 1);   // 00:00~07:59 → 어제 밤 구간
-  return affirmKeyOf(d);
-}
-function nightLocked(now){
-  const k = nightWindowKeyOf(now);
-  return !!k && state.nightUnlockKey !== k;
-}
+   (위쪽 OFF 버튼과 잠금 화면의 '부모님 확인' 버튼만 부모 비밀번호를 받는다) */
 const powerBtn = document.getElementById('powerBtn');
 const appLockEl = document.getElementById('appLock');
-const appLockMsg = document.getElementById('appLockMsg');
-function appOn(){ return state.appEnabled !== false && !nightLocked(); }
+function appOn(){ return state.appEnabled !== false; }
 function renderPower(){
   const on = appOn();
-  const night = !on && nightLocked();       // 야간 자동 잠금 때문에 꺼져 있는 경우
   powerBtn.textContent = on ? '🟢 ON' : '🔴 OFF';
   powerBtn.classList.toggle('off', !on);
   powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-  powerBtn.title = on ? '사용 ON · 부모 비밀번호로 끌 수 있어요'
-    : night ? '🌙 밤 9시~아침 8시 자동 잠금 · 부모 비밀번호로 켤 수 있어요'
-            : '사용 OFF · 부모 비밀번호로 켤 수 있어요';
-  if(appLockMsg){
-    appLockMsg.innerHTML = night
-      ? '🌙 밤 9시 ~ 아침 8시는 잠금 시간이에요<br>부모님이 켜 주시면 다시 사용할 수 있어요!'
-      : '부모님이 ON으로 켜 주시면 다시 사용할 수 있어요!';
-  }
+  powerBtn.title = on ? '사용 ON · 부모 비밀번호로 끌 수 있어요' : '사용 OFF · 부모 비밀번호로 켤 수 있어요';
   appLockEl.setAttribute('aria-hidden', on ? 'true' : 'false');
   document.body.classList.toggle('app-off', !on);
 }
@@ -7273,25 +7235,8 @@ function setAppEnabled(on, src){
   state.appEnabled = !!on;
   save(); renderPower();
   const remote = src === 'sheet';           // 시트 원격 제어로 바뀐 경우
-  if(on && nightLocked()){
-    /* 시트로 켜도 야간 자동 잠금은 부모 비밀번호로만 풀린다 — 아침 8시에 저절로 ON 이 된다 */
-    toast('🟢 사용 ON — 🌙 밤 9시~아침 8시 자동 잠금 중이라 잠금 화면이에요');
-    return;
-  }
   if(on){ blip(); toast(remote ? '🟢 사용 ON — 부모님이 시트에서 켰어요!' : '🟢 사용 ON — 이제 루틴을 할 수 있어요!'); }
   else { toast(remote ? '🔴 사용 OFF — 부모님이 시트에서 껐어요' : '🔴 사용 OFF — 지금은 잠금 화면이에요'); }
-}
-/* 🌙 시계가 21:00 / 08:00 을 지나면 잠금 화면을 저절로 바꾼다 (tick 이 250ms 마다 부른다) */
-let nightPowerWas = null;
-function syncNightPower(){
-  const locked = nightLocked();
-  const was = nightPowerWas;
-  nightPowerWas = locked;
-  if(was === null || was === locked) return;      // 처음 그리기는 위 renderPower() 가 맡는다
-  renderPower();
-  if(locked && panel.classList.contains('show')) closePanel();   // 야간 잠금이 걸리면 부모 설정도 닫는다
-  /* 잠금이 풀린 게 '아침 8시' 때문일 때만 안내 — 부모가 비번으로 켠 경우는 그쪽 토스트가 맡는다 */
-  if(!locked && !nightHoursNow() && state.appEnabled !== false) toast('🌞 아침 8시 — 이제 사용할 수 있어요!');
 }
 /* 🕹️ 시트 '웹제어' 원격 제어 — 규칙
    ① 시트 값이 직전에 본 값(lastSheetWebControl)과 '달라졌을 때만' 앱 사용 상태에 반영한다.
@@ -7308,32 +7253,9 @@ function applySheetWebControl(parsed){
   if(prev === val) return;
   state.lastSheetWebControl = val;
   save();
-  /* 부모님의 '사용 상태'(state.appEnabled)와 견준다 — 야간 자동 잠금 때문에 화면이 OFF 로 보여도
-     시트에서 바꾼 뜻은 그대로 받아 두어야 08:00 에 엉뚱한 상태로 돌아오지 않는다. */
-  if(state.appEnabled !== (val === 'on')) setAppEnabled(val === 'on', 'sheet');
+  if(appOn() !== (val === 'on')) setAppEnabled(val === 'on', 'sheet');
 }
-function askAppPower(){
-  askPin(()=>{
-    if(appOn()){
-      /* 지금 ON → 잠근다. 밤에 비밀번호로 켜 둔 상태라면 그 밤만 다시 잠그고,
-         낮이라면 부모님의 '사용 OFF' 로 남긴다(아침 8:00 에도 그대로 OFF). */
-      if(nightHoursNow()){
-        state.nightUnlockKey = null;
-        save(); renderPower();
-        toast('🔴 사용 OFF — 아침 8시까지 잠금이에요');
-      }else{
-        setAppEnabled(false, 'parent');
-      }
-      return;
-    }
-    /* 지금 OFF → 켠다. 야간 잠금 구간이면 이 밤을 '비밀번호로 푼 밤'으로 적어 둔다. */
-    const night = nightHoursNow();
-    state.appEnabled = true;
-    if(night) state.nightUnlockKey = nightWindowKeyOf();
-    save(); renderPower(); blip();
-    toast(night ? '🟢 사용 ON — 아침 8시까지 켜 둘게요!' : '🟢 사용 ON — 이제 루틴을 할 수 있어요!');
-  }, 'parent');
-}
+function askAppPower(){ askPin(()=> setAppEnabled(!appOn()), 'parent'); }
 powerBtn.addEventListener('click', e=>{ e.stopPropagation(); askAppPower(); });
 appLockEl.addEventListener('click', e=>{
   e.stopPropagation();
@@ -7871,7 +7793,6 @@ function tick(force){
   /* 아침 마감 알림 — 방과후 모드는 8:45에 대기 화면으로 넘어가지만 알림은 그대로 울린다 */
   if(now < DEPART + 15) checkDepartAlert(now);
   checkNightStart(now);              // 21:00 취침 시작음·안내 (하루 한 번)
-  syncNightPower();                  // 🌙 v52 — 21:00~07:59 야간 자동 OFF 잠금 반영
   if(force){ wakeAcc = 0; syncWake(); }
   else if(++wakeAcc >= 4){ wakeAcc = 0; syncWake(); }   // 1초에 한 번만 확인
 }
