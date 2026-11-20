@@ -48,10 +48,11 @@
   button{font-family:inherit; font-size:19px; cursor:pointer; border:0; background:none; color:inherit;}
   .btn-refresh{background:#fff; border:2px solid var(--line); border-radius:999px; padding:9px 16px;
     font-weight:800; color:var(--blue); min-height:46px;}
+  .btn-refresh.on{background:#dbeafe; border-color:#93c5fd; color:var(--blue-dark);}
   .btn-refresh:active{transform:scale(.97);}
 
-  /* ── tabs (5개 한 줄에 고르게) ────────────── */
-  .tabs{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin:16px 0 4px;}
+  /* ── tabs (4개 한 줄에 고르게) ────────────── */
+  .tabs{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:16px 0 4px;}
   .tab{background:#fff; border:2px solid var(--line); border-radius:999px; padding:12px 6px;
     font-size:19px; font-weight:800; color:var(--sub); white-space:nowrap; min-height:54px;
     display:flex; align-items:center; justify-content:center; gap:5px; overflow:hidden; letter-spacing:-.3px;}
@@ -243,9 +244,9 @@
   footer{margin-top:30px; text-align:center; color:#93a2bd; font-size:15px; font-weight:700; line-height:1.6;}
   .hide{display:none !important;}
   @media (max-width:560px){
-    .tabs{gap:4px; margin:14px 0 2px;}
-    .tab{font-size:13px; padding:9px 2px; min-height:48px; gap:3px; letter-spacing:-.5px; border-radius:15px;}
-    .tab .te{display:none;}
+    .tabs{gap:6px; margin:14px 0 2px;}
+    .tab{font-size:14px; padding:9px 3px; min-height:48px; gap:3px; letter-spacing:-.5px; border-radius:15px;}
+    .tab .te{font-size:14px;}
     .predbar .pk{font-size:14px; padding:7px 3px;}
     .psum .k b{font-size:20px;}
     .psum .k span{font-size:12px;}
@@ -270,6 +271,7 @@
       <div class="hd-right">
         <span class="today-label" id="todayLabel">오늘</span>
         <button class="btn-refresh" id="refreshBtn">🔄 새로고침</button>
+        <button class="btn-refresh" id="settingsBtn" aria-label="설정">⚙ 설정</button>
       </div>
     </div>
     <nav class="tabs" id="tabs">
@@ -277,7 +279,6 @@
       <button class="tab" data-tab="predict"><span class="te">🎯</span>승부예측</button>
       <button class="tab" data-tab="standings"><span class="te">🏆</span>순위</button>
       <button class="tab" data-tab="news"><span class="te">📰</span>주요 소식</button>
-      <button class="tab" data-tab="settings"><span class="te">⚙️</span>설정</button>
     </nav>
     <div class="banner" id="banner"></div>
   </header>
@@ -1284,22 +1285,22 @@ async function refreshDirect(){
 
 /* ── 이벤트 연결 ─────────────────────── */
 function bind(){
-  $("#tabs").querySelectorAll(".tab").forEach(t => {
-    t.onclick = () => {
-      state.tab = t.dataset.tab;
-      $("#tabs").querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
-      for (const name of ["today","predict","standings","news","settings"]){
-        $(`#tab-${name}`).classList.toggle("hide", name !== state.tab);
-      }
-      if (state.tab === "settings") renderSettings();
-      if (state.tab === "predict") renderPredict();
-      window.scrollTo({top:0, behavior:"smooth"});
-    };
-  });
-  $("#predBanner").onclick = () => {
-    const t = $("#tabs").querySelector('.tab[data-tab="predict"]');
-    if (t) t.click();
+  const showTab = (name) => {
+    state.tab = name;
+    $("#tabs").querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x.dataset.tab === name));
+    for (const n of ["today","predict","standings","news","settings"]){
+      $(`#tab-${n}`).classList.toggle("hide", n !== name);
+    }
+    $("#settingsBtn").classList.toggle("on", name === "settings");
+    if (name === "settings") renderSettings();
+    if (name === "predict") renderPredict();
+    window.scrollTo({top:0, behavior:"smooth"});
   };
+  $("#tabs").querySelectorAll(".tab").forEach(t => {
+    t.onclick = () => showTab(t.dataset.tab);
+  });
+  $("#settingsBtn").onclick = () => showTab("settings");
+  $("#predBanner").onclick = () => showTab("predict");
   /* 예측 버튼은 화면을 다시 그려도 살아 있도록 한 곳에서 받는다 */
   document.addEventListener("click", (e) => {
     const b = e.target && e.target.closest ? e.target.closest("[data-pred]") : null;
