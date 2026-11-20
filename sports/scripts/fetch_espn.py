@@ -251,8 +251,14 @@ ENG_TEAMS_KO = {
     "LIV": "리버풀", "MAN": "맨체스터 유나이티드", "MNC": "맨체스터 시티", "NEW": "뉴캐슬",
     "NFO": "노팅엄", "SUN": "선덜랜드", "TOT": "토트넘",
 }
+FRA_TEAMS_KO = {   # 리그1 (프랑스)
+    "PSG": "파리 생제르맹", "LILL": "릴", "LYON": "리옹", "REN": "렌", "TRY": "트루아",
+    "AUX": "오세르", "MON": "모나코", "RCL": "랑스", "OLM": "마르세유", "TOU": "툴루즈",
+    "STR": "스트라스부르", "LOR": "로리앙", "NICE": "니스", "MNS": "르망", "HAC": "르아브르",
+    "PAR": "파리 FC", "BRE": "브레스트", "ANG": "앙제",
+}
 UCL_TEAMS_KO = {
-    "MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "INT": "인터밀란", "JUV": "유벤투스",
+    "MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "ROMA": "로마", "INT": "인터밀란", "JUV": "유벤투스",
     "NAP": "나폴리", "LAZ": "라치오", "ATA": "아탈란타", "MUN": "바이에른", "SCP": "스포르팅",
     "PSG": "파리 생제르맹", "PSV": "PSV 에인트호번", "DOR": "도르트문트", "VFB": "슈투트가르트",
     "RBL": "라이프치히", "FEN": "페네르바흐체",
@@ -261,10 +267,12 @@ KO_BY_LEAGUE = {
     "soccer/ger.1": GER_TEAMS_KO,
     "soccer/esp.1": ESP_TEAMS_KO,
     "soccer/eng.1": ENG_TEAMS_KO,
-    "soccer/ita.1": {"MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "INT": "인터밀란",
+    "soccer/ita.1": {"MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "ROMA": "로마", "INT": "인터밀란",
                      "JUV": "유벤투스", "NAP": "나폴리", "LAZ": "라치오", "ATA": "아탈란타",
                      "FIO": "피오렌티나", "BOL": "볼로냐", "UDI": "우디네세", "GEN": "제노아",
-                     "SAS": "사수올로"},
+                     "SAS": "사수올로", "LEC": "레체", "PAR": "파르마", "COMO": "코모",
+                     "CAG": "칼리아리", "MON": "몬차", "FRO": "프로시논", "VEN": "베네치아"},
+    "soccer/fra.1": FRA_TEAMS_KO,
     "soccer/uefa.champions": UCL_TEAMS_KO,
     "football/nfl": NFL_TEAMS_KO,
     "soccer/tur.1": TUR_TEAMS_KO,
@@ -905,6 +913,17 @@ SOCCER_CFG = [
 SOCCER_CATS = [("goals", "득점"), ("assists", "도움")]
 
 
+def team_ko_cached(team: dict, league_key: str = "") -> str:
+    """팀 이름을 사전에서만 찾는다 (번역 호출 없음 — leaders 수집용)."""
+    abbr = (team.get("abbreviation") or "").upper()
+    override = (KO_BY_LEAGUE.get(league_key) or {}).get(abbr)
+    if override:
+        return override
+    if abbr and abbr in TEAMS_KO:
+        return TEAMS_KO[abbr]
+    return (team.get("shortDisplayName") or team.get("displayName") or team.get("name") or "").strip()
+
+
 def stat_text(value, kind="int"):
     if value in (None, "", "-"):
         return "-"
@@ -948,7 +967,7 @@ def espn_byathlete(sport_path: str, sort: str, season: int, limit: int = 10):
         out.append({
             "rank": pos,
             "player": athlete.get("displayName") or "",
-            "team": team_ko(team, sport_path) if athlete.get("teamName") else "",
+            "team": team_ko_cached(team, sport_path) if athlete.get("teamName") else "",
             "emblem": (logos[0].get("href") if logos else ""),
             "value": value,
         })
@@ -1022,8 +1041,8 @@ def build_leaders(now: datetime) -> None:
                    "logo": logos[0].get("href") if logos else ""}
             if hit["name"]:
                 teams[team_id] = hit
-        ko = team_ko({"abbreviation": hit.get("abbr", ""), "displayName": hit["name"],
-                      "name": hit["name"]}, f"soccer/{league_key}")
+        ko = team_ko_cached({"abbreviation": hit.get("abbr", ""), "displayName": hit["name"],
+                             "name": hit["name"]}, f"soccer/{league_key}")
         return ko or hit["name"], hit.get("logo", "")
 
     for slug, name in SOCCER_CFG:
