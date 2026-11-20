@@ -627,7 +627,11 @@ def kovo_standings() -> list[dict]:
     for i, r in enumerate(rows, start=1):
         r["rank"] = i
     season = str(payload[0].get("season") or "")
-    return [{"id": "kovo", "sport": "배구", "name": "V리그 남자부", "season": season,
+    # 023 같은 코드 대신 "2026-27" 처럼 보여 준다 (배구 시즌은 7월에 시작)
+    now = datetime.now(KST)
+    start_year = now.year if now.month >= 7 else now.year - 1
+    label = f"{start_year}-{str(start_year + 1)[2:]}"
+    return [{"id": "kovo", "sport": "배구", "name": "V리그 남자부", "season": label,
              "metric": "pct", "teamCount": len(rows), "rows": rows}]
 
 
