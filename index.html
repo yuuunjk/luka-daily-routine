@@ -7287,6 +7287,7 @@ function restoreData(file){
       /* 백업에 담긴 긍정 확언·미션 목록도 바로 화면에 반영한다 */
       renderAffirm(); renderAffirmSettings(); renderMissionSettings();
       renderPanelMode(); renderPanelStatus();
+      renderFruitBadge(); updatePartnerPopup();     // 🍎 백업에 담긴 과일 수를 바로 반영
       tick(true);
       toast('✅ 백업을 불러왔어요');
     }catch(e){
@@ -7314,7 +7315,9 @@ document.getElementById('resetAll').addEventListener('click', parentOnly(()=>{
     buildRoutineTable();
     renderModePills();
     curRKey = null;
-    renderTasks(); renderWild(); renderDex(); renderStudy(); renderMission(); tick(true);
+    renderTasks(); renderWild(); renderDex(); renderStudy(); renderMission();
+    renderFruitBadge(); updatePartnerPopup();       // 🍎 과일도 0으로
+    tick(true);
     toast('전체 초기화 완료');
   }
 }));
