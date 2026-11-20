@@ -50,6 +50,12 @@
     font-weight:800; color:var(--blue); min-height:46px;}
   .btn-refresh.on{background:#dbeafe; border-color:#93c5fd; color:var(--blue-dark);}
   .btn-refresh:active{transform:scale(.97);}
+  .btn-fav{background:#fff8e3; border:2px solid #f4e2b0; border-radius:999px; padding:9px 15px;
+    font-weight:900; color:#8a5b00; min-height:46px; white-space:nowrap; letter-spacing:-.3px;}
+  .btn-fav.has{background:#fff1c9; border-color:var(--fav-line);}
+  .btn-fav:active{transform:scale(.97);}
+  .btn-fav .cnt{font-size:14px; font-weight:900; color:#8a5b00; background:#ffe9a8;
+    border-radius:999px; padding:1px 7px; margin-left:5px;}
 
   /* ── tabs (4개 한 줄에 고르게) ────────────── */
   .tabs{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:16px 0 4px;}
@@ -216,6 +222,22 @@
   .sheet .btn-close-all{margin-top:16px; width:100%; background:var(--blue); color:#fff; font-weight:900;
     border-radius:999px; padding:14px; min-height:52px; font-size:19px;}
 
+  /* ── ⭐ 우리 팀 고르기 창 ─────────────────── */
+  .sheet .fp-hint{margin:0 0 4px; color:var(--sub); font-size:17px; font-weight:700;}
+  .favpick{display:grid; gap:2px;}
+  .favpick .fp-sport{font-size:18px; font-weight:900; color:#5b6b8c; margin:16px 0 8px;}
+  .favpick .fp-sport:first-child{margin-top:10px;}
+  .favpick .teams{display:flex; flex-wrap:wrap; gap:8px;}
+  .favpick .teambtn{background:#fff; border:2px solid var(--line); border-radius:999px; padding:9px 16px;
+    font-size:18px; font-weight:800; color:var(--sub); min-height:48px;}
+  .favpick .teambtn.on{background:#fff3c9; border-color:var(--fav-line); color:#7a5200;}
+  .favpick .teambtn:active{transform:scale(.97);}
+  .favpick .fp-empty{margin:16px 0 0; padding:22px 16px; border:2px dashed var(--line); border-radius:18px;
+    text-align:center; color:var(--sub); font-size:18px; font-weight:700; line-height:1.5;}
+  .sheet .fp-picked{margin:14px 0 0; font-size:16px; font-weight:800; color:#8a5b00;
+    background:#fff8e3; border:2px solid #f4e2b0; border-radius:16px; padding:11px 14px; text-align:center;
+    line-height:1.45; word-break:keep-all;}
+
   body.modal-open{overflow:hidden;}
 
   /* ── 🌙 밤 9시 ~ 아침 8시 자동 잠금 ───────── */
@@ -329,6 +351,9 @@
     body{font-size:19px;}
     .brand{font-size:27px;}
     .brand .appicon{width:32px; height:32px; border-radius:10px;}
+    .hd-right{gap:6px;}
+    .btn-fav,.btn-refresh{padding:8px 12px; font-size:17px; min-height:44px;}
+    .today-label{font-size:17px; padding:6px 12px;}
     .score{font-size:38px; min-width:96px;}
     .news h3{font-size:22px;}
     th,td{padding:10px 6px; font-size:17px;}
@@ -346,6 +371,7 @@
         <span class="today-label" id="todayLabel">오늘</span>
         <button class="relock" id="relockBtn" type="button">🌙 다시 잠그기</button>
         <button class="btn-refresh" id="refreshBtn">🔄 새로고침</button>
+        <button class="btn-fav" id="favBtn" type="button" aria-haspopup="dialog">⭐ 우리 팀</button>
         <button class="btn-refresh" id="settingsBtn" aria-label="설정">⚙ 설정</button>
       </div>
     </div>
@@ -442,6 +468,21 @@
     <div class="sh-meta" id="shMeta"></div>
     <div class="sh-body" id="shBody"></div>
     <button class="btn-close-all" id="shDone">다 읽었어요</button>
+  </div>
+</div>
+
+<!-- ⭐ 우리 팀 고르기 창 (상단 '우리 팀' 버튼) -->
+<div class="modal" id="favModal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="favTitle">
+    <div class="sh-top">
+      <span class="sh-tag">⭐ 우리 팀</span>
+      <button class="sh-close" id="favClose">✕ 닫기</button>
+    </div>
+    <h2 id="favTitle">⭐ 우리 팀 고르기</h2>
+    <p class="fp-hint">응원하는 팀을 눌러 두면 카드와 순위에서 반짝반짝 표시돼요.</p>
+    <div class="favpick" id="favBody"></div>
+    <div class="fp-picked" id="favPicked">아직 고른 팀이 없어요</div>
+    <button class="btn-close-all" id="favDone">다 골랐어요</button>
   </div>
 </div>
 
@@ -1161,7 +1202,7 @@ function renderSettings(){
       const t = b.dataset.team;
       const i = state.favorites.indexOf(t);
       if (i >= 0) state.favorites.splice(i, 1); else state.favorites.push(t);
-      saveFav(); renderSettings(); renderToday(); renderStandings();
+      saveFav(); renderSettings(); renderToday(); renderStandings(); updateFavBtn();
     };
   });
 
@@ -1182,12 +1223,74 @@ function renderSettings(){
   $("#sDirect").textContent = state.directOK === null ? "확인 중…" : (state.directOK ? "가능 ✅ (1분 갱신)" : "차단됨 → 5분 자동 갱신");
 }
 
+/* ── ⭐ 우리 팀 고르기 창 (상단 '⭐ 우리 팀' 버튼) ── */
+function updateFavBtn(){
+  const btn = $("#favBtn");
+  if (!btn) return;
+  const n = state.favorites.length;
+  btn.classList.toggle("has", n > 0);
+  btn.innerHTML = `⭐ 우리 팀${n ? `<span class="cnt">${n}</span>` : ""}`;
+  btn.setAttribute("aria-label", n ? `우리 팀 ${n}개 골랐어요 · 눌러서 바꾸기` : "우리 팀 고르기");
+}
+function renderFavPicked(){
+  const el = $("#favPicked");
+  if (!el) return;
+  el.textContent = state.favorites.length
+    ? `⭐ 고른 팀: ${state.favorites.join(" · ")}`
+    : "아직 고른 팀이 없어요 · 위에서 눌러 보세요";
+}
+function renderFavPicker(){
+  const body = $("#favBody");
+  if (!body) return;
+  const map = teamsBySport();
+  const order = SPORTS.filter(s => s !== "전체" && map.has(s));
+  body.innerHTML = order.length
+    ? order.map(sport => `
+        <div>
+          <div class="fp-sport">${SPORT_EMOJI[sport] || "🏅"} ${esc(sport)}</div>
+          <div class="teams">
+            ${[...map.get(sport)].sort((a, b) => a.localeCompare(b, "ko")).map(t => `
+              <button class="teambtn ${isFav(t) ? "on" : ""}" data-team="${esc(t)}">${isFav(t) ? "⭐ " : ""}${esc(t)}</button>
+            `).join("")}
+          </div>
+        </div>`).join("")
+    : `<p class="fp-empty">팀 목록을 아직 못 받았어요.<br>경기·순위 정보를 받은 뒤에 다시 열어 주세요.</p>`;
+  body.querySelectorAll(".teambtn").forEach(b => { b.onclick = () => toggleFavTeam(b.dataset.team); });
+  renderFavPicked();
+  updateFavBtn();
+}
+function toggleFavTeam(team){
+  if (!team) return;
+  const i = state.favorites.indexOf(team);
+  if (i >= 0) state.favorites.splice(i, 1); else state.favorites.push(team);
+  saveFav();
+  renderFavPicker();
+  renderSettings(); renderToday(); renderStandings();
+}
+function openFavPicker(){
+  renderFavPicker();
+  const m = $("#favModal");
+  if (!m) return;
+  m.classList.add("show");
+  m.setAttribute("aria-hidden", "false");
+  m.scrollTop = 0;
+  document.body.classList.add("modal-open");
+}
+function closeFavPicker(){
+  const m = $("#favModal");
+  if (!m) return;
+  m.classList.remove("show");
+  m.setAttribute("aria-hidden", "true");
+  if (!$("#articleModal").classList.contains("show")) document.body.classList.remove("modal-open");
+}
+
 /* ── 탭 & 새로고침 타이머 ─────────────── */
 function renderAll(){
   renderSportChips(); renderToday();
   renderStandingChips(); renderStandings();
   renderNewsChips(); renderNews();
   renderSettings(); renderPredict();
+  updateFavBtn();
   $("#todayLabel").textContent = fmtToday();
   window.__diag = {
     games: state.today?.total ?? 0,
@@ -1399,6 +1502,309 @@ async function refreshDirect(){
   renderSportChips(); renderToday(); renderSettings(); renderPredict();
 }
 
+/* =========================================================
+   🌙 밤 9시 ~ 아침 8시 자동 잠금
+   · 21:00 ~ 07:59 에는 앱 전체를 덮는 잠금 화면이 뜨고, 08:00 이 되면 저절로 폴린다.
+   · 잠금 중에는 1분 실시간·자동 새로고침 타이머를 멈춘다(잠금 해제·아침 8시에 재개).
+   · 부모님이 '부모님 확인' 을 누르고 구글 시트의 부모 비밀번호를 맞히면
+     '그 밤 구간' 동안만 열린다(localStorage 에 밤 구간 키를 적어 두고, 다음날 21:00 은 새 구간).
+   · 비밀번호는 dashboard/index.html 과 같은 시트('오늘의 공부 리스트' 의 '비밀번호' 열)에서
+     읽어 이 기기에 캐시하고, 코드에 기본값은 두지 않는다.
+   ========================================================= */
+const NIGHT_FROM_HOUR = 21;              // 21:00 부터 잠근다
+const NIGHT_TO_HOUR = 8;                 // 08:00 부터는 풀린다
+const NIGHT_KEY = "sports.nightUnlock";   // 이번 밤에만 유효한 해제 표시
+const PIN_KEY = "sports.parentPin";       // 시트에서 받은 부모 비밀번호 캐시
+const SHEET_ID = "1zYhT97QHevopd7qUJA5u839WweGv7YkCQuIHORP1HWM";
+const SHEET_TAB = "오늘의 공부 리스트";
+
+function loadNightUnlockKey(){
+  try {
+    const v = localStorage.getItem(NIGHT_KEY) || "";
+    return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+  } catch { return null; }
+}
+function loadPinCache(){
+  try {
+    const v = (localStorage.getItem(PIN_KEY) || "").trim();
+    return /^\d{4}$/.test(v) ? v : null;
+  } catch { return null; }
+}
+function savePinCache(pin){
+  try { localStorage.setItem(PIN_KEY, pin); } catch {}
+}
+function isoDate(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function nightHours(now){
+  const h = (now || kstNow()).getHours();
+  return h >= NIGHT_FROM_HOUR || h < NIGHT_TO_HOUR;
+}
+/* 한 밤을 같은 구간으로 묶는 키 — 21:00~23:59 는 그날 날짜, 00:00~07:59 는 어제 날짜 */
+function nightWindowKey(now){
+  now = now || kstNow();
+  if (!nightHours(now)) return null;
+  const d = new Date(now.getTime());
+  if (d.getHours() < NIGHT_TO_HOUR) d.setDate(d.getDate() - 1);
+  return isoDate(d);
+}
+function nightLocked(){
+  const k = nightWindowKey();
+  return !!k && state.nightUnlockKey !== k;
+}
+
+/* ── 시트에서 부모 비밀번호 읽기 (dashboard/index.html 과 같은 방식) ──
+   gviz 는 CORS 헤더를 주지 않아서 JSONP(<script>)로 부른다. */
+let pinReq = null;
+function normPin(v){
+  if (v == null) return null;
+  let s;
+  if (typeof v === "number"){
+    if (!isFinite(v) || v !== Math.trunc(v)) return null;
+    s = String(Math.abs(v));
+  } else {
+    s = String(v).trim().replace(/[\s,]/g, "");
+    if (/[^\d]/.test(s)) return null;
+  }
+  if (!s) return null;
+  if (s.length > 4) s = s.slice(0, 4);
+  if (s.length < 4) s = s.padStart(4, "0");
+  return /^\d{4}$/.test(s) ? s : null;
+}
+function pinCellVal(cell){
+  if (!cell) return null;
+  if (cell.f != null && String(cell.f).trim() !== "") return cell.f;
+  return cell.v;
+}
+const isBattlePinLabel = (t) => /배틀\s*(?:비밀번호|비번|pin)/i.test(String(t == null ? "" : t));
+const isPinLabel = (t) => !isBattlePinLabel(t) && /비밀번호|비번|pin/i.test(String(t == null ? "" : t));
+function pinFromTable(table){
+  const rows = (table && table.rows) || [];
+  const cols = (table && table.cols) || [];
+  /* 1) 머리글에 '비밀번호' 가 있는 열 (예: '비밀번호' 열의 5558) */
+  for (let c = 0; c < cols.length; c++){
+    if (!isPinLabel(cols[c] && cols[c].label)) continue;
+    for (const r of rows){
+      const p = normPin(pinCellVal((r && r.c || [])[c]));
+      if (p) return p;
+    }
+    return null;                       // 열은 있는데 값이 비어 있음
+  }
+  /* 2) 어느 칸이든 '비밀번호' 글자가 있으면 그 아래·오른쪽 */
+  for (let ri = 0; ri < rows.length; ri++){
+    const cells = (rows[ri] && rows[ri].c) || [];
+    for (let ci = 0; ci < cells.length; ci++){
+      if (!isPinLabel(cells[ci] && cells[ci].v)) continue;
+      for (let rr = ri + 1; rr < rows.length; rr++){
+        const p = normPin(pinCellVal(((rows[rr] && rows[rr].c) || [])[ci]));
+        if (p) return p;
+      }
+      for (let cc = ci + 1; cc < cells.length; cc++){
+        const p = normPin(pinCellVal(cells[cc]));
+        if (p) return p;
+      }
+      return null;
+    }
+  }
+  return null;
+}
+function sheetPinUrl(){
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`
+       + `?tqx=responseHandler:__sportsSheetCb`
+       + `&sheet=${encodeURIComponent(SHEET_TAB)}`
+       + `&_=${Date.now()}`;
+}
+function fetchSheetPin(){
+  if (pinReq) return pinReq;
+  pinReq = new Promise((resolve) => {
+    let done = false;
+    const finish = (pin) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (script && script.parentNode) script.parentNode.removeChild(script);
+      pinReq = null;
+      if (pin){ state.parentPin = pin; savePinCache(pin); }
+      resolve(pin);
+    };
+    window.__sportsSheetCb = (resp) => {
+      let pin = null;
+      try { pin = pinFromTable(resp && resp.status === "ok" ? resp.table : null); } catch {}
+      finish(pin);
+    };
+    const script = document.createElement("script");
+    script.src = sheetPinUrl();
+    script.async = true;
+    script.onerror = () => finish(null);
+    const timer = setTimeout(() => finish(null), 5000);
+    document.head.appendChild(script);
+  });
+  return pinReq;
+}
+
+/* ── 화면에 잠깐 알려 주는 말풍선 ── */
+let toastTimer = null;
+function toast(msg){
+  const el = $("#sportsToast");
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+/* ── 잠금 화면 / 타이머 정리 ── */
+function stopTimers(){
+  clearInterval(dataTimer); dataTimer = null;
+  clearInterval(liveTimer); liveTimer = null;
+}
+let nightWasLocked = null;
+function renderNightLock(){
+  const locked = nightLocked();
+  const opened = !locked && !!nightWindowKey();     // 부모님이 이번 밤을 열어 준 상태
+  document.body.classList.toggle("night-lock", locked);
+  document.body.classList.toggle("night-open", opened);
+  const el = $("#nightLock");
+  if (el) el.setAttribute("aria-hidden", locked ? "false" : "true");
+  if (locked){ stopTimers(); closeArticle(); }
+  updateNightClock();
+}
+function updateNightClock(){
+  const el = $("#nightLockClock");
+  if (!el) return;
+  const now = kstNow();
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  if (!nightHours(now)){ el.textContent = ""; return; }
+  const target = new Date(now.getTime());
+  if (now.getHours() >= NIGHT_TO_HOUR) target.setDate(target.getDate() + 1);
+  target.setHours(NIGHT_TO_HOUR, 0, 0, 0);
+  const mins = Math.max(0, Math.round((target.getTime() - now.getTime()) / 60000));
+  const left = mins >= 60 ? `${Math.floor(mins/60)}시간 ${mins % 60}분` : `${mins}분`;
+  el.textContent = `지금 ${hh}:${mm} · 아침 8시까지 ${left}`;
+}
+/* 20초마다 시계만 확인해서 21:00 / 08:00 을 지나면 잠금 화면을 저절로 바꿔 준다 */
+function nightTick(){
+  const locked = nightLocked();
+  const was = nightWasLocked;
+  nightWasLocked = locked;
+  renderNightLock();
+  if (was === null || was === locked) return;
+  if (locked){
+    toast("🌙 밤 9시 — 자동 잠금이 시작돼요");
+  } else {
+    toast("🌞 아침 8시 — 이제 사용할 수 있어요!");
+    loadAll().catch(()=>{});
+    setupTimer(); setupLive();
+    if (state.liveMode) refreshDirect().catch(()=>{});
+  }
+}
+
+/* ── 부모님 확인 (비밀번호 4자리) ── */
+let pinValue = "";
+let pinBusy = false;
+function renderPinDots(){
+  const n = pinValue.length;
+  document.querySelectorAll("#pinDots span").forEach((d, i) => d.classList.toggle("on", i < n));
+  const input = $("#pinInput");
+  if (input && input.value !== pinValue) input.value = pinValue;
+}
+function updatePinOk(){
+  const ok = $("#pinOk");
+  if (ok) ok.disabled = pinValue.length < 4 || pinBusy;
+}
+function markPinBad(){
+  const field = $("#pinField");
+  if (!field) return;
+  field.classList.remove("bad");
+  void field.offsetWidth;
+  field.classList.add("bad");
+}
+function openPin(){
+  pinValue = "";
+  pinBusy = false;
+  const field = $("#pinField");
+  if (field) field.classList.remove("bad");
+  const err = $("#pinErr");
+  if (err) err.textContent = "";
+  renderPinDots(); updatePinOk();
+  const m = $("#pinModal");
+  if (m){ m.classList.add("show"); m.setAttribute("aria-hidden", "false"); }
+  const input = $("#pinInput");
+  if (input) setTimeout(() => input.focus({preventScroll:true}), 40);
+}
+function closePin(){
+  const m = $("#pinModal");
+  if (m){ m.classList.remove("show"); m.setAttribute("aria-hidden", "true"); }
+  pinValue = "";
+  pinBusy = false;
+  const field = $("#pinField");
+  if (field) field.classList.remove("bad");
+  const err = $("#pinErr");
+  if (err) err.textContent = "";
+  renderPinDots(); updatePinOk();
+  const input = $("#pinInput");
+  if (input && document.activeElement === input) input.blur();
+}
+function pushPinKey(k){
+  if (pinBusy) return;
+  if (k === "ok"){ submitPin(); return; }
+  if (k === "del") pinValue = pinValue.slice(0, -1);
+  else if (pinValue.length < 4) pinValue += k;
+  const field = $("#pinField");
+  if (field) field.classList.remove("bad");
+  const err = $("#pinErr");
+  if (err) err.textContent = "";
+  renderPinDots(); updatePinOk();
+  if (pinValue.length === 4) submitPin();
+}
+async function submitPin(){
+  if (pinBusy || pinValue.length < 4) return;
+  pinBusy = true; updatePinOk();
+  const err = $("#pinErr");
+  if (err) err.textContent = "확인 중…";
+  /* 시트에서 바뀌었을 수 있으니 최신 값을 먼저 본다.
+     캐시가 있으면 1.2초만 기다리고, 없으면 4초까지 기다린 뒤 캐시로 넘어간다. */
+  const cached = state.parentPin;
+  const fresh = await Promise.race([
+    fetchSheetPin().catch(() => null),
+    new Promise(r => setTimeout(() => r(null), cached ? 1200 : 4000)),
+  ]);
+  pinBusy = false;
+  const pin = fresh || cached;
+  if (!pin){
+    if (err) err.textContent = "비밀번호를 확인할 수 없어요. 인터넷을 확인해 주세요.";
+    markPinBad();
+    return;
+  }
+  if (pinValue === pin){ unlockNight(); return; }
+  if (err) err.textContent = "비밀번호가 맞지 않아요";
+  markPinBad();
+  pinValue = "";
+  renderPinDots(); updatePinOk();
+}
+/* 부모님이 이번 밤을 열어 준다 */
+function unlockNight(){
+  const k = nightWindowKey();
+  if (!k){ closePin(); renderNightLock(); return; }   // 잠금 시간이 이미 지났다
+  state.nightUnlockKey = k;
+  try { localStorage.setItem(NIGHT_KEY, k); } catch {}
+  closePin();
+  nightWasLocked = false;
+  renderNightLock();
+  toast("🔓 부모님 확인 — 아침 8시까지 사용할 수 있어요");
+  loadAll().catch(()=>{});
+  setupTimer(); setupLive(); probeDirect();
+}
+/* 부모님이 다시 잠그기 */
+function relockNow(){
+  state.nightUnlockKey = null;
+  try { localStorage.setItem(NIGHT_KEY, ""); } catch {}
+  nightWasLocked = true;
+  renderNightLock();
+  toast("🌙 다시 잠갔어요");
+}
+
 /* ── 이벤트 연결 ─────────────────────── */
 function bind(){
   const showTab = (name) => {
@@ -1416,6 +1822,13 @@ function bind(){
     t.onclick = () => showTab(t.dataset.tab);
   });
   $("#settingsBtn").onclick = () => showTab("settings");
+  /* ⭐ 우리 팀 버튼 — 바로 옆에서 팀을 고른다 */
+  $("#favBtn").onclick = openFavPicker;
+  $("#favClose").onclick = closeFavPicker;
+  $("#favDone").onclick = closeFavPicker;
+  $("#favModal").addEventListener("click", (e) => {
+    if (e.target && e.target.id === "favModal") closeFavPicker();
+  });
   /* 예측 버튼은 화면을 다시 그려도 살아 있도록 한 곳에서 받는다 */
   document.addEventListener("click", (e) => {
     const b = e.target && e.target.closest ? e.target.closest("[data-pred]") : null;
@@ -1458,10 +1871,37 @@ function bind(){
     if (e.target && e.target.id === "articleModal") closeArticle();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && $("#articleModal").classList.contains("show")) closeArticle();
+    if (e.key !== "Escape") return;
+    if ($("#articleModal").classList.contains("show")) closeArticle();
+    else if ($("#favModal").classList.contains("show")) closeFavPicker();
+  });
+  /* 🌙 잠금 화면 · 부모님 확인 */
+  $("#nightUnlockBtn").onclick = openPin;
+  $("#relockBtn").onclick = relockNow;
+  $("#pinCancel").onclick = closePin;
+  $("#pinPad").querySelectorAll("button").forEach(b => { b.onclick = () => pushPinKey(b.dataset.k); });
+  $("#pinModal").addEventListener("click", (e) => {
+    if (e.target && e.target.id === "pinModal") closePin();
+  });
+  const pinInput = $("#pinInput");
+  pinInput.addEventListener("input", () => {
+    pinValue = String(pinInput.value || "").replace(/\D/g, "").slice(0, 4);
+    const field = $("#pinField");
+    if (field) field.classList.remove("bad");
+    const err = $("#pinErr");
+    if (err) err.textContent = "";
+    renderPinDots(); updatePinOk();
+    if (pinValue.length === 4) submitPin();
+  });
+  pinInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter"){ e.preventDefault(); submitPin(); }
+    if (e.key === "Escape"){ e.preventDefault(); closePin(); }
   });
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) loadAll().catch(()=>{});
+    if (document.hidden) return;
+    if (nightLocked()){ nightWasLocked = true; renderNightLock(); return; }
+    renderNightLock();
+    loadAll().catch(()=>{});
   });
 }
 
@@ -1469,10 +1909,16 @@ function bind(){
 (async function start(){
   bind();
   $("#todayLabel").textContent = fmtToday();
-  await loadAll().catch(()=>{});
-  setupTimer();
-  setupLive();
-  probeDirect();
+  renderNightLock();
+  nightWasLocked = nightLocked();
+  if (!nightLocked()){
+    await loadAll().catch(()=>{});
+    setupTimer();
+    setupLive();
+    probeDirect();
+    fetchSheetPin().catch(()=>{});        // 밤에 바로 쓸 수 있게 비밀번호를 미리 받아 둔다
+  }
+  setInterval(nightTick, 20000);
   if ("serviceWorker" in navigator){
     navigator.serviceWorker.register("./sw.js", {scope: "./"}).catch(()=>{});
   }
