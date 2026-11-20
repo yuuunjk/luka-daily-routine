@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LUKA 스포츠 · 오늘 경기</title>
-<meta name="description" content="광고도 댓글도 없는 우리 아이 스포츠 앱. 오늘 경기, 순위, 주요 소식을 깔끔하게.">
+<title>오늘의 경기장</title>
+<meta name="description" content="오늘의 경기장 — 오늘 경기, 순위, 주요 소식을 우리 아이 눈높이로.">
 <meta name="theme-color" content="#2563eb">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="./app-icon-180.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="LUKA 스포츠">
+<meta name="apple-mobile-web-app-title" content="오늘의 경기장">
 <style>
   :root{
     --ink:#16213e; --sub:#5b6b8c; --line:#e3edfb;
@@ -39,6 +39,7 @@
   .top{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
   .brand{display:flex; align-items:center; gap:10px; font-size:32px; font-weight:900; letter-spacing:-.5px;}
   .brand .ball{font-size:34px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.15));}
+  .brand h1{margin:0; font-size:inherit; font-weight:inherit; line-height:1.15; letter-spacing:inherit;}
   .brand small{font-size:16px; font-weight:700; color:var(--sub); display:block; letter-spacing:0;}
   .hd-right{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
   .today-label{font-size:19px; font-weight:800; color:var(--sub); background:#fff; border:2px solid var(--line);
@@ -212,7 +213,7 @@
 <div class="wrap">
   <header>
     <div class="top">
-      <div class="brand"><span class="ball">⚽</span><span>LUKA 스포츠</span></div>
+      <div class="brand"><span class="ball">⚽</span><h1>오늘의 경기장</h1></div>
       <div class="hd-right">
         <span class="today-label" id="todayLabel">오늘</span>
         <button class="btn-refresh" id="refreshBtn">🔄 새로고침</button>

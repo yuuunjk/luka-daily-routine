@@ -1,8 +1,8 @@
-/* LUKA 스포츠 서비스 워커
+/* 오늘의 경기장 서비스 워커
    - 앱 껍데기(index.html, 아이콘, 매니페스트): 캐시 먼저 (빠른 실행)
    - data/*.json: 네트워크 먼저 (늘 새 데이터), 실패할 때만 캐시
 */
-const VERSION = "sports-v3";
+const VERSION = "sports-v4";
 const SHELL = [
   "./",
   "./index.html",

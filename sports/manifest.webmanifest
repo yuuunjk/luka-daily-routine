@@ -1,7 +1,7 @@
 {
-  "name": "LUKA 스포츠",
-  "short_name": "스포츠",
-  "description": "광고도 댓글도 없는 우리 아이 스포츠 앱 — 오늘 경기, 순위, 주요 소식",
+  "name": "오늘의 경기장",
+  "short_name": "오늘의 경기장",
+  "description": "오늘의 경기장 — 오늘 경기, 순위, 주요 소식",
   "lang": "ko",
   "dir": "ltr",
   "start_url": "./index.html",
