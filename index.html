@@ -4131,11 +4131,42 @@ function cheerSlot(d){
   if(h >= 12 && h < 18) return 'afternoon';   // 오후
   return 'evening';                           // 저녁·밤 (18~04)
 }
-let cheerFirstDone = false;        // 이번 화면에서 첫(시간대 인사) 대사를 이미 보여 줬는지
 let cheerLastMsg = '';             // 바로 앞에 보여 준 대사
 let cheerQueue = { slot: null, greet: null, ask: null, cheer: null };
 let cheerTurn = 0;                 // 0 질문 → 1 응원 → 2 인사 → 다시 질문 (세 종류를 골고루)
 let cheerHideTimer = 0;
+/* v43 — 한 시간대에 새 대사는 3번까지. 그 뒤로는 '이따가 또 이야기하자' 안내만.
+   날짜+시간대 키로 localStorage 에 세어 두어 새로고침해도 유지되고,
+   시간대가 바뀌거나 날짜가 바뀌면 그 키가 새로 시작되어 저절로 0이 된다. */
+const CHEER_LIMIT = 3;
+const CHEER_STORE = 'lukaPokemonDashboard.cheer.v1';
+const PARTNER_LATER = [
+  '우리 이따가 또 이야기하자!',
+  '조금 있다가 다시 수다 떨자!',
+  '지금은 여기까지! 이따 또 얘기하자!'
+];
+const PARTNER_LATER_EVENING = [
+  '이제 푹 자자! 내일 아침에 또 이야기하자!',
+  '내일 또 수다 떨자! 오늘은 여기까지!'
+];
+function cheerStoreLoad(){
+  try{
+    const o = JSON.parse(localStorage.getItem(CHEER_STORE) || '{}');
+    return (o && typeof o === 'object') ? o : {};
+  }catch(e){ return {}; }
+}
+function cheerCountKey(){ return affirmKeyOf(getNow()) + '|' + cheerSlot(); }
+function cheerCountGet(){
+  const n = Number(cheerStoreLoad()[cheerCountKey()]) || 0;
+  return Math.max(0, Math.min(CHEER_LIMIT, n));
+}
+function cheerCountSet(n){
+  const all = cheerStoreLoad(), today = affirmKeyOf(getNow()), key = cheerCountKey();
+  const out = {};
+  Object.keys(all).forEach(k => { if(k.slice(0, 10) === today) out[k] = all[k]; });  // 오늘 것만 남긴다
+  out[key] = Math.max(0, Math.min(CHEER_LIMIT, n));
+  try{ localStorage.setItem(CHEER_STORE, JSON.stringify(out)); }catch(e){}
+}
 const CHEER_KINDS = ['ask', 'cheer', 'greet'];
 function cheerPool(kind, slot){
   if(kind === 'ask') return PARTNER_ASK;
@@ -4156,26 +4187,38 @@ function cheerTake(kind, slot){
   }
   return q.shift();
 }
+function cheerLaterMsg(slot){
+  const pool = slot === 'evening' ? PARTNER_LATER.concat(PARTNER_LATER_EVENING) : PARTNER_LATER;
+  let m = pool[Math.floor(Math.random() * pool.length)];
+  if(m === cheerLastMsg) m = pool[(pool.indexOf(m) + 1) % pool.length];
+  return m;
+}
 function cheerNextMsg(){
   const slot = cheerSlot();
-  if(!cheerFirstDone){                              // 첫 터치 = 지금 시간대 인사말
-    cheerFirstDone = true;
-    const m = cheerTake('greet', slot);
+  if(cheerQueue.slot !== slot){                     // 시간대가 바뀌면 대화 셔플도 새로
     cheerQueue.slot = slot;
+    cheerQueue.greet = null;
+    cheerQueue.ask = null;
+    cheerQueue.cheer = null;
+  }
+  const seen = cheerCountGet();
+  if(seen >= CHEER_LIMIT){                          // 이 시간대 3번 다 봤다 → 이따 다시
+    const m = cheerLaterMsg(slot);
     cheerLastMsg = m;
     return m;
   }
-  if(cheerQueue.slot !== slot){                     // 시간대가 바뀌면 인사말·대화를 새로 뽑는다
-    cheerQueue.slot = slot;
-    cheerQueue.greet = null;
-  }
   let m = '';
-  for(let i = 0; i < CHEER_KINDS.length; i++){      // 질문 → 응원 → 인사 순서로 돌아가며
-    const kind = CHEER_KINDS[cheerTurn % CHEER_KINDS.length];
-    cheerTurn++;
-    m = cheerTake(kind, slot);
-    if(m && m !== cheerLastMsg) break;
+  if(seen === 0){                                   // 이 시간대 첫 대사 = 인사말
+    m = cheerTake('greet', slot);
+  }else{
+    for(let i = 0; i < CHEER_KINDS.length; i++){    // 질문 → 응원 → 인사 순서로 돌아가며
+      const kind = CHEER_KINDS[cheerTurn % CHEER_KINDS.length];
+      cheerTurn++;
+      m = cheerTake(kind, slot);
+      if(m && m !== cheerLastMsg) break;
+    }
   }
+  if(m) cheerCountSet(seen + 1);
   cheerLastMsg = m || cheerLastMsg;
   return m;
 }
