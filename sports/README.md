@@ -1,10 +1,10 @@
 # ⚽ LUKA 스포츠 — 광고·댓글 없는 클린 스포츠 앱
 
 아이(초1)가 혼자 열어도 안전한 스포츠 화면입니다.
-네이버 스포츠의 **경기·순위·기사 제목/요약**만 받아서, 광고·배너·댓글·자극적인 기사 없이 보여 줍니다.
+**ESPN 공개 API**에서 경기·순위·소식을 받아 한국어로 옮겨서, 광고·배너·댓글·자극적인 기사 없이 보여 줍니다.
 
-- **앱 주소**: https://yuuunjk.github.io/clean-sports/
-- **만든 방식**: 정적 HTML 한 장 + 5분마다 도는 GitHub Actions 데이터 수집
+- **앱 주소**: https://yuuunjk.github.io/luka-daily-routine/sports/
+- **만든 방식**: 정적 HTML 한 장 + 브라우저가 ESPN을 직접 호출(실시간) + 주기적 JSON 스냅샷
 
 ## 화면
 
@@ -19,13 +19,14 @@
 
 ## 데이터
 
-`scripts/fetch_sports.py`가 네이버 스포츠 공개 API에서 받아 만듭니다.
+`scripts/fetch_espn.py`가 ESPN 공개 API에서 받아 만들고, 영어는 한국어로 옮깁니다.
 
 | 파일 | 내용 |
 |---|---|
 | `data/today.json` | 오늘 경기 전 종목 (상태·스코어·엠블럼·구장·중계) |
 | `data/standings.json` | 리그별 팀 순위 (KBO·MLB·NPB·K리그1/2·EPL·라리가·분데스리가·세리에A·MLS·KBL·WKBL·NBA·V리그 남/여) |
-| `data/news.json` | 안전 필터를 통과한 기사 제목 + 규칙 기반 3줄 요약 + 원문 링크 |
+| `data/news.json` | 안전 필터를 통과한 기사 제목 + 한국어 3줄 요약 + 원문 링크 |
+| `data/teams-ko.json` | 팀 약어 → 한국어 이름 |
 | `data/news_cache.json` | 이미 요약한 기사 캐시 (본문 재요청 방지) |
 
 지키는 선:
@@ -55,7 +56,7 @@ index.html                앱 (단일 파일)
 manifest.webmanifest      PWA 매니페스트
 sw.js                     오프라인 캐시
 app-icon-*.png            앱 아이콘 (512/192/180)
-scripts/fetch_sports.py   데이터 수집기
+scripts/fetch_espn.py      데이터 수집기(ESPN)
 scripts/make_icons.py     아이콘 생성기
 data/                     자동 생성 데이터
 screenshots/              라이브 화면 캡처
