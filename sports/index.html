@@ -351,7 +351,7 @@
   .banner{display:none; background:#fff4e5; border:2px solid #ffd9a8; color:#7a4a00;
     border-radius:18px; padding:12px 16px; font-size:17px; font-weight:700; margin-top:12px;}
   .banner.show{display:block;}
-  .livebar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px;
+  .livebar{display:flex; align-items:center; justify-content:flex-start; gap:10px; margin-top:6px;
     font-size:17px; color:var(--sub); font-weight:700; flex-wrap:wrap;}
   .livetoggle{border:2px solid var(--line); background:#fff; border-radius:999px; padding:8px 16px;
     font-size:17px; font-weight:800; color:var(--sub); min-height:44px;}
@@ -416,8 +416,8 @@
     <section id="tab-today">
       <div class="chips" id="sportChips"></div>
       <div class="livebar">
-        <span id="liveInfo">5분마다 새로 받아요</span>
         <button class="livetoggle" id="liveToggle">🔄 실시간</button>
+        <span id="liveInfo">5분마다 새로 받아요</span>
       </div>
       <div id="todayBody"></div>
     </section>
