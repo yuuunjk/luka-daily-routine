@@ -210,10 +210,19 @@
     box-shadow:0 2px 6px rgba(20,60,90,.2);}
   header.sky .powerbtn:active{transform:scale(.95);}
   header.sky .powerbtn.off{background:#ffe6df; border-color:#fff; color:#c0392b;}
+  /* v42 — 소리 · ON/OFF · ⚙️ 세 버튼은 같은 높이의 캡슐로 맞춘다
+     높이는 헤더 기준 단위(--u)로 계산해 세 버튼이 화면 크기와 상관없이 언제나 똑같다. */
+  header.sky .soundbtn, header.sky .powerbtn, header.sky .gear{
+    box-sizing:border-box; height:calc(var(--u) * 2); min-height:calc(var(--u) * 2);
+    display:inline-flex; align-items:center; justify-content:center; line-height:1;}
+  header.sky .soundbtn{padding:0 .62em;}
+  header.sky .powerbtn{padding:0 .6em;}
+  header.sky .gear{width:calc(var(--u) * 2); padding:0;}
   /* 🔆 화면 켜짐 유지 — v39: 바로 옆 '소리 켜기' 버튼과 똑같은 캡슐 모양·크기·색으로 통일.
      켜져 있을 때만 나타나고, 상태는 🔆 아이콘과 문구로만 알린다(색은 소리 버튼과 같다). */
   header.sky .wakechip{display:none; font-family:inherit; font-weight:900;
-    font-size:.9em; line-height:1.2; padding:.24em .62em; white-space:nowrap;
+    font-size:.9em; line-height:1; padding:0 .62em; white-space:nowrap;
+    box-sizing:border-box; height:calc(var(--u) * 2); min-height:calc(var(--u) * 2);
     border:2px solid rgba(255,255,255,.75); border-radius:.62em;
     background:rgba(23,74,116,.24); color:#fff; text-shadow:0 1px 2px rgba(25,70,110,.35);}
   header.sky[data-sky="day"] .wakechip, header.sky[data-sky="morning"] .wakechip{background:rgba(20,66,108,.3);}
