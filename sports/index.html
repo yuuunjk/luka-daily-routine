@@ -165,6 +165,11 @@
   .predtag.mine{color:#8a5b00; background:#fff1cf;}
   .predtag.hit{color:#0b7a43; background:#e2f8ec; border:2px solid #a7e6c3;}
   .predtag.miss{color:#6b7280; background:#f1f3f7; border:2px solid #e1e5ee;}
+  /* 대기 중인 예측을 바로 취소(또는 다시 고르기) */
+  .predcancel{border:2px solid #e1e5ee; background:#fff; border-radius:999px; padding:6px 13px;
+    font-size:15px; font-weight:900; color:#6b7280; min-height:40px; white-space:nowrap;}
+  .predcancel:active{transform:scale(.97); background:#f4f6fa; color:#374151;}
+  .hrow .predside{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
 
   .psum{background:linear-gradient(160deg,#eaf2ff,#ffffff 72%); border:2px solid #d7e6ff;
     border-radius:var(--radius); padding:18px 18px 16px; box-shadow:var(--shadow); margin-top:14px;}
@@ -691,6 +696,21 @@ function setPick(g, pick){
   savePreds(); gradePreds();
   renderToday(); renderPredict(); renderSettings();
 }
+function cancelPrediction(id){
+  const key = String(id);
+  const p = state.preds[key];
+  if (!p){ renderPredict(); return; }
+  const g = gameList().find(x => String(x.id) === key);
+  if (g && g.state !== "upcoming"){          // 이미 시작·종료된 경기는 취소할 수 없다
+    toast("이미 시작한 경기는 취소할 수 없어요");
+    renderPredict();
+    return;
+  }
+  delete state.preds[key];
+  savePreds(); gradePreds();
+  renderToday(); renderPredict(); renderSettings();
+  toast("🎯 예측을 취소했어요 — 마음이 바뀌면 다시 고를 수 있어요");
+}
 function gradePreds(){
   let changed = false;
   const byId = new Map(gameList().map(g => [String(g.id), g]));
@@ -759,9 +779,12 @@ function predMini(p, g){
   const away = g?.away?.name || p.away || "";
   const when = g ? `${dayLabel(g.date)}${g.time || ""}` : `${p.date || ""} ${p.time || ""}`.trim();
   const live = g?.state === "live";
+  /* 경기가 아직 시작 전이면 여기서도 바로 취소하고 다시 고를 수 있다 */
+  const cancel = (g && g.state === "upcoming")
+    ? `<button class="predcancel" type="button" data-cancel="${esc(p.id)}">✕ 취소</button>` : "";
   return `<div class="hrow">
       <span class="hm">${esc(p.emoji || "🏅")} ${esc(home)} vs ${esc(away)}<small>${esc(p.leagueName || "")} · ${esc(when)}</small></span>
-      <span class="predtag mine">${live ? "🔒" : "⏳"} ${esc(pickLabel(p))}</span>
+      <span class="predside"><span class="predtag mine">${live ? "🔒" : "⏳"} ${esc(pickLabel(p))}</span>${cancel}</span>
     </div>`;
 }
 function predHist(p, g){
@@ -2170,7 +2193,14 @@ function bind(){
   });
   /* 예측 버튼은 화면을 다시 그려도 살아 있도록 한 곳에서 받는다 */
   document.addEventListener("click", (e) => {
-    const b = e.target && e.target.closest ? e.target.closest("[data-pred]") : null;
+    if (!e.target || !e.target.closest) return;
+    const cancelBtn = e.target.closest("[data-cancel]");
+    if (cancelBtn){                       /* 기다리는 내 예측 → 바로 취소 */
+      e.preventDefault();
+      cancelPrediction(cancelBtn.dataset.cancel);
+      return;
+    }
+    const b = e.target.closest("[data-pred]");
     if (!b) return;
     e.preventDefault();
     const gid = b.dataset.gid, pick = b.dataset.pred;
