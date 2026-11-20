@@ -1299,7 +1299,7 @@ function leagueTree(){
     if (!s || s === "기타" || !name) return;
     if (!tree.has(s)) tree.set(s, new Map());
     const leagues = tree.get(s);
-    const key = leagueKeyOf(lid) || String(lname || s);
+    const key = String(lname || lid || s).trim();        // 같은 리그는 이름으로 묶는다 (V리그처럼 id가 둘로 나뉘는 경우)
     if (!leagues.has(key)) leagues.set(key, { name: lname || lid || s, teams: new Set() });
     leagues.get(key).teams.add(name);
   };
@@ -1313,26 +1313,22 @@ function leagueTree(){
   }
   return tree;
 }
-/* 리그 이름 순서 — 한국 리그를 먼저, 그 다음 해외 리그 */
-const LEAGUE_RANK = ["kbo","mlb","kleague.1","kleague.2","kbl","nba","kovo","nfl",
-                     "eng.1","esp.1","ita.1","ger.1","tur.1","uefa.champions"];
+/* 리그 순서 — 한국 리그를 먼저, 그 다음 해외 리그 (리그 이름 기준) */
+const LEAGUE_RANK = ["KBO 리그", "MLB", "K리그1", "K리그2", "KBL", "NBA",
+                     "V리그 남자부", "V리그 여자부", "NFL",
+                     "프리미어리그", "라리가", "세리에A", "분데스리가", "튀르키예 쉬페르리그", "챔피언스리그"];
 function leagueOrder(a, b){
   const ia = LEAGUE_RANK.indexOf(a[0]);
   const ib = LEAGUE_RANK.indexOf(b[0]);
   if (ia !== ib) return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-  return String(a[1].name).localeCompare(String(b[1].name), "ko");
+  return String(a[0]).localeCompare(String(b[0]), "ko");
 }
 function favTeamCount(tree, sport){
-  if (sport === "전체"){
-    let n = 0;
-    for (const leagues of tree.values()) for (const lg of leagues.values()) n += lg.teams.size;
-    return n;
-  }
-  const leagues = tree.get(sport);
-  if (!leagues) return 0;
-  let n = 0;
-  for (const lg of leagues.values()) n += lg.teams.size;
-  return n;
+  const seen = new Set();
+  const take = (leagues) => { for (const lg of leagues.values()) for (const t of lg.teams) seen.add(t); };
+  if (sport === "전체"){ for (const leagues of tree.values()) take(leagues); }
+  else if (tree.has(sport)) take(tree.get(sport));
+  return seen.size;
 }
 function updateFavBtn(){
   const btn = $("#favBtn");
@@ -1381,8 +1377,12 @@ function renderFavPicker(){
     if (state.favSport === "전체"){
       html += `<div class="fp-sporthead">${SPORT_EMOJI[sport] || "🏅"} ${esc(sport)}</div>`;
     }
+    /* 같은 팀이 두 대회(예: 리그 + 챔피언스리그)에 있어도 한 번만 보여 준다 */
+    const seen = new Set();
     for (const [lid, info] of leagues){
-      const teams = [...info.teams].sort((a, b) => a.localeCompare(b, "ko"));
+      const teams = [...info.teams].filter(t => !seen.has(t)).sort((a, b) => a.localeCompare(b, "ko"));
+      for (const t of teams) seen.add(t);
+      if (!teams.length) continue;
       html += `<div class="fp-lg">
           <div class="fp-lname">🏆 ${esc(info.name)}<span class="cnt">${teams.length}팀</span></div>
           <div class="teams">
@@ -1469,7 +1469,7 @@ function setupLive(){
 /* ── 실시간 직접 연결 (ESPN 공개 API · CORS 열려 있음) ── */
 const ESPN_SITE = "https://site.api.espn.com/apis/site/v2/sports";
 const ESPN_LEAGUES = [
-  {espn:"baseball/mlb", sport:"야구", name:"MLB"},
+  {espn:"baseball/mlb", sport:"해외야구", name:"MLB"},
   {espn:"basketball/nba", sport:"해외농구", name:"NBA"},
   {espn:"football/nfl", sport:"미식축구", name:"NFL"},
   {espn:"soccer/eng.1", sport:"해외축구", name:"프리미어리그"},

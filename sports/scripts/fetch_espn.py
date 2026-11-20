@@ -41,7 +41,7 @@ SPORT_EMOJI = {"야구": "⚾", "해외야구": "⚾", "축구": "⚽", "해외�
                "농구": "🏀", "해외농구": "🏀", "미식축구": "🏈", "배구": "🏐", "기타": "🏅"}
 
 LEAGUES = [
-    {"espn": "baseball/mlb", "sport": "야구", "name": "MLB", "season": "2026"},
+    {"espn": "baseball/mlb", "sport": "해외야구", "name": "MLB", "season": "2026"},
     {"espn": "basketball/nba", "sport": "해외농구", "name": "NBA", "season": "2026"},
     {"espn": "football/nfl", "sport": "미식축구", "name": "NFL", "season": "2026"},
     {"espn": "soccer/eng.1", "sport": "해외축구", "name": "프리미어리그", "season": "2026"},
