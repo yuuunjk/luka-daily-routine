@@ -2578,6 +2578,13 @@
         <button class="pbtn pmode" type="button" data-set-mode="vacation" aria-pressed="false">🏖️ 방학</button>
       </div>
       <span class="phint">테스트 시간은 화면을 미리 보는 값이에요. 아이가 한 기록·보상은 그대로 남습니다.</span>
+
+      <!-- v45 — 루틴별 파트너 대화 횟수 초기화 -->
+      <div class="psec">💬 파트너 대화</div>
+      <div class="pgrid">
+        <button class="pbtn wide" id="testCheerReset" type="button">💬 파트너 대화 초기화</button>
+      </div>
+      <span class="phint">아침·오후·밤 루틴마다 3번씩 새 대화가 나가고, 다음 루틴에 또 열려요. 이 버튼은 지금 바로 처음으로 되돌리고 설정창은 그대로 열어 둡니다.</span>
     </div>
 
     <!-- 탭 2: 확언 · 미션 -->
@@ -4143,20 +4150,34 @@ const PARTNER_ASK = [
   '오늘 몇 번 웃었어? 나는 벌써 다섯 번 웃었어!',
   '너한테 제일 맛있는 간식은 뭐야?'
 ];
+/* v45 — 대화를 세는 단위는 시간대가 아니라 **루틴**이다.
+   아침 루틴 / 오후(하교·방과후·방학 낮) 루틴 / 밤(취침) 루틴마다 새 대사 3번 + 마무리 1번. */
+function cheerRoutine(){                     // 지금 화면의 루틴 키 — morning / after / rest / night
+  try{ return routineNow() || routineKeyAt(); }catch(e){ return 'morning'; }
+}
+function cheerPhase(){                       // 세 루틴으로 묶는다 — 방과후·방학의 낮 구간은 '오후'
+  const k = cheerRoutine();
+  if(k === 'night') return 'night';
+  if(k === 'morning') return 'morning';
+  return 'afternoon';
+}
+/* 말투 — 루틴을 따르되, 아침 루틴이 한낮·저녁까지 이어지는 날(등교·방학 모드)은
+   시계도 함께 봐서 '좋은 아침'이 엉뚱한 시각에 나오지 않게 한다. */
 function cheerSlot(d){
   const h = (d || getNow()).getHours();
-  if(h >= 5 && h < 12) return 'morning';      // 아침
-  if(h >= 12 && h < 18) return 'afternoon';   // 오후
-  return 'evening';                           // 저녁·밤 (18~04)
+  const ph = cheerPhase();
+  if(ph === 'night') return 'evening';
+  if(ph === 'morning') return h >= 18 ? 'evening' : (h >= 12 ? 'afternoon' : 'morning');
+  return h >= 18 ? 'evening' : 'afternoon';
 }
 let cheerLastMsg = '';             // 바로 앞에 보여 준 대사
 let cheerQueue = { slot: null, greet: null, ask: null, cheer: null };
 let cheerTurn = 0;                 // 0 질문 → 1 응원 → 2 인사 → 다시 질문 (세 종류를 골고루)
 let cheerHideTimer = 0;
-/* v43 — 한 시간대에 새 대사는 3번까지. 그 뒤로는 '이따가 또 이야기하자' 안내만.
-   날짜+시간대 키로 localStorage 에 세어 두어 새로고침해도 유지되고,
-   시간대가 바뀌거나 날짜가 바뀌면 그 키가 새로 시작되어 저절로 0이 된다. */
-const CHEER_LIMIT = 3;                 // 한 시간대에 새 대사는 3번까지
+/* v45 — 한 **루틴**에 새 대사는 3번까지. 그 뒤로는 '이따가 또 이야기하자' 안내만.
+   날짜+루틴 키(예: 2026-11-20|morning)로 localStorage 에 세어 두어 새로고침해도 유지되고,
+   루틴이 바뀌거나(아침 → 오후 → 밤) 날짜가 바뀌면 그 키가 새로 시작되어 저절로 0이 된다. */
+const CHEER_LIMIT = 3;                 // 한 루틴에 새 대사는 3번까지
 const CHEER_TAPS = 4;                  // 4번째는 마무리 인사 1회, 5번째부터는 말풍선을 띄우지 않는다
 const CHEER_CLOSING = '우리 이따가 또 이야기하자!';
 const CHEER_STORE = 'lukaPokemonDashboard.cheer.v1';
@@ -4166,7 +4187,7 @@ function cheerStoreLoad(){
     return (o && typeof o === 'object') ? o : {};
   }catch(e){ return {}; }
 }
-function cheerCountKey(){ return affirmKeyOf(getNow()) + '|' + cheerSlot(); }
+function cheerCountKey(){ return affirmKeyOf(getNow()) + '|' + cheerPhase(); }   // 2026-11-20|morning · |afternoon · |night
 function cheerCountGet(){
   const n = Number(cheerStoreLoad()[cheerCountKey()]) || 0;
   return Math.max(0, Math.min(CHEER_TAPS, n));
@@ -4207,16 +4228,16 @@ function cheerNextMsg(){
     cheerQueue.cheer = null;
   }
   const seen = cheerCountGet();
-  if(seen >= CHEER_TAPS){                           // 이 시간대 5번째부터 → 말풍선 없음
+  if(seen >= CHEER_TAPS){                           // 이 루틴 5번째부터 → 말풍선 없음
     return '';
   }
-  if(seen === CHEER_LIMIT){                         // 4번째 = 마무리 인사 한 번
+  if(seen === CHEER_LIMIT){                         // 4번째 = 마무리 인사 한 번 (다음 루틴에서 또)
     cheerCountSet(seen + 1);
     cheerLastMsg = CHEER_CLOSING;
     return CHEER_CLOSING;
   }
   let m = '';
-  if(seen === 0){                                   // 이 시간대 첫 대사 = 인사말
+  if(seen === 0){                                   // 이 루틴 첫 대사 = 인사말
     m = cheerTake('greet', slot);
   }else{
     for(let i = 0; i < CHEER_KINDS.length; i++){    // 질문 → 응원 → 인사 순서로 돌아가며
@@ -4326,7 +4347,7 @@ function partnerCheerTap(){
   const pk = partnerPk();
   if(!el || !pk) return;
   const msg = cheerNextMsg();
-  if(!msg){                                        // 한 시간대에 4번까지 — 5번째부터는 말풍선 없음
+  if(!msg){                                        // 한 루틴에 4번까지 — 5번째부터는 말풍선 없음
     hidePartnerCheer();
     return;
   }
@@ -4355,6 +4376,17 @@ function partnerCheerTap(){
   if(el) el.addEventListener('click', hidePartnerCheer);   // 말풍선을 누르면 바로 닫힌다
   window.addEventListener('resize', ()=>{ if(el && el.classList.contains('show')) cheerPlace(); });
 })();
+/* v45 — 부모 설정 '💬 파트너 대화 초기화'.
+   루틴별 대화 횟수(아침·오후·밤)를 지금 바로 처음으로 되돌리고, 열려 있던 말풍선도 닫는다.
+   대화 셔플·순서도 함께 새로 시작해서 초기화 뒤에는 다시 3번까지 새 대사가 나온다. */
+function resetPartnerCheer(){
+  try{ localStorage.removeItem(CHEER_STORE); }catch(e){}
+  cheerQueue = { slot: null, greet: null, ask: null, cheer: null };
+  cheerTurn = 0; cheerLastMsg = '';
+  hidePartnerCheer();                                         // 설정창은 그대로 열어 둔다
+  try{ if(typeof renderPanelStatus === 'function') renderPanelStatus(); }catch(e){}
+  toast('💬 파트너 대화 횟수를 초기화했어요');
+}
 
 /* ---------- meal timer ---------- */
 let meal = { remain: 30*60, running:false, int:null };
@@ -6131,7 +6163,10 @@ function renderPanelStatus(){
   const p = n => (n < 10 ? '0' : '') + n;
   const d = getNow();
   const md = MODE_DEFS[modeId];
-  el.innerHTML = `지금 모드 <b>${md ? md.label : '등교'}</b> · 화면 시각 <b>${p(d.getHours())}:${p(d.getMinutes())}</b> (${simOffsetMs ? '미리보기' : '실제 시간'})`;
+  const ph = cheerPhase(), seen = cheerCountGet();
+  const phLabel = ph === 'morning' ? '아침' : ph === 'night' ? '밤' : '오후';
+  el.innerHTML = `지금 모드 <b>${md ? md.label : '등교'}</b> · 화면 시각 <b>${p(d.getHours())}:${p(d.getMinutes())}</b> (${simOffsetMs ? '미리보기' : '실제 시간'})`
+    + `<br>${phLabel} 루틴 파트너 대화 <b>${seen}/${CHEER_TAPS}</b>${seen >= CHEER_TAPS ? ' — 다음 루틴에 다시 열려요' : ''}`;
 }
 function renderPanelMode(){
   panel.querySelectorAll('[data-set-mode]').forEach(b=>{
@@ -6675,6 +6710,8 @@ function registerTestPokemon(n){
 }
 document.getElementById('testPoke1').addEventListener('click', parentOnly(()=> registerTestPokemon(1)));
 document.getElementById('testPoke3').addEventListener('click', parentOnly(()=> registerTestPokemon(3)));
+/* v45 — 🧪 테스트 탭: 루틴별 대화 횟수를 지금 처음으로 (설정창은 닫지 않는다) */
+document.getElementById('testCheerReset').addEventListener('click', parentOnly(()=> resetPartnerCheer()));
 
 /* ---------- backup / restore ---------- */
 function backupData(){
