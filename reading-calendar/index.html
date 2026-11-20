@@ -1363,5 +1363,15 @@
   render();
 })();
 </script>
+<script>
+  /* 웹앱 설치(삼성 인터넷·크롬)용 Service Worker 등록 */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(function (err) {
+        console.warn('Service Worker 등록 실패:', err);
+      });
+    });
+  }
+</script>
 </body>
 </html>

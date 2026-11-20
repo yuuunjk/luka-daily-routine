@@ -10,6 +10,7 @@ LUKA(2018년생, 초2)의 독서 기록 웹앱. 단일 HTML 파일 하나로 동
 | `app-icon-180.png` · `app-icon-192.png` · `app-icon-512.png` | 홈 화면 아이콘 (애플/안드로이드/마스커블 공용) |
 | `app-icon.svg` | 아이콘 원본 벡터 (책 세 권 모양) |
 | `manifest.webmanifest` | 웹앱 설치용 매니페스트 (이름·테마색·아이콘) |
+| `sw.js` | Service Worker — 삼성 인터넷·크롬의 웹앱 설치(WebAPK) 요건용. 네트워크 우선이라 새 버전이 캐시에 고착되지 않는다 |
 
 ## 쓰는 법 (갤럭시탭 S9)
 
@@ -47,6 +48,7 @@ LUKA(2018년생, 초2)의 독서 기록 웹앱. 단일 HTML 파일 하나로 동
 
 - `file://`로 열면 매니페스트는 브라우저가 읽지 않는다. 이때는 아이콘 파일을 `내 파일`에서 직접 골라 바로가기를 만들거나, 삼성 인터넷의 "홈 화면에 추가"를 쓰면 된다.
 - `http(s)`로 올리면 크롬이 "앱 설치"로 인식해 매니페스트의 아이콘·이름·테마색(`#f1f5f9`)을 그대로 쓴다.
+- 서비스 워커(`sw.js`)를 등록해 두어 **삼성 인터넷·크롬 모두 홈 화면에 "웹앱 설치"**가 뜬다(파일 바로가기가 아니라 주소창 없는 앱 창으로 열린다). 수정한 파일은 네트워크 우선 방식이라 새로고침하면 바로 반영된다.
 
 ## 디자인
 
@@ -59,9 +61,7 @@ LUKA(2018년생, 초2)의 독서 기록 웹앱. 단일 HTML 파일 하나로 동
 
 ## 배포
 
-GitHub Pages(활성화 후): **https://yuuunjk.github.io/reading-calendar/** — 저장소 `yuuunjk/reading-calendar`, `main` 브랜치 루트.
-
-- 설정 → Pages → Source: **Deploy from a branch** → Branch: **main**, 폴더 **/(root)** → Save. 1분 뒤 주소가 살아난다.
+GitHub Pages(활성화 후): **https://yuuunjk.github.io/luka-daily-routine/reading-calendar/** — 저장소 `yuuunjk/luka-daily-routine`, `main` 브랜치 `reading-calendar/` 폴더.
 
 - 공개 주소라 누구나 앱 화면을 열 수 있다. 다만 앱은 기록을 서버로 보내지 않으므로 **읽은 책 데이터는 각자 브라우저 안에만** 남는다.
 - 수정한 `index.html`을 올리면 1~2분 뒤 주소에 반영된다.
