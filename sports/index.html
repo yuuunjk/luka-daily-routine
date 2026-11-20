@@ -678,7 +678,13 @@ function renderNews(){
     pick = pick.filter(s => s.label === state.newsLeague);
   }
   const items = [];
-  for (const s of pick) for (const it of (s.items || [])) items.push({...it, label: it.label || s.label, sport: it.sport || s.sport, lang: it.lang || s.lang});
+  const seenTitles = new Set();
+  for (const s of pick) for (const it of (s.items || [])){
+    const key = String(it.title || "").replace(/[^\w가-힣]/g, "").slice(0, 26);
+    if (key && seenTitles.has(key)) continue;   // 같은 기사가 두 리그에 올라오면 한 번만
+    if (key) seenTitles.add(key);
+    items.push({...it, label: it.label || s.label, sport: it.sport || s.sport, lang: it.lang || s.lang});
+  }
   state.newsFlat = items;
   if (!items.length){
     body.innerHTML = `<div class="empty">아직 올라온 소식이 없어요.<br>조금 뒤 다시 받아 볼게요 😊</div>`;
