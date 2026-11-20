@@ -67,6 +67,22 @@
   .chip.on{background:#dbeafe; border-color:#93c5fd; color:var(--blue-dark);}
   .chip .num{font-size:15px; font-weight:800; opacity:.7; margin-left:4px;}
 
+  /* ── 하위 탭 (고른 종목 안의 리그) ───────── */
+  .subtabs{position:relative; margin:2px 0 16px; padding:6px 6px 7px; border:2px solid #dbe7fb;
+    border-radius:18px; background:linear-gradient(180deg,#f4f8ff,#eaf2fe);}
+  .subtabs::before{content:""; position:absolute; left:22px; top:-9px; width:3px; height:9px;
+    background:#dbe7fb; border-radius:2px;}
+  .subtabs .lbl{display:flex; align-items:center; gap:5px; margin:2px 6px 4px;
+    font-size:14px; font-weight:900; color:#7c93bd; letter-spacing:-.2px;}
+  .subtabs .lbl .br{font-size:16px; color:#b9caea;}
+  .subtabs .row{display:flex; gap:6px; overflow-x:auto; padding:2px; scrollbar-width:none;}
+  .subtabs .row::-webkit-scrollbar{display:none;}
+  .subtab{background:transparent; border:none; border-radius:12px; padding:10px 15px;
+    font-size:18px; font-weight:800; color:#6b86b5; white-space:nowrap; min-height:46px;
+    letter-spacing:-.3px;}
+  .subtab.on{background:#fff; color:var(--blue-dark);
+    box-shadow:0 2px 8px rgba(37,99,235,.16), inset 0 0 0 2px #bfdbfe;}
+
   /* ── cards ──────────────────────────────── */
   .sectitle{display:flex; align-items:center; gap:10px; margin:26px 0 12px; font-size:23px; font-weight:900;}
   .sectitle .count{font-size:16px; font-weight:800; color:var(--sub); background:#fff;
@@ -130,8 +146,7 @@
 
   .psum{background:linear-gradient(160deg,#eaf2ff,#ffffff 72%); border:2px solid #d7e6ff;
     border-radius:var(--radius); padding:18px 18px 16px; box-shadow:var(--shadow); margin-top:14px;}
-  .psum h2{margin:0 0 3px; font-size:23px; font-weight:900;}
-  .psum .sub{font-size:16px; font-weight:800; color:var(--sub); margin-bottom:14px;}
+  .psum h2{margin:0 0 12px; font-size:23px; font-weight:900;}
   .psum .kgrid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px;}
   .psum .k{background:#fff; border:2px solid var(--line); border-radius:18px; padding:10px 4px; text-align:center;}
   .psum .k b{display:block; font-size:23px; font-weight:900; color:var(--blue-dark); line-height:1.25;}
@@ -298,7 +313,10 @@
     <!-- 순위 -->
     <section id="tab-standings" class="hide">
       <div class="chips" id="standingSports"></div>
-      <div class="chips" id="leagueChips"></div>
+      <div class="subtabs" id="leagueTabs">
+        <div class="lbl"><span class="br">└</span> 리그 고르기</div>
+        <div class="row" id="leagueChips"></div>
+      </div>
       <div id="standingsBody"></div>
     </section>
 
@@ -566,7 +584,6 @@ function renderPredict(){
 
   let html = `<div class="psum">
       <h2>🎯 내 승부예측</h2>
-      <div class="sub">${st.total ? "맞히면 연승이 이어져요! 🔥" : "이길 팀을 찍어 보세요!"}</div>
       <div class="kgrid">
         <div class="k"><b>${st.rate === null ? "-" : st.rate + "%"}</b><span>적중률</span></div>
         <div class="k"><b>${st.hits}/${st.total}</b><span>맞힌 수</span></div>
@@ -852,11 +869,13 @@ function renderStandingChips(){
   });
   const mine = leagues.filter(l => l.sport === state.standingSport);
   $("#leagueChips").innerHTML = mine.map(l => `
-    <button class="chip ${state.league===l.id?"on":""}" data-id="${esc(l.id)}">${esc(l.name)}</button>
+    <button class="subtab ${state.league===l.id?"on":""}" data-id="${esc(l.id)}">${esc(l.name)}</button>
   `).join("");
-  $("#leagueChips").querySelectorAll(".chip").forEach(b => {
+  $("#leagueChips").querySelectorAll(".subtab").forEach(b => {
     b.onclick = () => { state.league = b.dataset.id; renderStandingChips(); renderStandings(); };
   });
+  const tabs = $("#leagueTabs");
+  if (tabs) tabs.style.display = mine.length ? "" : "none";
 }
 const GROUP_KOR = {EASTERN: "동부", WESTERN: "서부", EAST: "동부", WEST: "서부"};
 function groupTag(group){
