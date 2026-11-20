@@ -710,6 +710,7 @@ const state = {
   standingSport: null,
   league: null,
   rankMode: localStorage.getItem("sports.rankMode") === "player" ? "player" : "team",
+  rankInit: false,
   leaderCat: {},
   leaders: null,
   newsRegion: "전체",
@@ -1087,6 +1088,14 @@ async function loadAll(){
   if (!state.standingSport && state.standings?.leagues?.length){
     state.standingSport = state.standings.leagues[0].sport;
     state.league = state.standings.leagues[0].id;
+  }
+  /* 선수 순위로 열어 둔 사람이 그 리그에 기록이 없으면, 처음 한 번만 기록 있는 리그로 옮겨 준다 */
+  if (!state.rankInit){
+    state.rankInit = true;
+    if (state.rankMode === "player" && !leaderLeague() && (state.leaders?.leagues || []).length){
+      const same = state.leaders.leagues.find(l => l.sport === state.standingSport) || state.leaders.leagues[0];
+      if (same){ state.standingSport = same.sport; state.league = same.id; }
+    }
   }
   gradePreds();
   renderAll();
