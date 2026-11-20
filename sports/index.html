@@ -187,15 +187,30 @@
     border:2px solid var(--line); border-radius:18px; padding:11px 14px; margin-bottom:8px;}
   .hrow .hm{font-size:17px; font-weight:800; min-width:0; word-break:keep-all;}
   .hrow .hm small{display:block; font-size:14px; font-weight:700; color:var(--sub); margin-top:2px;}
-  /* ── 📊 종목별 · 리그별 적중률 ────────────── */
-  .pstat{background:#fff; border:2px solid var(--line); border-radius:18px; padding:12px 14px; margin-bottom:8px;}
-  .pstat .prow{display:flex; align-items:center; gap:10px;}
-  .pstat .pname{font-size:16.5px; font-weight:900; color:#2b3a55; min-width:0; flex:0 0 auto;
-    max-width:42%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .pbar{flex:1 1 60px; min-width:44px; height:11px; background:#eef3fb; border-radius:999px; overflow:hidden;}
-  .pbar i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#93c5fd,#2563eb);}
-  .pval{font-size:15.5px; font-weight:900; color:var(--blue-dark); white-space:nowrap;}
-  .pval small{font-weight:800; color:var(--sub); font-size:13.5px;}
+  /* ── 📊 종목별 · 리그별 적중률 (종목 카드 안에 리그줄) ────── */
+  .pgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px;}
+  .pcard{background:#fff; border:2px solid var(--line); border-radius:20px; padding:14px 16px 8px;
+    box-shadow:var(--shadow);}
+  .pcard .phead{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
+  .pcard .phead .nm{font-size:18.5px; font-weight:900; letter-spacing:-.3px; min-width:0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .pcard .phead .vv{font-size:19px; font-weight:900; color:var(--blue-dark); white-space:nowrap;}
+  .pcard .phead .vv small{font-size:13.5px; font-weight:800; color:var(--sub);}
+  .pbig{height:12px; background:#eef3fb; border-radius:999px; overflow:hidden; margin:10px 0 2px;}
+  .pbig i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#93c5fd,#2563eb);}
+  .plist{margin-top:6px;}
+  .plrow{display:flex; align-items:center; gap:9px; padding:7px 0 5px; border-top:1px dashed #eef3fb;}
+  .plrow .nm{flex:0 0 96px; min-width:0; font-size:15px; font-weight:800; color:var(--sub);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px;}
+  .plbar{flex:1 1 auto; height:8px; background:#f1f5fb; border-radius:999px; overflow:hidden;}
+  .plbar i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#bfdbfe,#60a5fa);}
+  .plrow .vv{flex:none; font-size:14.5px; font-weight:900; color:var(--blue); white-space:nowrap;}
+  .plrow .vv small{font-size:12.5px; font-weight:800; color:#93a8c5;}
+  /* '맞힌 수' 칸 — 누르면 전체 누적 채점 기록 */
+  .psum .k.btn{font-family:inherit; cursor:pointer; position:relative; border-color:#bfdbfe; background:#f7fbff;}
+  .psum .k.btn b{color:var(--blue);}
+  .psum .k.btn::after{content:"▤"; position:absolute; top:5px; right:7px; font-size:12px; color:#93c5fd;}
+  .psum .k.btn:active{transform:scale(.98);}
 
   /* ── tables ─────────────────────────────── */
   .tablewrap{background:#fff; border:2px solid var(--line); border-radius:var(--radius); overflow:auto;
@@ -543,6 +558,20 @@
   </div>
 </div>
 
+<!-- 🎯 전체 누적 채점 기록 (상단 '맞힌 수' 누를 때) -->
+<div class="modal" id="predModal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="predModalTitle">
+    <div class="sh-top">
+      <span class="sh-tag">🎯 승부예측</span>
+      <button class="sh-close" id="predModalClose">✕ 닫기</button>
+    </div>
+    <h2 id="predModalTitle">전체 채점 기록</h2>
+    <div class="sh-meta" id="predModalMeta"></div>
+    <div class="sh-body" id="predModalBody"></div>
+    <button class="btn-close-all" id="predModalDone">닫기</button>
+  </div>
+</div>
+
 <!-- ⭐ 우리 팀 고르기 창 (상단 '우리 팀' 버튼) -->
 <div class="modal" id="favModal" aria-hidden="true">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="favTitle">
@@ -833,44 +862,61 @@ function predHist(p, g){
       <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중" : "😅 아깝다"}</span>
     </div>`;
 }
-/* ── 📊 종목별 · 리그별 적중률 (채점된 예측만 모아서) ── */
+/* ── 📊 종목별 · 리그별 적중률 (채점된 예측만 모아서 종목 카드 안에 리그줄) ── */
 function predBreakdown(){
   const graded = Object.values(state.preds).filter(p => p.res);
-  const sports = new Map(), leagues = new Map();
+  const sports = new Map();
   for (const p of graded){
-    const rows = [
-      [sports, p.sport || "기타", SPORT_EMOJI[p.sport] || p.emoji || "🏅"],
-      [leagues, p.leagueName || "기타 리그", p.emoji || "🏅"],
-    ];
-    for (const [map, name, emoji] of rows){
-      const cur = map.get(name) || {name, emoji, hits: 0, total: 0};
-      cur.total += 1;
-      if (p.res === "hit") cur.hits += 1;
-      map.set(name, cur);
-    }
+    const sName = p.sport || "기타";
+    const s = sports.get(sName) || {name: sName, emoji: SPORT_EMOJI[p.sport] || p.emoji || "🏅",
+                                     hits: 0, total: 0, leagues: new Map()};
+    s.total += 1;
+    if (p.res === "hit") s.hits += 1;
+    const lName = p.leagueName || "기타 리그";
+    const l = s.leagues.get(lName) || {name: lName, hits: 0, total: 0};
+    l.total += 1;
+    if (p.res === "hit") l.hits += 1;
+    s.leagues.set(lName, l);
+    sports.set(sName, s);
   }
   const by = (a, b) => (b.total - a.total) || (b.hits - a.hits);
-  return {sports: [...sports.values()].sort(by), leagues: [...leagues.values()].sort(by)};
+  return [...sports.values()]
+    .map(s => ({...s, leagues: [...s.leagues.values()].sort(by)}))
+    .sort(by);
 }
-function pstatRow(r){
-  const pct = r.total ? Math.round(r.hits / r.total * 100) : 0;
-  return `<div class="pstat">
-      <div class="prow">
-        <span class="pname">${esc(r.emoji)} ${esc(r.name)}</span>
-        <span class="pbar"><i style="width:${pct}%"></i></span>
-        <span class="pval">${pct}%<small> · ${r.hits}/${r.total}</small></span>
-      </div>
-    </div>`;
-}
+function predPct(hits, total){ return total ? Math.round(hits / total * 100) : 0; }
 function predStatsSection(){
-  const bd = predBreakdown();
-  const block = (title, rows) => `<div class="sectitle">${title}</div>${
-    rows.length
-      ? rows.map(pstatRow).join("")
-      : `<div class="empty">아직 채점된 경기가 없어요.<br>경기가 끝나면 종목·리그별로 모아서 보여 드릴게요 📊</div>`}`;
-  return `<div class="sectitle">📊 종목별 · 리그별 적중률</div>
-    ${block("🏅 종목별", bd.sports)}
-    ${block("🏆 리그별", bd.leagues)}`;
+  const list = predBreakdown();
+  const title = `<div class="sectitle">📊 종목별 · 리그별 적중률</div>`;
+  if (!list.length){
+    return `${title}<div class="empty">아직 채점된 경기가 없어요.<br>경기가 끝나면 종목·리그별로 모아서 보여 드릴게요 📊</div>`;
+  }
+  const cards = list.map(s => {
+    const p = predPct(s.hits, s.total);
+    return `<div class="pcard">
+      <div class="phead">
+        <span class="nm">${esc(s.emoji)} ${esc(s.name)}</span>
+        <span class="vv">${p}%<small> · ${s.hits}/${s.total}</small></span>
+      </div>
+      <div class="pbig"><i style="width:${p}%"></i></div>
+      <div class="plist">${s.leagues.map(l => {
+        const lp = predPct(l.hits, l.total);
+        return `<div class="plrow">
+          <span class="nm">${esc(l.name)}</span>
+          <span class="plbar"><i style="width:${lp}%"></i></span>
+          <span class="vv">${lp}%<small> · ${l.hits}/${l.total}</small></span>
+        </div>`;
+      }).join("")}</div>
+    </div>`;
+  }).join("");
+  return `${title}<div class="pgrid">${cards}</div>`;
+}
+/* 오늘 · 어제 경기만 골라 보는 최근 채점 결과 */
+function recentGraded(st){
+  const now = kstNow();
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const days = new Set([iso(now), iso(new Date(now.getTime() - 86400000))]);
+  return st.graded.filter(p => days.has(String(p.date || "").slice(0, 10)));
 }
 function renderPredict(){
   const st = predStats();
@@ -888,7 +934,8 @@ function renderPredict(){
       <h2>🎯 내 승부예측</h2>
       <div class="kgrid">
         <div class="k"><b>${st.rate === null ? "-" : st.rate + "%"}</b><span>적중률</span></div>
-        <div class="k"><b>${st.hits}/${st.total}</b><span>맞힌 수</span></div>
+        <button class="k btn" id="predAllBtn" type="button" aria-haspopup="dialog"
+                title="전체 누적 채점 기록 보기"><b>${st.hits}/${st.total}</b><span>맞힌 수</span></button>
         <div class="k streak"><b>${st.streak ? "🔥 " + st.streak : "0"}</b><span>연승</span></div>
         <div class="k"><b>${st.pending}</b><span>대기 중</span></div>
       </div>
@@ -901,12 +948,16 @@ function renderPredict(){
     ? waiting.map(p => predMini(p, byId.get(p.id))).join("")
     : `<div class="empty">아직 기다리는 예측이 없어요.<br>오늘 경기의 <b>예정</b> 경기 카드에서 이길 팀을 찍어 보세요 😊</div>`;
 
-  html += `<div class="sectitle">✅ 채점 결과 <span class="count">${st.graded.length}경기</span></div>`;
-  html += st.graded.length
-    ? st.graded.slice(0, 10).map(p => predHist(p, byId.get(p.id))).join("")
-    : `<div class="empty">아직 채점한 경기가 없어요.<br>경기가 끝나면 자동으로 채점해 드려요 🎯</div>`;
+  /* 최근 채점 결과는 누적 전체가 아니라 오늘·어제 경기만 */
+  const recent = recentGraded(st).sort((a, b) => (b.gradedAt || 0) - (a.gradedAt || 0));
+  html += `<div class="sectitle">✅ 최근 채점 결과 (오늘 · 어제) <span class="count">${recent.length}경기</span></div>`;
+  html += recent.length
+    ? recent.map(p => predHist(p, byId.get(p.id))).join("")
+    : `<div class="empty">최근 2일 안에 채점된 결과가 없어요.<br>경기가 끝나면 바로 채점해 드릴게요 🎯</div>`;
 
   body.innerHTML = html;
+  const allBtn = $("#predAllBtn");
+  if (allBtn) allBtn.onclick = openPredHistory;
 }
 
 /* ── 유틸 ──────────────────────────────── */
@@ -1391,6 +1442,42 @@ function openArticle(idx){
 }
 function closeArticle(){
   const modal = $("#articleModal");
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+}
+
+/* ── 🎯 전체 누적 채점 기록 창 ──────────── */
+function openPredHistory(){
+  const st = predStats();
+  const rows = st.graded.slice().sort((a, b) => (b.gradedAt || 0) - (a.gradedAt || 0));
+  const meta = $("#predModalMeta");
+  if (meta) meta.textContent = rows.length
+    ? `적중 ${st.hits} / ${st.total} · 적중률 ${st.rate === null ? "-" : st.rate + "%"} · 최근 ${rows.length}경기`
+    : "아직 채점된 기록이 없어요";
+  const body = $("#predModalBody");
+  if (body){
+    body.innerHTML = rows.length ? rows.map(p => {
+      const hit = p.res === "hit";
+      const actual = p.actual === "draw" ? "무승부" : `${p.actual === "home" ? p.home : p.away} 승`;
+      const score = (typeof p.hs === "number" && typeof p.as === "number") ? `${p.hs} : ${p.as}` : "";
+      const bits = [p.leagueName || "", score, `내 예측 ${pickLabel(p)}`, `실제 ${actual}`].filter(Boolean).join(" · ");
+      return `<div class="hrow">
+        <span class="hm">${esc(p.home)} vs ${esc(p.away)}<small>${esc(bits)}</small></span>
+        <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중" : "😅 아깝다"}</span>
+      </div>`;
+    }).join("") : `<div class="empty">아직 채점된 기록이 없어요.<br>경기가 끝나면 자동으로 채점해 드려요 🎯</div>`;
+  }
+  const modal = $("#predModal");
+  if (!modal) return;
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+  modal.scrollTop = 0;
+  document.body.classList.add("modal-open");
+}
+function closePredHistory(){
+  const modal = $("#predModal");
+  if (!modal) return;
   modal.classList.remove("show");
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
@@ -2364,12 +2451,18 @@ function bind(){
   };
   $("#shClose").onclick = closeArticle;
   $("#shDone").onclick = closeArticle;
+  $("#predModalClose").onclick = closePredHistory;
+  $("#predModalDone").onclick = closePredHistory;
+  $("#predModal").addEventListener("click", (e) => {
+    if (e.target && e.target.id === "predModal") closePredHistory();
+  });
   $("#articleModal").addEventListener("click", (e) => {
     if (e.target && e.target.id === "articleModal") closeArticle();
   });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if ($("#articleModal").classList.contains("show")) closeArticle();
+    else if ($("#predModal").classList.contains("show")) closePredHistory();
     else if ($("#favModal").classList.contains("show")) closeFavPicker();
   });
   /* 🌙 잠금 화면 · 부모님 확인 */
