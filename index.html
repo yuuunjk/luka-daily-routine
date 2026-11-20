@@ -1207,7 +1207,7 @@
   /* 희귀·전설은 오로라 빛 테두리 — 은색 대신 에메랄드·시안·보라·핑크가 금속처럼 흐른다 (v42)
      희귀는 밝고 은은하게, 전설·환상은 한 단계 더 깊고 영롱하게. */
   .pcard.t1{background:linear-gradient(150deg,#ffffff 0%,#a8efdf 10%,#3f97b4 21%,#eafaff 33%,#7fc0e2 45%,#f4efff 57%,#bda6ec 69%,#ffe6f4 81%,#79a8c4 91%,#6b73b8 100%);
-    box-shadow:0 0 0 calc(var(--k)*.2) rgba(140,238,216,.8), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62), 0 0 calc(var(--k)*3.2) rgba(100,215,255,.55);}
+    box-shadow:0 0 0 calc(var(--k)*.2) rgba(140,238,216,.8), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62), 0 0 calc(var(--k)*3.4) rgba(100,215,255,.6);}
   .pcard.t2{background:linear-gradient(150deg,#f6fffc 0%,#66e0c4 8%,#237f9e 18%,#e8e0ff 29%,#7a5cd0 40%,#ffd8ef 51%,#4fa8c8 62%,#b48cff 73%,#2f6f9e 84%,#1e4a76 92%,#7fe6d8 100%);
     animation:cardIn .42s cubic-bezier(.3,1.5,.6,1), legGlow 3.6s ease-in-out infinite;}
   @keyframes legGlow{0%,100%{box-shadow:0 0 0 calc(var(--k)*.2) rgba(160,220,255,.35), 0 0 calc(var(--k)*2.4) rgba(120,240,215,.28), 0 calc(var(--k)*1.8) calc(var(--k)*4.2) rgba(4,12,30,.62);}
@@ -1221,7 +1221,7 @@
   .pcard.t1 .pring{opacity:.34;filter:saturate(.95) brightness(1.05);}
   .pcard.t2 .pring{opacity:.42;filter:saturate(1.02) brightness(1.08);animation:holoSpin 18s linear infinite;}
   /* 전설·환상은 테두리 바깥으로 오로라 빛이 번진다 */
-  .pcard.t2{filter:drop-shadow(0 0 calc(var(--k)*2.2) rgba(196,168,255,.36)) drop-shadow(0 0 calc(var(--k)*3.6) rgba(130,240,220,.26));}
+  .pcard.t2{filter:drop-shadow(0 0 calc(var(--k)*2.4) rgba(190,160,255,.46)) drop-shadow(0 0 calc(var(--k)*4) rgba(125,240,215,.34));}
   /* 잡지 않은 포켓몬 = 로열 블루 테두리 (색·두께는 아래 ⑥ 카드 뒷면 규칙에서 정한다) */
   .pcard.backmode .pring{opacity:0;}
 
