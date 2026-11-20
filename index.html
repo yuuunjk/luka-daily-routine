@@ -4461,6 +4461,8 @@ function studyFruitSync(on, idx){
    · 💬 이야기하기 — v45/v46 규칙 그대로: 루틴(아침·오후·밤)마다 새 대사 3회 + 4회차 마무리 인사,
      5회차부터는 대사 대신 안내. 🧪 테스트의 '💬 파트너 대화 초기화' 도 그대로 연동된다.
      v50 — 4회째 마무리 인사가 나온 즉시 이 버튼은 잠긴다(회색 + '오늘은 이야기를 다 나눴어요').
+     v51 — 1·2·3회 모두 '파트너 질문 → 루카 답(선택지/직접 입력) → 파트너 리액션'으로 통일.
+     (2·3회차에 끼어들던 단독 응원 멘트를 빼서 리액션과 다음 질문 사이가 매끄러워졌다)
    · 🍎 과일 주기 / 🌟 스페셜 과일 주기 — 하나 줄이고 기쁨 모션 + 실제 포켓몬 울음소리. */
 const PP_HELLO = '안녕 LUKA! 나랑 이야기하거나 과일을 줄래?';
 const PP_HELLO2 = '이야기하고 싶으면 💬, 과일을 주고 싶으면 🍎 를 눌러 줘!';
@@ -4665,10 +4667,31 @@ function ppShuffle(a){
 let ppFxTimer = 0, ppLastLine = '';
 let ppTopicQ = [], ppLastTopic = null, ppLastOpener = null;
 let ppGreetQ = {}, ppCheerQ = [];
+/* ===== v51 — 한 루틴 안에서 같은 질문은 두 번 나오지 않는다 =====
+   대화 3회가 모두 '질문 → 답 → 리액션'으로 이어지므로, 1회차 인사 질문과 2·3회차 주제 질문이
+   겹치지 않아야 티키타카가 자연스럽다. 이 루틴(날짜+시간대)에서 이미 물어본 질문을 적어 두고
+   다음 질문을 고를 때 건너뛴다. 루틴 키가 바뀌면(아침 → 오후 → 밤, 날짜 변경) 목록도 새로 시작한다. */
+let ppAskedQ = [], ppAskedKey = '';
+function ppAskedSync(){
+  const k = cheerCountKey();
+  if(k !== ppAskedKey){ ppAskedKey = k; ppAskedQ = []; }
+}
+function ppAskedHas(q){ return ppAskedQ.indexOf(q) >= 0; }
+function ppAskedAdd(q){ if(q && !ppAskedHas(q)) ppAskedQ.push(q); }
 function ppNextTopic(){
-  if(!ppTopicQ.length) ppTopicQ = ppShuffle(PP_TOPICS.slice());
-  let t = ppTopicQ.shift();
-  if(t === ppLastTopic && ppTopicQ.length){ ppTopicQ.push(t); t = ppTopicQ.shift(); }
+  let t = null;
+  for(let guard = 0; guard < PP_TOPICS.length * 2 + 2 && !t; guard++){
+    if(!ppTopicQ.length){
+      ppTopicQ = ppShuffle(PP_TOPICS.filter(x => !ppAskedHas(x.q)));
+      if(!ppTopicQ.length) ppTopicQ = ppShuffle(PP_TOPICS.slice());   // 이 루틴에서 다 물어봤으면 처음부터
+    }
+    const cand = ppTopicQ.shift();
+    if(!cand) continue;
+    if(ppAskedHas(cand.q)) continue;                                  // 이미 물어본 질문은 버린다
+    if(cand === ppLastTopic && ppTopicQ.length){ ppTopicQ.push(cand); continue; }
+    t = cand;
+  }
+  if(!t) t = PP_TOPICS[Math.floor(Math.random() * PP_TOPICS.length)];
   ppLastTopic = t;
   return t;
 }
@@ -4677,14 +4700,16 @@ function ppGreetLine(slot){
     ppGreetQ[slot] = ppShuffle((PARTNER_GREET[slot] || PARTNER_GREET.afternoon).slice());
   return ppGreetQ[slot].shift();
 }
-function ppCheerLine(){
+function ppCheerLine(){            // v51 — 팝업 대화 흐름에서는 쓰지 않는다(질문→답→리액션으로 통일). 문구는 남겨 둔다
   if(!ppCheerQ.length) ppCheerQ = ppShuffle(PARTNER_CHEERS.slice());
   return ppCheerQ.shift();
 }
 function ppOpenerFor(slot){
   const arr = PP_OPENER[slot] || PP_OPENER.afternoon;
-  let t = arr[Math.floor(Math.random() * arr.length)];
-  if(arr.length > 1 && t === ppLastOpener) t = arr[(arr.indexOf(t) + 1) % arr.length];
+  const fresh = arr.filter(t => !ppAskedHas(t.q));           // v51 — 이 루틴에서 안 물어본 인사 질문 먼저
+  const list = fresh.length ? fresh : arr;
+  let t = list[Math.floor(Math.random() * list.length)];
+  if(list.length > 1 && t === ppLastOpener) t = list[(list.indexOf(t) + 1) % list.length];
   ppLastOpener = t;
   return t;
 }
@@ -4898,8 +4923,11 @@ function closePartnerPopup(){
   ppCloseTurn();
   clearTimeout(ppReplyTimer); ppBusy = false;
 }
-/* 💬 이야기하기 — 한 번 누를 때마다 루틴별 1~3회째는 새 대화(질문+선택지),
-   4회째는 마무리 인사만, 5회째부터는 새 대화가 열리지 않는다. */
+/* 💬 이야기하기 — 한 번 누를 때마다 루틴별 1~3회째는 **모두** 주고받기 대화다:
+   파트너 질문 → 루카 답(선택지/직접 입력) → 파트너 리액션. 4회째는 마무리 인사만,
+   5회째부터는 새 대화가 열리지 않는다.
+   v51 — 2·3회차에 끼어들던 단독 응원 멘트를 없앴다(리액션과 다음 질문 사이가 쌩뚱맞았던 원인).
+   1회차만 질문 앞에 지금 시간대의 가벼운 인사 한 마디를 붙인다. */
 function partnerTalkTap(){
   if(ppTurnOpen || ppBusy){ ppShake(ppEl('ppTalk')); return; }     // 답을 먼저 기다린다
   const seen = cheerCountGet();
@@ -4918,10 +4946,11 @@ function partnerTalkTap(){
   }
   cheerCountSet(seen + 1);
   const slot = cheerSlot();
-  if(seen === 0) ppSay('partner', ppGreetLine(slot));              // 이 루틴 첫 대화 = 인사말
-  else if(Math.random() < .5) ppSay('partner', ppCheerLine());     // 가끔 응원 한 마디 먼저
+  ppAskedSync();                                                   // v51 — 이 루틴에서 물어본 질문 목록
+  if(seen === 0) ppSay('partner', ppGreetLine(slot));              // 1회차만 — 이 루틴 첫 대화라 가벼운 인사 한 마디
   const topic = (seen === 0) ? ppOpenerFor(slot) : ppNextTopic();
-  ppSay('partner', topic.q);
+  ppAskedAdd(topic.q);                                             // v51 — 다음 질문에서 겹치지 않게
+  ppSay('partner', topic.q);                                       // 1·2·3회 모두 질문 → 답 → 리액션
   ppOpenTurn(topic.opts);
   try{ if(soundOn) blip(); }catch(e){}
 }
@@ -5089,6 +5118,7 @@ function playPartnerCry(id){
 function resetPartnerCheer(){
   try{ localStorage.removeItem(CHEER_STORE); }catch(e){}
   ppTopicQ = []; ppLastTopic = null; ppLastOpener = null; ppGreetQ = {}; ppCheerQ = []; ppLastLine = '';
+  ppAskedQ = []; ppAskedKey = '';         // v51 — 물어본 질문 목록도 비운다(같은 질문이 다시 나올 수 있게)
   ppSyncTalkBtn();                       // v50 — 잠겼던 '💬 이야기하기'도 다시 눌린다
   if(document.getElementById('partnerOverlay').classList.contains('show')){
     ppCloseTurn(); ppClearChat(); clearTimeout(ppReplyTimer); ppBusy = false;
