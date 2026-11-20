@@ -2103,8 +2103,9 @@ let pinPurpose = "night";          // 'night' = 잠금 화면 열기 / 'power' =
 function renderPinDots(){
   const n = pinValue.length;
   document.querySelectorAll("#pinDots span").forEach((d, i) => d.classList.toggle("on", i < n));
+  /* 입력값은 화면에 옮겨 담지 않는다 — 점 4개로만 보여 주고, 남의 비번이 읽히지 않게 */
   const input = $("#pinInput");
-  if (input && input.value !== pinValue) input.value = pinValue;
+  if (input && input.value) input.value = "";
 }
 function updatePinOk(){
   const ok = $("#pinOk");
