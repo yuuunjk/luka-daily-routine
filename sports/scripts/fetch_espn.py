@@ -36,13 +36,13 @@ SITE = "https://site.api.espn.com/apis/site/v2/sports"
 CORE = "https://site.api.espn.com/apis/v2/sports"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36"
 
-SPORT_ORDER = ["야구", "축구", "농구", "배구", "해외축구", "미식축구", "국제 대회", "해외야구", "기타"]
-SPORT_EMOJI = {"야구": "⚾", "해외야구": "⚾", "축구": "⚽", "해외축구": "⚽", "국제 대회": "🌍",
-               "농구": "🏀", "미식축구": "🏈", "배구": "🏐", "기타": "🏅"}
+SPORT_ORDER = ["야구", "해외야구", "축구", "해외축구", "미식축구", "농구", "해외농구", "배구", "국제대회", "기타"]
+SPORT_EMOJI = {"야구": "⚾", "해외야구": "⚾", "축구": "⚽", "해외축구": "⚽", "국제대회": "🌍",
+               "농구": "🏀", "해외농구": "🏀", "미식축구": "🏈", "배구": "🏐", "기타": "🏅"}
 
 LEAGUES = [
     {"espn": "baseball/mlb", "sport": "야구", "name": "MLB", "season": "2026"},
-    {"espn": "basketball/nba", "sport": "농구", "name": "NBA", "season": "2026"},
+    {"espn": "basketball/nba", "sport": "해외농구", "name": "NBA", "season": "2026"},
     {"espn": "football/nfl", "sport": "미식축구", "name": "NFL", "season": "2026"},
     {"espn": "soccer/eng.1", "sport": "해외축구", "name": "프리미어리그", "season": "2026"},
     {"espn": "soccer/esp.1", "sport": "해외축구", "name": "라리가", "season": "2026"},
@@ -52,14 +52,14 @@ LEAGUES = [
     {"espn": "soccer/uefa.champions", "sport": "해외축구", "name": "챔피언스리그", "season": "2026"},
     # ── 국제 대회 (나라 대 나라) ──
     # ESPN에서 soccer/afc.cup 은 'AFC 챔피언스리그2'(클럽 대회)라서, 아시안컵은 afc.asian.cup 을 쓴다.
-    {"espn": "soccer/fifa.world", "sport": "국제 대회", "name": "월드컵", "season": "2026", "intl": True},
-    {"espn": "soccer/fifa.worldq.afc", "sport": "국제 대회", "name": "월드컵 아시아 예선", "season": "2026", "intl": True},
-    {"espn": "soccer/afc.asian.cup", "sport": "국제 대회", "name": "아시안컵", "season": "2026", "intl": True},
-    {"espn": "soccer/uefa.nations", "sport": "국제 대회", "name": "네이션스리그", "season": "2026", "intl": True},
-    {"espn": "soccer/uefa.euro", "sport": "국제 대회", "name": "유로", "season": "2026", "intl": True},
-    {"espn": "soccer/caf.nations", "sport": "국제 대회", "name": "아프리카 네이션스컵", "season": "2026", "intl": True},
-    {"espn": "soccer/conmebol.america", "sport": "국제 대회", "name": "코파 아메리카", "season": "2026", "intl": True},
-    {"espn": "soccer/fifa.friendly", "sport": "국제 대회", "name": "국가대표 평가전", "season": "2026", "intl": True},
+    {"espn": "soccer/fifa.world", "sport": "국제대회", "name": "월드컵", "season": "2026", "intl": True},
+    {"espn": "soccer/fifa.worldq.afc", "sport": "국제대회", "name": "월드컵 아시아 예선", "season": "2026", "intl": True},
+    {"espn": "soccer/afc.asian.cup", "sport": "국제대회", "name": "아시안컵", "season": "2026", "intl": True},
+    {"espn": "soccer/uefa.nations", "sport": "국제대회", "name": "네이션스리그", "season": "2026", "intl": True},
+    {"espn": "soccer/uefa.euro", "sport": "국제대회", "name": "유로", "season": "2026", "intl": True},
+    {"espn": "soccer/caf.nations", "sport": "국제대회", "name": "아프리카 네이션스컵", "season": "2026", "intl": True},
+    {"espn": "soccer/conmebol.america", "sport": "국제대회", "name": "코파 아메리카", "season": "2026", "intl": True},
+    {"espn": "soccer/fifa.friendly", "sport": "국제대회", "name": "국가대표 평가전", "season": "2026", "intl": True},
 ]
 INTL_KEYS = {l["espn"] for l in LEAGUES if l.get("intl")}
 
@@ -94,6 +94,8 @@ TEAMS_KO = {
     "ATH": "아틀레틱", "RSO": "레알소시에다드", "VIL": "비야레알", "BET": "베티스",
     "VAL": "발렌시아", "GIR": "지로나", "CEL": "셀타", "OSA": "오사수나",
     "RAY": "라요", "MLL": "마요르카", "GET": "헤타페", "ALV": "알라베스",
+    # 튀르키예 — 챔피언스리그 등 다른 대회에서도 같은 이름이 나오게 통일
+    "FEN": "페네르바흐체",
     # 세리에A
     "JUV": "유벤투스", "INT": "인터밀란", "ACM": "AC밀란", "NAP": "나폴리",
     "ROM": "로마", "LAZ": "라치오", "ATA": "아탈란타", "FIO": "피오렌티나",
@@ -121,7 +123,7 @@ NFL_TEAMS_KO = {
 
 # 튀르키예 쉬페르리그 18팀 (GEN은 세리에A 제노아와 겹침)
 TUR_TEAMS_KO = {
-    "GAL": "갈라타사라이", "FEN": "페네르바체", "BES": "베식타스", "TRAB": "트라브존스포르",
+    "GAL": "갈라타사라이", "FEN": "페네르바흐체", "BES": "베식타스", "TRAB": "트라브존스포르",
     "IBFK": "바샥셰히르", "KAS": "카슴파샤", "KOC": "코자엘리스포르", "AMED": "아메드스포르",
     "COR": "초룸", "GOZ": "괴즈테페", "CAY": "차이쿠르리제스포르", "ERZ": "에르주룸",
     "ALA": "알라냐스포르", "GEN": "겐츨레르비를리이", "KNY": "코니아스포르", "GAZ": "가즈안테프",
@@ -252,7 +254,7 @@ UCL_TEAMS_KO = {
     "MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "INT": "인터밀란", "JUV": "유벤투스",
     "NAP": "나폴리", "LAZ": "라치오", "ATA": "아탈란타", "MUN": "바이에른", "SCP": "스포르팅",
     "PSG": "파리 생제르맹", "PSV": "PSV 에인트호번", "DOR": "도르트문트", "VFB": "슈투트가르트",
-    "RBL": "라이프치히",
+    "RBL": "라이프치히", "FEN": "페네르바흐체",
 }
 KO_BY_LEAGUE = {
     "soccer/ger.1": GER_TEAMS_KO,
@@ -260,7 +262,8 @@ KO_BY_LEAGUE = {
     "soccer/eng.1": ENG_TEAMS_KO,
     "soccer/ita.1": {"MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "INT": "인터밀란",
                      "JUV": "유벤투스", "NAP": "나폴리", "LAZ": "라치오", "ATA": "아탈란타",
-                     "FIO": "피오렌티나", "BOL": "볼로냐", "UDI": "우디네세", "GEN": "제노아"},
+                     "FIO": "피오렌티나", "BOL": "볼로냐", "UDI": "우디네세", "GEN": "제노아",
+                     "SAS": "사수올로"},
     "soccer/uefa.champions": UCL_TEAMS_KO,
     "football/nfl": NFL_TEAMS_KO,
     "soccer/tur.1": TUR_TEAMS_KO,
@@ -312,7 +315,7 @@ def status_ko(comp: dict, sport: str) -> tuple[str, str]:
         label = f"{period}쿼터" if period else "진행 중"
     elif sport == "야구":
         label = f"{period}회" if period else "진행 중"
-    elif sport in ("해외축구", "축구", "국제 대회"):
+    elif sport in ("해외축구", "축구", "국제대회"):
         label = "후반" if period >= 2 else "전반"
         if clock:
             label += f" {clock}"
