@@ -430,14 +430,18 @@
     100%{transform:translateY(0) scale(1,1);}
   }
   /* v43 — 말풍선은 파트너 카드 **왼쪽** 빈 하늘에 뜨고(꼬리는 오른쪽 카드를 향한다),
-     제목·배지 없이 대사만 — 포켓몬이 직접 말을 거는 느낌. 30초 뒤에 저절로 사라진다. */
+     제목·배지 없이 대사만 — 포켓몬이 직접 말을 거는 느낌. 30초 뒤에 저절로 사라진다.
+     v44 — 몸통+꼬리를 **하나의 인라인 SVG path** 로 그린다(테두리는 stroke).
+     회전 사각형·가상요소로 꼬리를 붙이면 본체 테두리와 만나는 자리에 흰 틈·단차가 생겼으므로
+     한 붓으로 이어 그려 외곽선·흰 배경이 끊기지 않고, 클램프로 꼬리 높이가 어디로 잡혀도
+     꼬리는 늘 같은 외곽선 위에 붙는다. 그림자는 몸통+꼬리 전체 실루엣에 준다. */
   #partnerCheer{
     position:fixed; left:0; top:0; z-index:48; box-sizing:border-box;
     display:block;
     width:max-content; min-width:184px; max-width:min(21em, calc(100vw - 24px));
-    background:#fff; border:3px solid #2b3445; border-radius:15px;
+    background:#fff; border:3px solid transparent; border-radius:15px;
     padding:.5em .82em .52em;
-    box-shadow:0 10px 22px rgba(20,50,80,.26);
+    filter:drop-shadow(0 9px 16px rgba(20,50,80,.26));
     color:#16283b; font-family:inherit; font-size:15px; line-height:1.34;
     opacity:0; transform:translateX(10px) scale(.95); transform-origin:right center;
     pointer-events:none;
@@ -446,11 +450,13 @@
   }
   #partnerCheer[hidden]{display:none;}
   #partnerCheer.show{opacity:1; transform:none; pointer-events:auto; cursor:pointer;}
-  /* 꼬리 — 오른쪽 가장자리에서 파트너 카드를 향해 */
-  #partnerCheer .pc-tail{position:absolute; right:-12px; top:var(--tail,50%); width:18px; height:18px;
-    margin-top:-9px; background:#fff; border-right:3px solid #2b3445; border-top:3px solid #2b3445;
-    border-top-right-radius:5px; transform:rotate(-45deg);}
-  #partnerCheer .pc-msg{display:block; font-weight:900; color:#16283b; letter-spacing:-.01em; word-break:keep-all;
+  /* 몸통+꼬리 한 붓 — 좌표는 말풍선 테두리 박스 기준(3px 투명 테두리만큼 당겨 놓는다) */
+  #partnerCheer .pc-shape{position:absolute; left:-3px; top:-3px; display:block;
+    overflow:visible; pointer-events:none;}
+  #partnerCheer .pc-shape path{fill:#fff; stroke:#2b3445; stroke-width:3;
+    stroke-linejoin:round; stroke-linecap:round;}
+  #partnerCheer .pc-msg{display:block; position:relative; z-index:1;
+    font-weight:900; color:#16283b; letter-spacing:-.01em; word-break:keep-all;
     overflow-wrap:break-word; line-height:1.38; font-size:1.02em;
     text-wrap:balance; text-align:center;}
   @keyframes cheerPop{0%{transform:scale(.9);}55%{transform:scale(1.05);}100%{transform:scale(1);}}
@@ -2486,9 +2492,10 @@
 <div class="burst" id="burst"></div>
 <div id="toast"></div>
 
-<!-- v43 — 파트너 말풍선: 카드 왼쪽 빈 하늘에 대사만 뜬다(제목·배지 없음) -->
+<!-- v43 — 파트너 말풍선: 카드 왼쪽 빈 하늘에 대사만 뜬다(제목·배지 없음)
+     v44 — 몸통·꼬리는 .pc-shape 한 path 로 그린다(테두리·흰 배경이 한 붓으로 이어진다) -->
 <div id="partnerCheer" role="status" aria-live="polite" aria-atomic="true" hidden>
-  <span class="pc-tail" aria-hidden="true"></span>
+  <svg class="pc-shape" aria-hidden="true" focusable="false"><path id="cheerPath" d=""></path></svg>
   <span class="pc-msg" id="cheerMsg"></span>
 </div>
 
@@ -4235,6 +4242,42 @@ function partnerBounce(){
   clearTimeout(a._hop);
   a._hop = setTimeout(()=> a.classList.remove('hop'), 720);
 }
+/* v44 — 말풍선 몸통(둥근 사각형)과 오른쪽 꼬리를 **하나의 닫힌 path** 로 만든다.
+   테두리는 stroke(3px)라 몸통과 꼬리 사이에 틈·단차·계단이 생길 수 없고,
+   꼬리 높이(cy)가 위/아래로 클램프돼도 꼬리는 언제나 같은 외곽선 위에 붙는다. */
+function cheerShapePath(W, H, ty){
+  const hf = 1.5, x0 = hf, y0 = hf, x1 = W - hf, y1 = H - hf;   // stroke 중심선
+  let R = 13.5, b = 8, f = 2.5, len = 13;                        // 모서리·꼬리 반높이·밑동 필렛·길이
+  const slack = () => (H - 2*hf) - 2*R - 2*(b + f);              // 오른쪽 곧은 변에 남는 세로 여유
+  while(slack() < 0 && R > 8) R -= 1;                            // 한 줄짜리처럼 납작한 말풍선은 모서리를 조금 조인다
+  while(slack() < 0 && b > 6){ b -= 1; f = Math.max(2, f - .5); len = Math.min(len, b + 5); }
+  const lo = y0 + R + b + f, hi = y1 - R - b - f;
+  const cy = hi >= lo ? Math.max(lo, Math.min(hi, ty)) : (y0 + y1) / 2;
+  const dx = len, dy = b, dl = Math.hypot(dx, dy), ux = dx/dl, uy = dy/dl;
+  const b1 = cy - b, b2 = cy + b;
+  const a1 = b1 - f, a4 = b2 + f, px = x1 + ux*f, py1 = b1 + uy*f, py2 = b2 - uy*f;
+  const n = v => Math.round(v*10)/10;
+  return {tipX: n(x1 + len), tipY: n(cy),
+    d: `M ${n(x0+R)} ${n(y0)} H ${n(x1-R)} A ${n(R)} ${n(R)} 0 0 1 ${n(x1)} ${n(y0+R)}` +
+         ` V ${n(a1)} Q ${n(x1)} ${n(b1)} ${n(px)} ${n(py1)} L ${n(x1+len)} ${n(cy)}` +
+         ` L ${n(px)} ${n(py2)} Q ${n(x1)} ${n(b2)} ${n(x1)} ${n(a4)}` +
+         ` V ${n(y1-R)} A ${n(R)} ${n(R)} 0 0 1 ${n(x1-R)} ${n(y1)}` +
+         ` H ${n(x0+R)} A ${n(R)} ${n(R)} 0 0 1 ${n(x0)} ${n(y1-R)}` +
+         ` V ${n(y0+R)} A ${n(R)} ${n(R)} 0 0 1 ${n(x0+R)} ${n(y0)} Z`};
+}
+function cheerShape(W, H, ty){
+  const el = document.getElementById('partnerCheer');
+  const svg = el && el.querySelector('.pc-shape');
+  const path = svg && svg.firstElementChild;
+  if(!path) return;
+  const TIP = 16;                                   // 꼬리가 삐져나올 오른쪽 여백
+  W = Math.max(40, W); H = Math.max(30, H);
+  svg.setAttribute('width', W + TIP); svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W + TIP} ${H}`);
+  const s = cheerShapePath(W, H, ty);
+  path.setAttribute('d', s.d);
+  path.setAttribute('data-tip', s.tipX + ',' + s.tipY);   // 꼬리 끝 좌표(검증·디버깅용)
+}
 /* 말풍선 자리 — 파트너 카드 **왼쪽**의 빈 하늘.
    카드 세로 가운데에 맞춰 마음 스킬 배너를 가리지 않고, 시계 숫자는 오른쪽 끝만 살짝
    스치게 한다. 좁은 화면에서는 화면 밖으로 나가지 않게 클램프하고, 꼬리는 오른쪽 카드를 향한다. */
@@ -4265,10 +4308,10 @@ function cheerPlace(){
   top = Math.max(8, Math.min(top, vh - h - 8));
   el.style.left = Math.round(left) + 'px';
   el.style.top = Math.round(top) + 'px';
-  /* 꼬리는 카드 세로 가운데를 향하고, 등근 모서리를 넘지 않게 안쪽으로 잡는다 */
-  const mid = cr.top + cr.height / 2 - top;
-  const tail = Math.max(Math.min(16, h / 2), Math.min(h - 16, mid));
-  el.style.setProperty('--tail', Math.round(tail) + 'px');
+  /* 꼬리는 카드 세로 가운데를 향한다. 몸통과 한 path 라 어디로 클램프돼도 끊기지 않고,
+     둥근 모서리를 넘지 않게는 path 쪽에서 다시 한 번 잡아 준다. */
+  const box = el.getBoundingClientRect();
+  cheerShape(box.width, box.height, cr.top + cr.height / 2 - top);
 }
 function hidePartnerCheer(){
   const el = document.getElementById('partnerCheer');
