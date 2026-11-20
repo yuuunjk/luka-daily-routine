@@ -3922,9 +3922,9 @@ function buildRestPanel(wrap){
 }
 /* 취침 루틴(21:00)까지 남은 시간 */
 function restLeftText(){
-  const now = nowMinutes();
-  const left = Math.max(0, 21*60 - now);
-  const h = Math.floor(left / 60), m = Math.round(left % 60);
+  /* 초 단위를 먼저 반올림한다 — 그냥 두면 659.9분이 '10시간 60분'으로 나온다 */
+  const left = Math.max(0, Math.round(21*60 - nowMinutes()));
+  const h = Math.floor(left / 60), m = left % 60;
   return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
 }
 function updateRestLeft(){
@@ -7222,6 +7222,18 @@ function resetMissionItems(){
   save(); renderMission(); renderMissionSettings();
   toast('🏥 기본 미션으로 복원했어요');
 }
+/* v55 — 마지막 자리가 들어오는 순간 [확인]을 누르지 않아도 바로 검증한다.
+   (자릿수는 시트에서 받은 비밀번호 길이를 따른다 — 지금은 4자리 고정) */
+function pinExpectedValue(){ return (pinTarget === 'battle' ? currentBattlePin() : currentPin()); }
+function pinNeededLen(expected){ return expected ? String(expected).length : 4; }
+function autoSubmitPinIfFull(){
+  const raw = String(pinInput.value || '').replace(/\D/g, '');
+  const expected = pinExpectedValue();
+  if(!expected) return false;                       // 시트 비번을 아직 못 받음 — [확인]으로 안내
+  if(raw.length < pinNeededLen(expected)) return false;
+  submitPin();
+  return true;
+}
 function submitPin(){
   const v = String(pinInput.value || '').replace(/\D/g, '');
   pinInput.value = v;
@@ -7230,7 +7242,7 @@ function submitPin(){
     pinInput.focus({ preventScroll: true });
     return;
   }
-  const expected = (pinTarget === 'battle' ? currentBattlePin() : currentPin());
+  const expected = pinExpectedValue();
   if(!expected){
     /* 아직 시트에서 비밀번호를 못 받은 상태 — 임의의 기본 비번으로 열리지 않게 막고 다시 불러온다 */
     pinInput.value = '';
@@ -7356,6 +7368,7 @@ pinPad.querySelectorAll('[data-k]').forEach(b=>{
     pinByKeyboard = false;
     renderPinDots();
     updatePinOk();
+    autoSubmitPinIfFull();            // v55 — 마지막 자리를 누르면 바로 통과/흔들림
   });
 });
 pinInput.addEventListener('input', ()=>{
@@ -7366,6 +7379,7 @@ pinInput.addEventListener('input', ()=>{
   pinByKeyboard = true;
   renderPinDots();
   updatePinOk();
+  autoSubmitPinIfFull();              // v55 — 자판으로 4자리가 차는 순간 바로 통과/흔들림
 });
 pinInput.addEventListener('keydown', e=>{
   if(e.key === 'Enter'){ e.preventDefault(); submitPin(); }
