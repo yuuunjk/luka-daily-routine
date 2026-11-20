@@ -226,6 +226,24 @@
   td.rank{font-weight:900; color:var(--blue);}
   .grp{font-size:14px; font-weight:800; color:#7c8aa5; background:#eef3fb; border-radius:999px;
     padding:1px 8px; margin-left:6px; vertical-align:2px;}
+  /* 순위 — 팀/선수 하위 탭 · 선수 순위표 */
+  .rankswitch{display:flex; gap:6px; background:#eef4fd; border:2px solid var(--line);
+    border-radius:999px; padding:5px; margin:12px 0 4px;}
+  .rankswitch button{flex:1 1 0; border:0; background:transparent; border-radius:999px;
+    padding:10px 8px; font-family:inherit; font-size:18px; font-weight:900; color:var(--sub);
+    min-height:48px; letter-spacing:-.4px;}
+  .rankswitch button.on{background:var(--blue); color:#fff; box-shadow:0 3px 8px rgba(37,99,235,.25);}
+  .rankswitch button:active{transform:scale(.98);}
+  .leadchips{padding-top:8px;}
+  table.leadtable{min-width:0;}
+  table.leadtable td.plead{text-align:left;}
+  .pwrap{display:flex; align-items:center; gap:9px; min-width:0;}
+  .pwrap .emb{width:28px; height:28px; object-fit:contain; flex:none;}
+  .pwrap .pname{display:flex; flex-direction:column; font-size:18px; font-weight:900; line-height:1.22;
+    letter-spacing:-.3px;}
+  .pwrap .pname small{font-size:13.5px; font-weight:700; color:var(--sub); margin-top:2px;}
+  table.leadtable td.value{font-size:20px; font-weight:900; color:var(--blue); white-space:nowrap;}
+  .leadnote{font-size:15px; font-weight:700; color:#93a2bd; margin-top:10px; line-height:1.5;}
   .last5{display:inline-flex; gap:3px;}
   .last5 i{width:11px; height:11px; border-radius:50%; display:inline-block;}
   .last5 .W{background:var(--green);} .last5 .L{background:#e0574a;} .last5 .D{background:#c3ccdd;}
@@ -471,11 +489,16 @@
 
     <!-- 순위 -->
     <section id="tab-standings" class="hide">
+      <div class="rankswitch" id="rankSwitch">
+        <button type="button" data-mode="team" class="on">🏅 팀 순위</button>
+        <button type="button" data-mode="player">👟 선수 순위</button>
+      </div>
       <div class="chips" id="standingSports"></div>
       <div class="subtabs nolabel" id="leagueTabs">
         <div class="row" id="leagueChips"></div>
       </div>
       <div id="standingsBody"></div>
+      <div id="leadersBody" class="hide"></div>
     </section>
 
     <!-- 주요 소식 -->
@@ -674,6 +697,9 @@ const state = {
   todayState: "전체",
   standingSport: null,
   league: null,
+  rankMode: localStorage.getItem("sports.rankMode") === "player" ? "player" : "team",
+  leaderCat: {},
+  leaders: null,
   newsRegion: "전체",
   newsLeague: "전체",
   newsQuery: "",
@@ -1031,13 +1057,15 @@ async function loadAll(){
     getJSON("./data/news.json"),
     getJSON("./data/teams-ko.json"),
     getJSON("./data/ko-teams.json"),
+    getJSON("./data/leaders.json"),
   ]);
-  const [t, s, n, k, kk] = results;
+  const [t, s, n, k, kk, ld] = results;
   if (k.status === "fulfilled" && k.value) state.teamsKo = k.value;
   if (kk.status === "fulfilled" && kk.value) state.koTeams = kk.value;
   if (t.status === "fulfilled") state.today = t.value;
   if (s.status === "fulfilled") state.standings = s.value;
   if (n.status === "fulfilled") state.news = n.value;
+  if (ld && ld.status === "fulfilled" && ld.value) state.leaders = ld.value;
 
   const failed = results.filter(r => r.status === "rejected").length;
   if (failed >= 2){
@@ -1235,8 +1263,42 @@ function renderToday(){
 }
 
 /* ── 순위 ──────────────────────────────── */
+/* 선수 순위에만 있는 리그(예: 리그1)도 고를 수 있게 팀 순위 리그 목록과 합친다 */
+function rankLeagues(){
+  const base = state.standings?.leagues || [];
+  if (state.rankMode !== "player") return base;
+  const out = base.slice();
+  for (const l of state.leaders?.leagues || []){
+    if (!out.some(x => x.id === l.id)){
+      out.push({id: l.id, sport: l.sport, name: l.name, season: l.season,
+                metric: "", teamCount: 0, rows: []});
+    }
+  }
+  return out;
+}
+function leaderLeague(){
+  return (state.leaders?.leagues || []).find(l => l.id === state.league) || null;
+}
+function renderRankSwitch(){
+  const box = $("#rankSwitch");
+  if (!box) return;
+  box.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.mode === state.rankMode));
+}
+function setRankMode(mode){
+  if (mode === state.rankMode) return;
+  state.rankMode = mode;
+  try { localStorage.setItem("sports.rankMode", mode); } catch {}
+  if (mode === "player" && !leaderLeague()){
+    /* 지금 리그에 선수 기록이 없으면 같은 종목에서 기록이 있는 리그로 옮겨 준다 */
+    const pool = state.leaders?.leagues || [];
+    const same = pool.find(l => l.sport === state.standingSport) || pool[0];
+    if (same){ state.standingSport = same.sport; state.league = same.id; }
+  }
+  renderRankSwitch(); renderStandingChips(); renderStandings();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
 function renderStandingChips(){
-  const leagues = state.standings?.leagues || [];
+  const leagues = rankLeagues();
   const sports = [...new Set(leagues.map(l => l.sport))];
   if (!sports.length){
     $("#standingSports").innerHTML = "";
@@ -1303,7 +1365,14 @@ function groupTag(group){
   return `<span class="grp">${esc(label)}</span>`;
 }
 function renderStandings(){
-  const body = $("#standingsBody");
+  const teamBody = $("#standingsBody");
+  const leadBody = $("#leadersBody");
+  const player = state.rankMode === "player";
+  if (teamBody) teamBody.classList.toggle("hide", player);
+  if (leadBody) leadBody.classList.toggle("hide", !player);
+  renderRankSwitch();
+  if (player){ renderLeaders(); return; }
+  const body = teamBody;
   const leagues = state.standings?.leagues || [];
   const lg = leagues.find(l => l.id === state.league) || leagues[0];
   if (!lg){
@@ -1337,6 +1406,53 @@ function renderStandings(){
       </table>
     </div>
     <div class="livebar"><span>${esc(lg.name)} · ${esc(lg.season)} 시즌 · ${lg.teamCount}팀 · ${metric}</span></div>`;
+}
+
+/* ── 선수 순위 ───────────────────────────── */
+function renderLeaders(){
+  const body = $("#leadersBody");
+  if (!body) return;
+  const lg = leaderLeague();
+  if (!lg){
+    const now = (rankLeagues().find(l => l.id === state.league) || {}).name || "이 리그";
+    body.innerHTML = `
+      <div class="empty">이 리그는 현재 선수 기록을 불러올 수 없어요.<br>
+        <span class="leadnote">${esc(now)} 선수 순위는 아직 준비되지 않았어요.<br>
+        MLB·NBA·NFL·해외축구·K리그·KBL에서는 볼 수 있어요.</span></div>`;
+    return;
+  }
+  const cats = lg.categories || [];
+  if (!cats.length){
+    body.innerHTML = `<div class="empty">이 리그는 현재 선수 기록을 불러올 수 없어요.</div>`;
+    return;
+  }
+  let chosen = state.leaderCat[lg.id];
+  if (!cats.some(c => c.key === chosen)) chosen = cats[0].key;
+  state.leaderCat[lg.id] = chosen;
+  const cat = cats.find(c => c.key === chosen) || cats[0];
+  const rows = (cat.rows || []).map(r => `
+    <tr>
+      <td class="rank">${esc(r.rank)}</td>
+      <td class="plead"><span class="pwrap">
+        ${r.emblem ? `<img class="emb" src="${esc(r.emblem)}" alt="" loading="lazy" onerror="this.remove()">` : ""}
+        <span class="pname">${esc(r.player)}<small>${esc(r.team || "")}</small></span>
+      </span></td>
+      <td class="value">${esc(r.value)}</td>
+    </tr>`).join("");
+  body.innerHTML = `
+    <div class="chips leadchips">${cats.map(c => `
+      <button class="chip ${c.key === chosen ? "on" : ""}" data-cat="${esc(c.key)}">${esc(c.name)}</button>
+    `).join("")}</div>
+    <div class="tablewrap">
+      <table class="leadtable">
+        <thead><tr><th>순위</th><th style="text-align:left">선수</th><th>${esc(cat.name)}</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="livebar"><span>${esc(lg.name)} · ${esc(lg.season)} 시즌 · ${esc(cat.name)} TOP ${cat.rows.length} · ${esc(lg.source || "")}</span></div>`;
+  body.querySelectorAll(".leadchips .chip").forEach(b => {
+    b.onclick = () => { state.leaderCat[lg.id] = b.dataset.cat; renderLeaders(); };
+  });
 }
 
 /* ── 소식 ──────────────────────────────── */
@@ -1683,6 +1799,7 @@ function closeFavPicker(){
 /* ── 탭 & 새로고침 타이머 ─────────────── */
 function renderAll(){
   renderSportChips(); renderStateChips(); renderToday();
+  renderRankSwitch();
   renderStandingChips(); renderStandings();
   renderNewsChips(); renderNews();
   renderSettings(); renderPredict();
@@ -1856,6 +1973,12 @@ function espnDate(offset){
 }
 async function fetchEspn(){
   const dates = [espnDate(0), espnDate(-1)];
+  /* 연결 확인 — 한 번만 먼저 찔러 보고, 안 되면 40번을 더 시도하지 않는다 */
+  try {
+    const probe = await fetch(`${ESPN_SITE}/${ESPN_LEAGUES[0].espn}/scoreboard?dates=${dates[0]}&limit=5`, {cache:"no-store"});
+    if (!probe.ok) return null;
+    await probe.json();
+  } catch { return null; }
   const jobs = [];
   for (const d of dates) for (const lg of ESPN_LEAGUES) jobs.push({d, lg});
   const results = await Promise.allSettled(jobs.map(({d, lg}) =>
@@ -2159,7 +2282,7 @@ function setAppPower(on){
   renderNightLock();
   toast(k ? `🟢 사용 ON — ${friendlyClock(nightRange().to)}까지 사용할 수 있어요` : "🟢 사용 ON — 이제 사용할 수 있어요!");
   if (wasLocked){
-    loadAll().catch(()=>{}); setupTimer(); setupLive(); probeDirect();
+    loadAll().catch(()=>{}); setupTimer(); setupLive(); if (state.liveMode) probeDirect();
   }
 }
 function updateNightClock(){
@@ -2330,7 +2453,7 @@ function unlockNight(){
   renderNightLock();
   toast(`🔓 부모님 확인 — ${friendlyClock(nightRange().to)}까지 사용할 수 있어요`);
   loadAll().catch(()=>{});
-  setupTimer(); setupLive(); probeDirect();
+  setupTimer(); setupLive(); if (state.liveMode) probeDirect();
 }
 
 /* 🔄 웹앱 새로고침 — 서비스 워커·캐시를 비우고 새 버전을 받아 다시 연다.
@@ -2375,6 +2498,13 @@ function bind(){
     t.onclick = () => showTab(t.dataset.tab);
   });
   $("#settingsBtn").onclick = () => openPin("settings");
+  /* 순위 — 팀 순위 / 선수 순위 하위 탭 */
+  const rankSwitch = $("#rankSwitch");
+  if (rankSwitch){
+    rankSwitch.querySelectorAll("button").forEach(b => {
+      b.onclick = () => setRankMode(b.dataset.mode);
+    });
+  }
   /* 🟢 ON / 🔴 OFF — 부모 비밀번호를 맞혀야 바뀐다 (야간 자동 잠금도 이 버튼에 합쳤다) */
   $("#powerBtn").onclick = () => openPin("power");
   /* ⭐ 우리 팀 버튼 — 바로 옆에서 팀을 고른다 */
@@ -2425,6 +2555,10 @@ function bind(){
     finally { setTimeout(() => { $("#refreshBtn").textContent = "🔄 새로고침"; }, 700); }
   };
   $("#liveToggle").onclick = async () => {
+    if (!state.directOK){
+      await probeDirect();               // 🔄 누를 때 처음으로 연결을 확인한다
+      renderToday();
+    }
     if (!state.directOK){
       alert("지금은 실시간 직접 연결이 안 돼요.\n저장된 경기 정보를 보여 주고 있고, 🔄 새로고침을 누르면 다시 시도해요.");
       return;
@@ -2508,7 +2642,7 @@ function bind(){
     await loadAll().catch(()=>{});
     setupTimer();
     setupLive();
-    probeDirect();
+    if (state.liveMode) probeDirect();   // 켜 둔 사람만 연결을 확인한다 (처음엔 저장된 데이터)
     fetchSheetPin().catch(()=>{});        // 밤에 바로 쓸 수 있게 비밀번호를 미리 받아 둔다
   }
   setInterval(nightTick, 20000);

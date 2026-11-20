@@ -27,6 +27,7 @@ import time
 import urllib.parse
 import urllib.request
 import hashlib
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 KST = timezone(timedelta(hours=9))
@@ -411,6 +412,40 @@ KLEAGUE = "https://www.kleague.com"
 KBL_API = "https://api.kbl.or.kr"
 KOVO_API = "https://user-api.kovo.co.kr"
 KBO_RANK = "https://www.koreabaseball.com/Record/TeamRank/TeamRankDaily.aspx"
+
+# ══ 국내 팀 로고 — 앱과 같은 곳(sports/assets/logos/)에 내려둔 파일 ══════════
+# 외부 CDN 핫링크가 느리거나 막혀도 깨지지 않게 로컬 SVG·PNG 를 상대경로로 연결한다.
+LOGO_BASE = "./assets/logos"
+KBO_LOGO = {   # KBO 구단 약칭 → 엠블럼 (koreabaseball.com 공식)
+    "KIA": "kbo-HT.png", "KT": "kbo-KT.png", "LG": "kbo-LG.png", "롯데": "kbo-LT.png",
+    "NC": "kbo-NC.png", "삼성": "kbo-SS.png", "키움": "kbo-WO.png", "SSG": "kbo-SK.png",
+    "한화": "kbo-HH.png", "두산": "kbo-OB.png",
+}
+
+
+def kbo_logo(name: str) -> str:
+    f = KBO_LOGO.get((name or "").strip())
+    return f"{LOGO_BASE}/{f}" if f else ""
+
+
+def kbl_logo(logo_class: str) -> str:
+    """KBL 경기·순위의 teamLogoClass(kgc, kcc …) → 로컬 엠블럼"""
+    c = (logo_class or "").strip()
+    return f"{LOGO_BASE}/kbl-{c}.svg" if c and c != "kbl" else ""
+
+
+def kleague_logo(team_id: str) -> str:
+    """kleague.com 구단 코드(K01 …) → 로컬 엠블럼"""
+    t = (team_id or "").strip().upper()
+    return f"{LOGO_BASE}/kleague-{t}.png" if t.startswith("K") else ""
+
+
+def kovo_logo(url: str) -> str:
+    """cdn.kovo.co.kr/emblems/xxx.svg → 로컬 ./assets/logos/kovo-xxx.svg"""
+    base = os.path.basename(str(url or "").split("?")[0])
+    return f"{LOGO_BASE}/kovo-{base}" if base else ""
+
+
 KR_HEADERS = {
     "User-Agent": UA,
     "Accept": "application/json, text/plain, */*",
@@ -500,6 +535,7 @@ def kleague_games(now: datetime) -> list[dict]:
                     (m.get("homeTeamName") or "").strip(), hscore,
                     (m.get("awayTeamName") or "").strip(), ascore,
                     (m.get("fieldName") or "").strip(),
+                    kleague_logo(m.get("homeTeam")), kleague_logo(m.get("awayTeam")),
                 ))
     return out
 
@@ -514,7 +550,7 @@ def kleague_standings() -> list[dict]:
             rows.append({
                 "rank": int(r.get("rank") or len(rows) + 1),
                 "team": (r.get("teamName") or "").strip(),
-                "emblem": "",
+                "emblem": kleague_logo(r.get("teamId")),
                 "games": r.get("gameCount"),
                 "w": r.get("winCnt"), "d": r.get("tieCnt"), "l": r.get("lossCnt"),
                 "rate": None, "points": r.get("gainPoint"), "last5": "", "group": "",
@@ -545,7 +581,7 @@ def kbo_standings() -> list[dict]:
             continue
         rate = (w / (w + l)) if (w + l) else 0.0
         rows.append({
-            "rank": 0, "team": cells[1], "emblem": "", "games": games, "w": w, "d": d, "l": l,
+            "rank": 0, "team": cells[1], "emblem": kbo_logo(cells[1]), "games": games, "w": w, "d": d, "l": l,
             "rate": f"{rate:.3f}", "points": None, "last5": "", "group": "",
         })
     if not rows:
@@ -581,6 +617,7 @@ def kbl_games(now: datetime) -> list[dict]:
             f"kbl-{m.get('gmkey')}", "농구", "kbl", "KBL", date, time_text, state, status,
             (m.get("tnameH") or "").strip(), hscore, (m.get("tnameA") or "").strip(), ascore,
             (m.get("stadiumname") or m.get("place") or "").strip() if isinstance(m.get("stadiumname"), str) else "",
+            kbl_logo(m.get("logoH")), kbl_logo(m.get("logoA")),
         ))
     return out
 
@@ -594,7 +631,7 @@ def kbl_standings() -> list[dict]:
         rows.append({
             "rank": int(r.get("rank") or len(rows) + 1),
             "team": (r.get("tname") or r.get("tnameF") or "").strip(),
-            "emblem": "", "games": win + loss, "w": win, "d": int(r.get("draw") or 0), "l": loss,
+            "emblem": kbl_logo(r.get("teamLogoClass")), "games": win + loss, "w": win, "d": int(r.get("draw") or 0), "l": loss,
             "rate": f"{rate:.3f}", "points": None, "last5": "", "group": "",
         })
     if not rows:
@@ -640,7 +677,7 @@ def kovo_games(now: datetime) -> list[dict]:
             date, time_text, state, status,
             V_TEAMS_KO.get(str(m.get("hcode") or ""), (m.get("hname") or "").strip()), hscore,
             V_TEAMS_KO.get(str(m.get("acode") or ""), (m.get("aname") or "").strip()), ascore,
-            (m.get("place") or "").strip(), m.get("homeEmblemUrl") or "", m.get("awayEmblemUrl") or "",
+            (m.get("place") or "").strip(), kovo_logo(m.get("homeEmblemUrl")), kovo_logo(m.get("awayEmblemUrl")),
         ))
     return out
 
@@ -655,7 +692,7 @@ def kovo_standings() -> list[dict]:
         rows.append({
             "rank": int(r.get("rank") or len(rows) + 1),
             "team": V_TEAMS_KO.get(str(r.get("tcode") or ""), str(r.get("tsname") or "").strip()),
-            "emblem": r.get("emblemUrl") or "", "games": win + loss, "w": win, "d": 0, "l": loss,
+            "emblem": kovo_logo(r.get("emblemUrl")), "games": win + loss, "w": win, "d": 0, "l": loss,
             "rate": f"{rate:.3f}", "points": None, "last5": "", "group": "",
         })
     if not rows:
@@ -835,6 +872,268 @@ def build_standings(now: datetime) -> None:
     write_json("standings.json", {
         "updated": now.isoformat(timespec="seconds"),
         "sports": SPORT_ORDER, "source": "ESPN", "leagues": leagues,
+    })
+
+
+
+# ══ 선수 개인 순위 (leaders) ═════════════════════════════════
+# 리그별 개인 기록 순위를 모아 data/leaders.json 으로 저장한다.
+#  · ESPN (MLB·NBA·NFL)       — statistics/byathlete
+#  · ESPN (해외축구 6개 리그) — core /leaders + 선수·팀 참조
+#  · K리그1·2                 — kleague.com /record/rankSort.do
+#  · KBL                      — api.kbl.or.kr /league/season-leader
+# 자료가 없는 리그(KBO·V리그 등)는 아무 것도 만들지 않는다. 앱이 안내 문구를 보여 준다.
+LEADER_CACHE = "leaders-cache.json"
+
+BYATHLETE_CFG = [
+    {"id": "mlb", "espn": "baseball/mlb", "sport": "해외야구", "name": "MLB",
+     "cats": [("batting.avg", "타율", "avg3"), ("batting.homeRuns", "홈런", "int"),
+              ("batting.RBIs", "타점", "int"), ("pitching.ERA", "평균자책", "avg2"),
+              ("pitching.wins", "다승", "int"), ("pitching.strikeouts", "탈삼진", "int")]},
+    {"id": "nba", "espn": "basketball/nba", "sport": "해외농구", "name": "NBA",
+     "cats": [("offensive.avgPoints", "득점", "avg1"), ("general.avgRebounds", "리바운드", "avg1"),
+              ("offensive.avgAssists", "어시스트", "avg1"), ("defensive.avgSteals", "스틸", "avg1")]},
+    {"id": "nfl", "espn": "football/nfl", "sport": "미식축구", "name": "NFL",
+     "cats": [("passing.passingYards", "패싱야드", "int"), ("rushing.rushingYards", "러싱야드", "int"),
+              ("receiving.receivingYards", "리시빙야드", "int")]},
+]
+
+SOCCER_CFG = [
+    ("eng.1", "프리미어리그"), ("esp.1", "라리가"), ("ger.1", "분데스리가"),
+    ("ita.1", "세리에A"), ("fra.1", "리그1"), ("uefa.champions", "챔피언스리그"),
+]
+SOCCER_CATS = [("goals", "득점"), ("assists", "도움")]
+
+
+def stat_text(value, kind="int"):
+    if value in (None, "", "-"):
+        return "-"
+    try:
+        num = float(str(value).replace(",", ""))
+    except Exception:  # noqa: BLE001
+        return str(value)
+    if kind == "avg3":
+        return f"{num:.3f}"
+    if kind == "avg2":
+        return f"{num:.2f}"
+    if kind == "avg1":
+        return f"{num:.1f}"
+    return str(int(round(num)))
+
+
+def espn_byathlete(sport_path: str, sort: str, season: int, limit: int = 10):
+    """ESPN byathlete — 한 번의 호출로 선수·팀·기록을 모두 준다."""
+    url = (f"https://site.web.api.espn.com/apis/common/v3/sports/{sport_path}/statistics/byathlete"
+           f"?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit={limit}"
+           f"&sort={urllib.parse.quote(sort + ':desc')}&season={season}&seasontype=2")
+    payload = get_json(url)
+    names = {(c.get("name") or ""): (c.get("names") or []) for c in payload.get("categories") or []}
+    group, _, stat = sort.partition(".")
+    keys = names.get(group) or []
+    idx = keys.index(stat) if stat in keys else None
+    out = []
+    for pos, entry in enumerate(payload.get("athletes") or [], start=1):
+        athlete = entry.get("athlete") or {}
+        value = None
+        if idx is not None:
+            for cat in entry.get("categories") or []:
+                if cat.get("name") == group:
+                    totals = cat.get("totals") or []
+                    if idx < len(totals):
+                        value = totals[idx]
+        team = {"abbreviation": athlete.get("teamShortName") or "",
+                "displayName": athlete.get("teamName") or "",
+                "name": athlete.get("teamName") or ""}
+        logos = athlete.get("teamLogos") or []
+        out.append({
+            "rank": pos,
+            "player": athlete.get("displayName") or "",
+            "team": team_ko(team, sport_path) if athlete.get("teamName") else "",
+            "emblem": (logos[0].get("href") if logos else ""),
+            "value": value,
+        })
+    return out
+
+
+def _core_ref(url: str):
+    try:
+        return get_json(url)
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def espn_core_leaders(sport: str, league: str, season: int, stype: int, limit: int = 12):
+    """ESPN core /leaders — 해외축구는 byathlete 가 비어 있어 이 경로를 쓴다."""
+    url = (f"https://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}"
+           f"/seasons/{season}/types/{stype}/leaders?limit={limit}")
+    payload = get_json(url)
+    return {c.get("name"): c.get("leaders") or [] for c in payload.get("categories") or []}
+
+
+def _ref_id(ref: str):
+    match = re.search(r"/(\d+)(?:\?|$)", ref or "")
+    return match.group(1) if match else ""
+
+
+def build_leaders(now: datetime) -> None:
+    cache = read_json(LEADER_CACHE, {}) or {}
+    athletes = cache.get("athletes") or {}
+    teams = cache.get("teams") or {}
+    year = now.year
+    nba_season = year + 1 if now.month >= 9 else year
+    leagues = []
+
+    # ── ESPN byathlete: MLB · NBA · NFL ──
+    for cfg in BYATHLETE_CFG:
+        season = nba_season if cfg["id"] == "nba" else year
+        cats = []
+        for sort, label, kind in cfg["cats"]:
+            rows = []
+            for attempt_season in (season, season - 1):
+                try:
+                    rows = espn_byathlete(cfg["espn"], sort, attempt_season, limit=10)
+                except Exception as exc:  # noqa: BLE001
+                    print(f"  {cfg['name']} {label} 실패: {exc}", flush=True)
+                    rows = []
+                if rows:
+                    break
+            if not rows:
+                continue
+            cats.append({"key": sort, "name": label, "season": str(attempt_season), "rows": [
+                {"rank": r["rank"], "player": r["player"], "team": r["team"],
+                 "emblem": r["emblem"], "value": stat_text(r["value"], kind)} for r in rows]})
+        if cats:
+            label = f"{season - 1}-{str(season)[2:]}" if cfg["id"] == "nba" else str(season)
+            leagues.append({"id": cfg["id"], "sport": cfg["sport"], "name": cfg["name"],
+                            "season": label, "source": "ESPN", "categories": cats})
+            print(f"  {cfg['name']} 선수 순위 {len(cats)}부문", flush=True)
+
+    # ── ESPN core: 해외축구 (참조 → 이름·팀·로고, 캐시 사용) ──
+    def team_info(team_id: str, league_key: str):
+        if not team_id:
+            return "", ""
+        hit = teams.get(team_id)
+        if not hit:
+            data = _core_ref(f"https://sports.core.api.espn.com/v2/sports/soccer/leagues/{league_key}"
+                             f"/seasons/{year}/teams/{team_id}")
+            logos = data.get("logos") or []
+            hit = {"name": data.get("displayName") or data.get("name") or "",
+                   "abbr": data.get("abbreviation") or "",
+                   "logo": logos[0].get("href") if logos else ""}
+            if hit["name"]:
+                teams[team_id] = hit
+        ko = team_ko({"abbreviation": hit.get("abbr", ""), "displayName": hit["name"],
+                      "name": hit["name"]}, f"soccer/{league_key}")
+        return ko or hit["name"], hit.get("logo", "")
+
+    for slug, name in SOCCER_CFG:
+        try:
+            cats_raw = espn_core_leaders("soccer", slug, year, 1, limit=12)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  {name} 선수 순위 실패: {exc}", flush=True)
+            continue
+        picked = []
+        for key, label in SOCCER_CATS:
+            leaders = cats_raw.get(key) or []
+            if not leaders:
+                continue
+            pending = []
+            for entry in leaders[:10]:
+                aid = _ref_id(((entry.get("athlete") or {}).get("$ref")) or "")
+                tid = _ref_id(((entry.get("team") or {}).get("$ref")) or "")
+                if aid and aid not in athletes:
+                    pending.append(aid)
+            if pending:
+                with ThreadPoolExecutor(max_workers=8) as pool:
+                    fetched = list(pool.map(
+                        lambda a: (a, _core_ref(f"https://sports.core.api.espn.com/v2/sports/soccer"
+                                                 f"/leagues/{slug}/seasons/{year}/athletes/{a}")),
+                        pending))
+                for aid, data in fetched:
+                    if data.get("displayName"):
+                        athletes[aid] = data["displayName"]
+            rows = []
+            for pos, entry in enumerate(leaders[:10], start=1):
+                aid = _ref_id(((entry.get("athlete") or {}).get("$ref")) or "")
+                tid = _ref_id(((entry.get("team") or {}).get("$ref")) or "")
+                team_name, logo = team_info(tid, slug)
+                rows.append({"rank": pos, "player": athletes.get(aid, ""), "team": team_name,
+                             "emblem": logo, "value": stat_text(entry.get("value"), "int")})
+            rows = [r for r in rows if r["player"]]
+            if rows:
+                picked.append({"key": key, "name": label, "rows": rows})
+        if picked:
+            leagues.append({"id": slug, "sport": "해외축구", "name": name,
+                            "season": f"{year}-{str(year + 1)[2:]}", "source": "ESPN",
+                            "categories": picked})
+            print(f"  {name} 선수 순위 {len(picked)}부문", flush=True)
+
+    # ── K리그1·2 ──
+    for lid, lname in ((1, "K리그1"), (2, "K리그2")):
+        cats = []
+        for code, label, field in (("GOAL", "득점", "goalQty"), ("ASSIST", "도움", "assistQty"),
+                                   ("AP", "공격포인트", "apQty")):
+            try:
+                data = kr_post_json(f"{KLEAGUE}/record/rankSort.do",
+                                    {"year": str(year), "leagueId": str(lid), "recordType": code})
+            except Exception as exc:  # noqa: BLE001
+                print(f"  {lname} {label} 실패: {exc}", flush=True)
+                continue
+            rows = []
+            for pos, item in enumerate((((data or {}).get("data") or {}).get("list") or [])[:10], start=1):
+                rows.append({"rank": pos, "player": (item.get("name") or "").strip(),
+                             "team": (item.get("teamName") or "").strip(),
+                             "emblem": kleague_logo(item.get("teamId")),
+                             "value": str(item.get(field) if item.get(field) is not None else "-")})
+            if rows:
+                cats.append({"key": code, "name": label, "rows": rows})
+        if cats:
+            leagues.append({"id": f"kleague.{lid}", "sport": "축구", "name": lname,
+                            "season": str(year), "source": "K리그", "categories": cats})
+            print(f"  {lname} 선수 순위 {len(cats)}부문", flush=True)
+
+    # ── KBL ──
+    try:
+        parts = kr_get_json(f"{KBL_API}/league/season-leader", KBL_HEADERS)
+        emblem_by_team = {}
+        try:
+            for row in kbl_standings()[0]["rows"]:
+                emblem_by_team[row["team"]] = row["emblem"]
+        except Exception:  # noqa: BLE001
+            pass
+        labels = {"score": "득점", "rb": "리바운드", "ast": "어시스트", "bs": "블록", "stl": "스틸"}
+        cats = []
+        for part in parts or []:
+            key = part.get("part")
+            if key not in labels:
+                continue
+            rows = []
+            for pos, item in enumerate((part.get("list") or [])[:10], start=1):
+                player = item.get("player") or {}
+                team_name = (player.get("tname") or "").strip()
+                rows.append({"rank": pos, "player": (player.get("pname") or "").strip(),
+                             "team": team_name, "emblem": emblem_by_team.get(team_name, ""),
+                             "value": stat_text(item.get("value"), "avg1")})
+            if rows:
+                cats.append({"key": key, "name": labels[key], "rows": rows})
+        if cats:
+            leagues.append({"id": "kbl", "sport": "농구", "name": "KBL",
+                            "season": "2026-27", "source": "KBL", "categories": cats})
+            print(f"  KBL 선수 순위 {len(cats)}부문", flush=True)
+    except Exception as exc:  # noqa: BLE001
+        print(f"  KBL 선수 순위 실패: {exc}", flush=True)
+
+    write_json(LEADER_CACHE, {"athletes": athletes, "teams": teams})
+    if not leagues:
+        print("  선수 순위 0개 — 그대로 둡니다", flush=True)
+        return
+    order = {s: i for i, s in enumerate(SPORT_ORDER)}
+    leagues.sort(key=lambda l: (order.get(l["sport"], 9), l["name"]))
+    write_json("leaders.json", {
+        "updated": now.isoformat(timespec="seconds"),
+        "sports": SPORT_ORDER,
+        "source": "ESPN · K리그 · KBL",
+        "leagues": leagues,
     })
 
 
@@ -1229,7 +1528,7 @@ def main() -> int:
         print(f"  팀 이름 사전에서 엉터리 이름 {dropped}개 제거", flush=True)
     write_json("teams-ko.json", dict(sorted(TEAMS_KO.items())))
     write_ko_maps()
-    for name, fn in (("today", build_today), ("standings", build_standings), ("news", build_news)):
+    for name, fn in (("today", build_today), ("standings", build_standings), ("leaders", build_leaders), ("news", build_news)):
         try:
             fn(now)
         except Exception as exc:  # noqa: BLE001
