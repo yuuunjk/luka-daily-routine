@@ -92,6 +92,12 @@ TEAMS_KO = {
 }
 
 STATE_KO = {"pre": "예정", "in": "진행 중", "post": "종료"}
+GROUP_KO = {
+    "American League": "아메리칸리그", "National League": "내셔널리그",
+    "Eastern Conference": "동부", "Western Conference": "서부",
+    "Eastern": "동부", "Western": "서부",
+    "AFC": "AFC", "NFC": "NFC",
+}
 DIRTY: set[str] = set()
 
 # 아이 화면에 올리지 않는 주제
@@ -358,7 +364,7 @@ def build_standings(now: datetime) -> None:
                     "rate": win_pct,
                     "points": points if points not in ("", None) else None,
                     "last5": "",
-                    "group": group_name if len(groups) > 1 else "",
+                    "group": GROUP_KO.get(group_name, group_name) if len(groups) > 1 else "",
                 })
         if not rows:
             print(f"  {league['name']} 순위 없음", flush=True)
@@ -368,7 +374,27 @@ def build_standings(now: datetime) -> None:
         for r in rows:
             if metric == "pct":
                 r["points"] = None
-        rows.sort(key=lambda r: (r["group"] or "", r["rank"]))
+        # ESPN이 주는 rank는 그룹·리그 기준이 뒤섞여 있어, 성적순으로 직접 매긴다
+        def perf(r):
+            if metric == "pts":
+                return (-float(str(r["points"] or 0).replace("+", "")), -float(str(r["w"] or 0)))
+            rate = r.get("rate")
+            try:
+                rate = float(str(rate))
+            except Exception:  # noqa: BLE001
+                w = float(str(r["w"] or 0)); l = float(str(r["l"] or 0))
+                rate = w / (w + l) if (w + l) else 0.0
+            return (-rate, -float(str(r["w"] or 0)))
+        buckets: dict[str, list] = {}
+        for r in rows:
+            buckets.setdefault(r["group"] or "", []).append(r)
+        ordered = []
+        for key in buckets:
+            group_rows = sorted(buckets[key], key=perf)
+            for i, r in enumerate(group_rows, start=1):
+                r["rank"] = i
+            ordered.extend(group_rows)
+        rows = ordered
         # 승률 문자열 정리
         for r in rows:
             if metric == "pct" and isinstance(r["rate"], str) and r["rate"].startswith("."):
