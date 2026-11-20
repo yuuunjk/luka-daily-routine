@@ -251,6 +251,11 @@
     .psum .k b{font-size:20px;}
     .psum .k span{font-size:12px;}
   }
+  /* 좁은 휴대폰(360px대)에서도 탭 4개가 한 줄에 다 들어가도록 */
+  @media (max-width:400px){
+    .tab{font-size:15px; padding:10px 2px; letter-spacing:-.6px;}
+    .tab .te{display:none;}
+  }
   @media (max-width:520px){
     body{font-size:19px;}
     .brand{font-size:27px;}
