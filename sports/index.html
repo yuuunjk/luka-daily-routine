@@ -234,6 +234,18 @@
     border:2px solid #d6e6ff; border-radius:999px; padding:7px 16px; min-height:42px; display:inline-flex; align-items:center; background:#f5f9ff;}
   .news:active .readbtn{background:#e6f1ff;}
   .news .src{font-weight:800;}
+  /* ── 🔍 기사 검색 ─────────────────────────── */
+  .newssearch{display:flex; align-items:center; gap:8px; background:#fff; border:2px solid var(--line);
+    border-radius:999px; padding:7px 12px 7px 14px; margin:4px 0 2px; min-height:50px;}
+  .newssearch:focus-within{border-color:#93c5fd; box-shadow:0 0 0 3px #e8f1ff;}
+  .newssearch .ic{font-size:17px; flex:none; line-height:1;}
+  .newssearch input{flex:1 1 auto; min-width:0; border:0; outline:none; background:transparent;
+    font-family:inherit; font-size:17.5px; font-weight:800; color:var(--ink); padding:4px 0;}
+  .newssearch input::placeholder{color:#9aa8bf; font-weight:700;}
+  .newssearch .clr{display:none; flex:none; width:34px; height:34px; border-radius:50%; background:#eef3fb;
+    color:#5b6b8c; font-size:15px; font-weight:900; align-items:center; justify-content:center;}
+  .newssearch.has .clr{display:inline-flex;}
+  .newssearch .clr:active{transform:scale(.94); background:#e2eaf8;}
 
   /* ── 기사 읽기 창 (앱 안에서만 읽기) ── */
   .modal{position:fixed; inset:0; z-index:90; display:none; background:rgba(15,32,64,.55);
@@ -454,6 +466,12 @@
     <!-- 주요 소식 -->
     <section id="tab-news" class="hide">
       <div class="chips" id="newsChips"></div>
+      <div class="newssearch" id="newsSearchBox">
+        <span class="ic" aria-hidden="true">🔍</span>
+        <input id="newsSearch" type="search" placeholder="팀·선수·키워드로 기사 찾기" autocomplete="off"
+               enterkeyhint="search" aria-label="기사 검색">
+        <button class="clr" id="newsSearchClear" type="button" aria-label="검색어 지우기">✕</button>
+      </div>
       <div class="chips" id="newsLeagueChips"></div>
       <div id="newsBody"></div>
     </section>
@@ -629,6 +647,7 @@ const state = {
   league: null,
   newsRegion: "전체",
   newsLeague: "전체",
+  newsQuery: "",
   today: null,
   standings: null,
   news: null,
@@ -1322,12 +1341,22 @@ function renderNews(){
     if (key) seenTitles.add(key);
     items.push({...it, label: it.label || s.label, sport: it.sport || s.sport, lang: it.lang || s.lang});
   }
-  state.newsFlat = items;
-  if (!items.length){
-    body.innerHTML = `<div class="empty">아직 올라온 소식이 없어요.<br>조금 뒤 다시 받아 볼게요 😊</div>`;
+  /* 🔍 키워드 검색 — 제목·요약·본문·리그 태그를 대소문자 없이 비교 */
+  const q = (state.newsQuery || "").trim().toLowerCase();
+  const found = q ? items.filter(it => {
+    const hay = [it.title, ...(it.summary || []), ...(Array.isArray(it.body) ? it.body : []),
+                 it.label, it.sport, it.source]
+      .filter(Boolean).join(" ").toLowerCase();
+    return hay.includes(q);
+  }) : items;
+  state.newsFlat = found;
+  if (!found.length){
+    body.innerHTML = q
+      ? `<div class="empty">🔍 “${esc(state.newsQuery.trim())}” 로 찾은 기사가 없어요.<br>팀 이름·선수 이름으로 다시 찾아볼까요?</div>`
+      : `<div class="empty">아직 올라온 소식이 없어요.<br>조금 뒤 다시 받아 볼게요 😊</div>`;
     return;
   }
-  body.innerHTML = items.map((it, i) => `
+  body.innerHTML = found.map((it, i) => `
     <article class="news" data-idx="${i}">
       <div class="tagrow"><span class="sectag">${SPORT_EMOJI[it.sport]||"🏅"} ${esc(it.label)}</span></div>
       <h3>${esc(it.title)}</h3>
@@ -2263,6 +2292,25 @@ function bind(){
   $("#powerBtn").onclick = () => openPin("power");
   /* ⭐ 우리 팀 버튼 — 바로 옆에서 팀을 고른다 */
   $("#favBtn").onclick = openFavPicker;
+  /* 🔍 주요 소식 키워드 검색 */
+  const newsSearch = $("#newsSearch");
+  const newsBox = $("#newsSearchBox");
+  if (newsSearch && newsBox){
+    newsSearch.value = state.newsQuery || "";
+    newsBox.classList.toggle("has", !!(state.newsQuery || "").trim());
+    newsSearch.oninput = () => {
+      state.newsQuery = newsSearch.value;
+      newsBox.classList.toggle("has", !!newsSearch.value.trim());
+      renderNews();
+    };
+    newsSearch.onkeydown = (e) => {
+      if (e.key === "Escape"){ newsSearch.value = ""; state.newsQuery = ""; newsBox.classList.remove("has"); renderNews(); }
+    };
+    $("#newsSearchClear").onclick = () => {
+      newsSearch.value = ""; state.newsQuery = "";
+      newsBox.classList.remove("has"); renderNews(); newsSearch.focus();
+    };
+  }
   $("#favClose").onclick = closeFavPicker;
   $("#favDone").onclick = closeFavPicker;
   $("#favModal").addEventListener("click", (e) => {
