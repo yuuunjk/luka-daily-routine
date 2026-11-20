@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><title>CORS probe</title><pre id="o">running...</pre>
+<script>
+const u='https://api-gw.sports.naver.com/schedule/today-games?date=2026-11-20&fields=categoryId';
+const t0=Date.now();
+fetch(u).then(r=>r.text().then(t=>{
+  o.textContent='OK status='+r.status+' acao='+r.headers.get('access-control-allow-origin')+' ms='+(Date.now()-t0)+' body='+t.slice(0,80);
+})).catch(e=>{ o.textContent='FAIL '+(Date.now()-t0)+'ms '+e; });
+</script>
