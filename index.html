@@ -7290,7 +7290,8 @@ function syncNightPower(){
   if(was === null || was === locked) return;      // 처음 그리기는 위 renderPower() 가 맡는다
   renderPower();
   if(locked && panel.classList.contains('show')) closePanel();   // 야간 잠금이 걸리면 부모 설정도 닫는다
-  if(!locked && state.appEnabled !== false) toast('🌞 아침 8시 — 이제 사용할 수 있어요!');
+  /* 잠금이 풀린 게 '아침 8시' 때문일 때만 안내 — 부모가 비번으로 켠 경우는 그쪽 토스트가 맡는다 */
+  if(!locked && !nightHoursNow() && state.appEnabled !== false) toast('🌞 아침 8시 — 이제 사용할 수 있어요!');
 }
 /* 🕹️ 시트 '웹제어' 원격 제어 — 규칙
    ① 시트 값이 직전에 본 값(lastSheetWebControl)과 '달라졌을 때만' 앱 사용 상태에 반영한다.
