@@ -4460,6 +4460,7 @@ function studyFruitSync(on, idx){
    상단 파트너 카드를 누르면 팝업이 열린다(여는 것만으로는 대화 횟수를 쓰지 않는다).
    · 💬 이야기하기 — v45/v46 규칙 그대로: 루틴(아침·오후·밤)마다 새 대사 3회 + 4회차 마무리 인사,
      5회차부터는 대사 대신 안내. 🧪 테스트의 '💬 파트너 대화 초기화' 도 그대로 연동된다.
+     v50 — 4회째 마무리 인사가 나온 즉시 이 버튼은 잠긴다(회색 + '오늘은 이야기를 다 나눴어요').
    · 🍎 과일 주기 / 🌟 스페셜 과일 주기 — 하나 줄이고 기쁨 모션 + 실제 포켓몬 울음소리. */
 const PP_HELLO = '안녕 LUKA! 나랑 이야기하거나 과일을 줄래?';
 const PP_HELLO2 = '이야기하고 싶으면 💬, 과일을 주고 싶으면 🍎 를 눌러 줘!';
@@ -4787,6 +4788,28 @@ function updatePartnerPopup(){
     else if(sp <= 0){ hint.textContent = '공부를 모두 끝내면 🌟 스페셜 과일도 받을 수 있어요!'; hint.hidden = false; }
     else hint.hidden = true;
   }
+  ppSyncTalkBtn();
+}
+/* v50 — 그 루틴의 대화권(1~3회)과 마지막 인사(4회)를 모두 나누면 '💬 이야기하기'는 잠긴다.
+   · 잠기는 순간: 4회째를 눌러 마무리 인사가 나온 그 즉시 (버튼이 회색이 되고 문구가 바뀐다)
+   · 닫았다 다시 열어도 그대로 — 횟수는 날짜+루틴 키로 localStorage 에 남아 있기 때문
+   · 풀리는 때: 루틴이 바뀌거나(아침 → 오후 → 밤) 날짜가 바뀌면 키가 새로 시작되고,
+     🧪 테스트의 '💬 파트너 대화 초기화' 뒤에도 다시 활성화된다.
+   ※ 🍎 과일 주기 / 🌟 스페셜 과일 주기는 대화권과 무관하게 그대로 동작한다. */
+const PP_TALK_LABEL = '💬 이야기하기';
+const PP_TALK_DONE_LABEL = '💬 오늘은 이야기를 다 나눴어요';
+function ppTalkDone(){ return cheerCountGet() >= CHEER_TAPS; }
+function ppSyncTalkBtn(){
+  const tb = ppEl('ppTalk');
+  if(!tb) return;
+  const done = ppTalkDone();
+  const mark = done ? '1' : '0';
+  if(tb.dataset.done === mark) return;        // 이미 맞춰져 있으면 DOM 을 건드리지 않는다
+  tb.dataset.done = mark;
+  tb.disabled = done;
+  tb.textContent = done ? PP_TALK_DONE_LABEL : PP_TALK_LABEL;
+  tb.setAttribute('aria-label', done ? '오늘은 이야기를 다 나눴어요' : '이야기하기');
+  if(done){ tb.classList.remove('wait'); tb.classList.remove('shake'); }
 }
 function ppClearFx(){
   const fx = ppEl('ppFx');
@@ -4859,7 +4882,7 @@ function openPartnerPopup(){
   ppCloseTurn();
   ppClearChat();
   ppSay('partner', PP_HELLO);          // 여는 것만으로 대화 횟수를 쓰지 않는다
-  ppSay('partner', PP_HELLO2);
+  ppSay('partner', ppTalkDone() ? PP_DONE : PP_HELLO2);   // v50 — 다 나눈 루틴이면 그렇다고 알려 준다
   updatePartnerPopup();
   renderFruitBadge();
   ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
@@ -4889,6 +4912,7 @@ function partnerTalkTap(){
     cheerCountSet(seen + 1);
     ppSay('partner', cheerClosing());
     ppCloseTurn();
+    ppSyncTalkBtn();                                               // v50 — 인사가 나온 즉시 잠근다
     try{ if(soundOn) blip(); }catch(e){}
     return;
   }
@@ -5065,6 +5089,7 @@ function playPartnerCry(id){
 function resetPartnerCheer(){
   try{ localStorage.removeItem(CHEER_STORE); }catch(e){}
   ppTopicQ = []; ppLastTopic = null; ppLastOpener = null; ppGreetQ = {}; ppCheerQ = []; ppLastLine = '';
+  ppSyncTalkBtn();                       // v50 — 잠겼던 '💬 이야기하기'도 다시 눌린다
   if(document.getElementById('partnerOverlay').classList.contains('show')){
     ppCloseTurn(); ppClearChat(); clearTimeout(ppReplyTimer); ppBusy = false;
     ppSay('partner', PP_HELLO);
@@ -7716,6 +7741,7 @@ function syncRoutine(){
   curRKey = k;
   if(k !== 'morning') timerStop();   // the meal timer belongs to the morning routine
   buildTasks();
+  try{ ppSyncTalkBtn(); }catch(e){}  // v50 — 루틴이 바뀌면 대화권도 새로 열린다
   return true;
 }
 let wakeAcc = 0;
@@ -7726,6 +7752,7 @@ function tick(force){
   if(rollXpDay()) renderWild();      // 자정을 넘기면 경험치가 0으로
   if(curMissionDay !== todayKey()){  // 자정을 넘기면 오늘의 미션 체크도 새로 시작
     curMissionDay = todayKey();
+    try{ ppSyncTalkBtn(); }catch(e){}   // v50 — 날짜가 바뀌면 대화권도 새로 열린다
     if(curTab === 'center') renderMission();
   }
   if(curAffirmDay !== affirmKeyOf()){   // 자정을 넘기면 긍정 확언도 새 문장으로
