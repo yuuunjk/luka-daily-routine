@@ -102,6 +102,9 @@ TEAMS_KO = {
     "BAY": "바이에른", "BVB": "도르트문트", "LEV": "레버쿠젠", "RBL": "라이프치히",
     "SGE": "프랑크푸르트", "VFB": "슈투트가르트", "WOB": "볼프스부르크",
     "BMG": "묀헨글라트바흐", "SCF": "프라이부르크", "M05": "마인츠",
+    "B04": "레버쿠젠", "FCA": "아우크스부르크", "HSV": "함부르크", "KOE": "쾰른",
+    "FCU": "우니온 베를린", "S04": "샬케", "SVW": "브레멘", "TSG": "호펜하임",
+    "ELV": "엘버스베르크",
 }
 
 # NFL 32팀 — 약어가 NBA·MLB와 겹쳐서(CHI·DEN·LAC·SF) 리그별 사전으로 따로 쓴다
@@ -222,12 +225,43 @@ def read_json(name: str, default=None):
 
 
 # 약어가 리그마다 겹치는 경우(예: MIL = 밀워키 벅스 / AC밀란) 리그별로 먼저 본다
+# ESPN은 분데스리가 바이에른을 MUN, 프리미어리그 맨유도 MUN으로 준다 → 리그별 사전이 없으면
+# '바이에른'이 '맨유'로 나온다. 라리가 레반테(LEV)도 분데스리가 레버쿠젠과 겹친다.
+GER_TEAMS_KO = {
+    "B04": "레버쿠젠", "BMG": "묀헨글라트바흐", "DOR": "도르트문트", "ELV": "엘버스베르크",
+    "FCA": "아우크스부르크", "FCU": "우니온 베를린", "HSV": "함부르크", "KOE": "쾰른",
+    "M05": "마인츠", "MUN": "바이에른", "RBL": "라이프치히", "S04": "샬케",
+    "SCF": "프라이부르크", "SCP": "파더보른", "SGE": "프랑크푸르트", "SVW": "브레멘",
+    "TSG": "호펜하임", "VFB": "슈투트가르트",
+}
+ESP_TEAMS_KO = {
+    "ALA": "알라베스", "ATH": "아틀레틱", "ATM": "아틀레티코", "BAR": "바르셀로나",
+    "BET": "베티스", "CEL": "셀타", "DEP": "데포르티보", "ELC": "엘체", "ESP": "에스파뇰",
+    "GET": "헤타페", "LEV": "레반테", "MCF": "말라가", "OSA": "오사수나", "RAC": "라싱",
+    "RAY": "라요", "RMA": "레알마드리드", "RSO": "레알소시에다드", "SEV": "세비야",
+    "VAL": "발렌시아", "VIL": "비야레알",
+}
+ENG_TEAMS_KO = {
+    "ARS": "아스널", "AVL": "애스턴빌라", "BHA": "브라이턴", "BOU": "본머스",
+    "BRE": "브렌트퍼드", "CHE": "첼시", "COV": "코번트리", "CRY": "크리스털팰리스",
+    "EVE": "에버턴", "FUL": "풀럼", "HUL": "헐", "IPS": "입스위치", "LEE": "리즈",
+    "LIV": "리버풀", "MAN": "맨체스터 유나이티드", "MNC": "맨체스터 시티", "NEW": "뉴캐슬",
+    "NFO": "노팅엄", "SUN": "선덜랜드", "TOT": "토트넘",
+}
+UCL_TEAMS_KO = {
+    "MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "INT": "인터밀란", "JUV": "유벤투스",
+    "NAP": "나폴리", "LAZ": "라치오", "ATA": "아탈란타", "MUN": "바이에른", "SCP": "스포르팅",
+    "PSG": "파리 생제르맹", "PSV": "PSV 에인트호번", "DOR": "도르트문트", "VFB": "슈투트가르트",
+    "RBL": "라이프치히",
+}
 KO_BY_LEAGUE = {
+    "soccer/ger.1": GER_TEAMS_KO,
+    "soccer/esp.1": ESP_TEAMS_KO,
+    "soccer/eng.1": ENG_TEAMS_KO,
     "soccer/ita.1": {"MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "INT": "인터밀란",
                      "JUV": "유벤투스", "NAP": "나폴리", "LAZ": "라치오", "ATA": "아탈란타",
                      "FIO": "피오렌티나", "BOL": "볼로냐", "UDI": "우디네세", "GEN": "제노아"},
-    "soccer/uefa.champions": {"MIL": "AC밀란", "TOR": "토리노", "ROM": "로마", "INT": "인터밀란",
-                              "JUV": "유벤투스", "NAP": "나폴리", "LAZ": "라치오", "ATA": "아탈란타"},
+    "soccer/uefa.champions": UCL_TEAMS_KO,
     "football/nfl": NFL_TEAMS_KO,
     "soccer/tur.1": TUR_TEAMS_KO,
 }
@@ -1145,12 +1179,30 @@ def write_ko_maps() -> None:
         "byLeague": {
             "football/nfl": NFL_TEAMS_KO,
             "soccer/tur.1": TUR_TEAMS_KO,
+            "soccer/ger.1": GER_TEAMS_KO,
+            "soccer/esp.1": ESP_TEAMS_KO,
+            "soccer/eng.1": ENG_TEAMS_KO,
             "soccer/ita.1": KO_BY_LEAGUE["soccer/ita.1"],
-            "soccer/uefa.champions": KO_BY_LEAGUE["soccer/uefa.champions"],
+            "soccer/uefa.champions": UCL_TEAMS_KO,
         },
         "intl": INT_TEAMS_KO,
         "intlLeagues": sorted(INTL_KEYS),
     })
+
+
+def good_cached_name(value) -> bool:
+    """예전 실행이 남긴 엉터리 이름을 걸러 낸다.
+
+    기계번역이 'LeverkusenCity in Germany', 'Hamburg\n' 같은 값을 사전에 넣어 두었다.
+    한글이 없거나, 'City in' 이 섮여 있거나, 줄바꿈·양끝 공백이 있으면 버린다.
+    """
+    if not isinstance(value, str):
+        return False
+    if not re.search(r"[가-힣]", value):
+        return False
+    if "City in" in value or "\n" in value or value != value.strip():
+        return False
+    return True
 
 
 START = time.time()
@@ -1164,8 +1216,14 @@ def main() -> int:
     now = datetime.now(KST)
     print(f"[{now.isoformat(timespec='seconds')}] ESPN 수집 시작", flush=True)
     cached = read_json("teams-ko.json", {}) or {}
+    dropped = 0
     for k, v in cached.items():
-        TEAMS_KO.setdefault(k, v)
+        if good_cached_name(v):
+            TEAMS_KO.setdefault(k, v)
+        else:
+            dropped += 1
+    if dropped:
+        print(f"  팀 이름 사전에서 엉터리 이름 {dropped}개 제거", flush=True)
     write_json("teams-ko.json", dict(sorted(TEAMS_KO.items())))
     write_ko_maps()
     for name, fn in (("today", build_today), ("standings", build_standings), ("news", build_news)):

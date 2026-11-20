@@ -49,11 +49,12 @@
     font-weight:800; color:var(--blue); min-height:46px;}
   .btn-refresh:active{transform:scale(.97);}
 
-  /* ── tabs ───────────────────────────────── */
-  .tabs{display:flex; gap:10px; margin:16px 0 4px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none;}
-  .tabs::-webkit-scrollbar{display:none;}
-  .tab{background:#fff; border:2px solid var(--line); border-radius:999px; padding:12px 20px;
-    font-size:20px; font-weight:800; color:var(--sub); white-space:nowrap; min-height:56px;}
+  /* ── tabs (5개 한 줄에 고르게) ────────────── */
+  .tabs{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin:16px 0 4px;}
+  .tab{background:#fff; border:2px solid var(--line); border-radius:999px; padding:12px 6px;
+    font-size:19px; font-weight:800; color:var(--sub); white-space:nowrap; min-height:54px;
+    display:flex; align-items:center; justify-content:center; gap:5px; overflow:hidden; letter-spacing:-.3px;}
+  .tab .te{font-size:17px; line-height:1;}
   .tab.on{background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 6px 16px rgba(37,99,235,.28);}
 
   /* ── chips ──────────────────────────────── */
@@ -99,12 +100,54 @@
   .score{display:flex; align-items:center; gap:8px; font-size:46px; font-weight:900; letter-spacing:-1px;
     min-width:120px; justify-content:center;}
   .score .vs{font-size:26px; color:#a8b6ce; font-weight:800; letter-spacing:0;}
-  .card .ft{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px;
-    font-size:17px; color:var(--sub); border-top:1px dashed var(--line); padding-top:9px; flex-wrap:wrap;}
-  .card .ft .st{font-weight:800; color:#3d4a6b;}
-  .card.live .ft .st{color:var(--red);}
+  /* ── 카드 아래 정보 3줄 ───────────────── */
+  .card .meta{display:grid; gap:3px; margin-top:10px; padding-top:9px; border-top:1px dashed var(--line);}
+  .card .meta .m1{font-size:17px; font-weight:900; color:#3d4a6b;}
+  .card.live .meta .m1{color:var(--red);}
+  .card .meta .m2{font-size:16px; font-weight:700; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .card .meta .m3{font-size:16px; font-weight:800; color:#6b7f9e; word-break:keep-all;}
   .event-title{font-size:22px; font-weight:800; margin:10px 0 4px; word-break:keep-all;}
   .mytag{font-size:15px; font-weight:900; color:#8a5b00; background:#ffe9a8; border-radius:999px; padding:2px 10px;}
+
+  /* ── 🎯 승부예측 ────────────────────────── */
+  .predbanner{display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;
+    background:linear-gradient(135deg,#eef5ff,#ffffff); border:2px solid #d7e6ff; border-radius:20px;
+    padding:12px 16px; margin-top:14px; text-align:left; min-height:56px; flex-wrap:wrap;}
+  .predbanner:active{transform:scale(.995);}
+  .predbanner .pb-k{font-size:17px; font-weight:900; color:var(--blue-dark); white-space:nowrap;}
+  .predbanner .pb-v{font-size:16px; font-weight:800; color:var(--sub); flex:1; min-width:0;}
+  .predbanner .pb-go{font-size:15px; font-weight:900; color:#fff; background:var(--blue);
+    border-radius:999px; padding:5px 13px; white-space:nowrap;}
+
+  .predbar{display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);}
+  .predbar .pk{flex:1 1 0; min-width:0; border:2px solid var(--line); background:#fff; border-radius:14px;
+    padding:8px 4px; font-size:15.5px; font-weight:800; color:var(--sub); min-height:46px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .predbar .pk:active{transform:scale(.97);}
+  .predbar .pk.on{background:var(--blue); border-color:var(--blue); color:#fff;}
+  .predbar .pk.on.draw{background:var(--amber); border-color:var(--amber); color:#fff;}
+  .predrow{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px;
+    padding-top:9px; border-top:1px dashed var(--line); flex-wrap:wrap;}
+  .predrow .pd{font-size:15px; font-weight:700; color:var(--sub);}
+  .predtag{display:inline-flex; align-items:center; gap:5px; font-size:16px; font-weight:900;
+    border-radius:999px; padding:5px 12px; white-space:nowrap;}
+  .predtag.mine{color:#8a5b00; background:#fff1cf;}
+  .predtag.hit{color:#0b7a43; background:#e2f8ec; border:2px solid #a7e6c3;}
+  .predtag.miss{color:#6b7280; background:#f1f3f7; border:2px solid #e1e5ee;}
+
+  .psum{background:linear-gradient(160deg,#eaf2ff,#ffffff 72%); border:2px solid #d7e6ff;
+    border-radius:var(--radius); padding:18px 18px 16px; box-shadow:var(--shadow); margin-top:14px;}
+  .psum h2{margin:0 0 3px; font-size:23px; font-weight:900;}
+  .psum .sub{font-size:16px; font-weight:800; color:var(--sub); margin-bottom:14px;}
+  .psum .kgrid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px;}
+  .psum .k{background:#fff; border:2px solid var(--line); border-radius:18px; padding:10px 4px; text-align:center;}
+  .psum .k b{display:block; font-size:23px; font-weight:900; color:var(--blue-dark); line-height:1.25;}
+  .psum .k span{display:block; font-size:13.5px; font-weight:800; color:var(--sub); letter-spacing:-.3px;}
+  .psum .k.streak b{color:#e8670b;}
+  .hrow{display:flex; align-items:center; justify-content:space-between; gap:10px; background:#fff;
+    border:2px solid var(--line); border-radius:18px; padding:11px 14px; margin-bottom:8px;}
+  .hrow .hm{font-size:17px; font-weight:800; min-width:0; word-break:keep-all;}
+  .hrow .hm small{display:block; font-size:14px; font-weight:700; color:var(--sub); margin-top:2px;}
 
   /* ── tables ─────────────────────────────── */
   .tablewrap{background:#fff; border:2px solid var(--line); border-radius:var(--radius); overflow:auto;
@@ -198,6 +241,14 @@
   .livetoggle.on{background:#ffe8e8; border-color:#ffb3b3; color:#b91c1c;}
   footer{margin-top:30px; text-align:center; color:#93a2bd; font-size:15px; font-weight:700; line-height:1.6;}
   .hide{display:none !important;}
+  @media (max-width:560px){
+    .tabs{gap:4px; margin:14px 0 2px;}
+    .tab{font-size:13px; padding:9px 2px; min-height:48px; gap:3px; letter-spacing:-.5px; border-radius:15px;}
+    .tab .te{display:none;}
+    .predbar .pk{font-size:14px; padding:7px 3px;}
+    .psum .k b{font-size:20px;}
+    .psum .k span{font-size:12px;}
+  }
   @media (max-width:520px){
     body{font-size:19px;}
     .brand{font-size:27px;}
@@ -220,10 +271,11 @@
       </div>
     </div>
     <nav class="tabs" id="tabs">
-      <button class="tab on" data-tab="today">🔴 오늘 경기</button>
-      <button class="tab" data-tab="standings">🏆 순위</button>
-      <button class="tab" data-tab="news">📰 주요 소식</button>
-      <button class="tab" data-tab="settings">⚙️ 설정</button>
+      <button class="tab on" data-tab="today"><span class="te">🔴</span>오늘 경기</button>
+      <button class="tab" data-tab="predict"><span class="te">🎯</span>승부예측</button>
+      <button class="tab" data-tab="standings"><span class="te">🏆</span>순위</button>
+      <button class="tab" data-tab="news"><span class="te">📰</span>주요 소식</button>
+      <button class="tab" data-tab="settings"><span class="te">⚙️</span>설정</button>
     </nav>
     <div class="banner" id="banner"></div>
   </header>
@@ -231,12 +283,22 @@
   <main>
     <!-- 오늘 경기 -->
     <section id="tab-today">
+      <button class="predbanner" id="predBanner">
+        <span class="pb-k">🎯 내 승부예측</span>
+        <span class="pb-v" id="pbValue">아직 예측이 없어요</span>
+        <span class="pb-go">보기</span>
+      </button>
       <div class="chips" id="sportChips"></div>
       <div class="livebar">
         <span id="liveInfo">5분마다 새로 받아요</span>
         <button class="livetoggle" id="liveToggle">🔄 실시간</button>
       </div>
       <div id="todayBody"></div>
+    </section>
+
+    <!-- 승부예측 -->
+    <section id="tab-predict" class="hide">
+      <div id="predictBody"></div>
     </section>
 
     <!-- 순위 -->
@@ -271,6 +333,13 @@
         <div class="row"><span class="k">실시간 직접 연결</span><span class="v" id="sDirect">확인 중…</span></div>
         <div class="row"><span class="k">오늘 경기 수</span><span class="v" id="sGames">-</span></div>
         <div class="row"><span class="k">소식 수</span><span class="v" id="sNews">-</span></div>
+      </div>
+      <div class="panel">
+        <h3>🎯 승부예측 기록</h3>
+        <p class="hint">내가 고른 예측과 채점 결과는 이 기기에만 저장돼요. 로그인도 서버도 쓰지 않아요.</p>
+        <div class="row"><span class="k">채점한 경기</span><span class="v" id="sPredTotal">-</span></div>
+        <div class="row"><span class="k">기다리는 예측</span><span class="v" id="sPredPending">-</span></div>
+        <button class="ghost" id="resetPredBtn">예측 기록 지우기</button>
       </div>
       <div class="panel">
         <h3>🧹 처음으로</h3>
@@ -313,6 +382,11 @@ const SPORT_EMOJI = {야구:"⚾", 해외야구:"⚾", 축구:"⚽", 해외축�
 const SPORTS = ["전체","야구","축구","농구","배구","해외축구","미식축구","국제 대회","해외야구","일반"];
 const KST_OFFSET = 9 * 60 * 60 * 1000;
 
+/* 🎯 승부예측 저장 키 (state 를 만들 때 바로 쓰므로 먼저 둔다) */
+const PRED_KEY = "sports.preds.v1";
+const DRAW_SPORTS = new Set(["축구", "해외축구", "국제 대회"]);   // 무승부가 있는 종목
+const PRED_KEEP_MS = 7 * 86400000;                               // 오래된 미채점 예측 정리
+
 const state = {
   tab: "today",
   sport: "전체",
@@ -324,6 +398,7 @@ const state = {
   standings: null,
   news: null,
   favorites: loadFav(),
+  preds: loadPreds(),
   interval: Number(localStorage.getItem("sports.interval") ?? 5),
   liveMode: localStorage.getItem("sports.live") === "1",
   directOK: null,
@@ -342,6 +417,193 @@ function saveFav(){
   localStorage.setItem("sports.fav", JSON.stringify(state.favorites));
 }
 const isFav = (team) => !!team && state.favorites.includes(team);
+
+/* ── 🎯 승부예측 (이 기기 안에만 저장 · 로그인·서버 없음) ── */
+function loadPreds(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(PRED_KEY) || "{}");
+    return (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
+  } catch { return {}; }
+}
+function savePreds(){
+  try { localStorage.setItem(PRED_KEY, JSON.stringify(state.preds)); } catch {}
+}
+const allowDraw = (g) => DRAW_SPORTS.has(g.sport);
+function predStart(p){
+  if (!p || !p.date) return 0;
+  const t = Date.parse(`${p.date}T${p.time || "00:00"}:00+09:00`);
+  return Number.isNaN(t) ? 0 : t;
+}
+function outcomeOf(g){
+  if (!g || g.state !== "done") return null;
+  const hs = g.home?.score, as = g.away?.score;
+  if (typeof hs === "number" && typeof as === "number"){
+    if (hs > as) return "home";
+    if (as > hs) return "away";
+    return "draw";
+  }
+  if (g.winner === "HOME") return "home";
+  if (g.winner === "AWAY") return "away";
+  if (g.winner === "DRAW") return "draw";
+  return null;
+}
+function pickLabel(p){
+  if (!p) return "";
+  if (p.pick === "draw") return "무승부";
+  return `${p.pick === "home" ? (p.home || "홈팀") : (p.away || "원정팀")} 승`;
+}
+function predOf(id){ return state.preds[String(id)] || null; }
+function setPick(g, pick){
+  if (!g || g.state !== "upcoming" || !g.away?.name) return;
+  const cur = predOf(g.id);
+  if (cur && cur.pick === pick){
+    delete state.preds[String(g.id)];            // 한 번 더 누르면 취소
+  } else {
+    state.preds[String(g.id)] = {
+      pick, at: Date.now(),
+      date: g.date || "", time: g.time || "",
+      home: g.home?.name || "", away: g.away?.name || "",
+      leagueName: g.leagueName || "", sport: g.sport || "", emoji: g.emoji || "🏅",
+      res: null, actual: null,
+    };
+  }
+  savePreds(); gradePreds();
+  renderToday(); renderPredict(); renderSettings();
+}
+function gradePreds(){
+  let changed = false;
+  const byId = new Map(gameList().map(g => [String(g.id), g]));
+  for (const [id, p] of Object.entries(state.preds)){
+    if (p.res) continue;
+    const g = byId.get(id);
+    if (!g || g.state !== "done") continue;
+    const act = outcomeOf(g);
+    if (!act) continue;
+    p.res = (p.pick === act) ? "hit" : "miss";
+    p.actual = act;
+    p.hs = g.home?.score ?? null;
+    p.as = g.away?.score ?? null;
+    p.gradedAt = Date.now();
+    changed = true;
+  }
+  const cut = Date.now() - PRED_KEEP_MS;
+  for (const [id, p] of Object.entries(state.preds)){
+    if (!p.res && (p.at || 0) < cut){ delete state.preds[id]; changed = true; }
+  }
+  if (changed) savePreds();
+}
+function predStats(){
+  const all = Object.entries(state.preds).map(([id, p]) => ({id, ...p}));
+  const graded = all.filter(p => p.res).sort((a, b) => (predStart(b) - predStart(a)) || ((b.gradedAt || 0) - (a.gradedAt || 0)));
+  const hits = graded.filter(p => p.res === "hit").length;
+  let streak = 0;
+  for (const p of graded){ if (p.res === "hit") streak++; else break; }
+  const now = Date.now();
+  const pending = all.filter(p => !p.res && predStart(p) >= now - 3 * 3600000).length;
+  const total = graded.length;
+  return { all, graded, hits, total, pending, streak, rate: total ? Math.round(hits / total * 100) : null };
+}
+/* 카드 아래에 붙는 예측 바/배지 */
+function predBlock(g){
+  if (!g || !g.away?.name) return "";
+  const p = predOf(g.id);
+  const gid = esc(g.id);
+  if (g.state === "upcoming"){
+    const on = (k) => (p && p.pick === k ? "on" : "");
+    const btn = (k, label, extra = "") =>
+      `<button class="pk ${on(k)}${extra}" data-gid="${gid}" data-pred="${k}">${esc(label)}</button>`;
+    const home = g.home?.name || "홈팀", away = g.away?.name || "원정팀";
+    return `<div class="predbar">${btn("home", home + " 승")}${
+      allowDraw(g) ? btn("draw", "무승부", " draw") : ""}${btn("away", away + " 승")}</div>`;
+  }
+  if (!p) return "";
+  if (g.state === "live")
+    return `<div class="predrow"><span class="predtag mine">🔒 내 예측: ${esc(pickLabel(p))}</span></div>`;
+  if (g.state === "cancel")
+    return `<div class="predrow"><span class="predtag mine">내 예측: ${esc(pickLabel(p))}</span></div>`;
+  if (g.state === "done"){
+    if (!p.res)
+      return `<div class="predrow"><span class="predtag mine">내 예측: ${esc(pickLabel(p))}</span></div>`;
+    const hit = p.res === "hit";
+    const actual = p.actual === "draw" ? "무승부" : `${(p.actual === "home" ? p.home : p.away)} 승`;
+    return `<div class="predrow">
+        <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중!" : "😅 아깝다"}</span>
+        <span class="pd">내 예측 ${esc(pickLabel(p))} · 실제 ${esc(actual)}</span>
+      </div>`;
+  }
+  return "";
+}
+function predMini(p, g){
+  const home = g?.home?.name || p.home || "";
+  const away = g?.away?.name || p.away || "";
+  const when = g ? `${dayLabel(g.date)}${g.time || ""}` : `${p.date || ""} ${p.time || ""}`.trim();
+  const live = g?.state === "live";
+  return `<div class="hrow">
+      <span class="hm">${esc(p.emoji || "🏅")} ${esc(home)} vs ${esc(away)}<small>${esc(p.leagueName || "")} · ${esc(when)}</small></span>
+      <span class="predtag mine">${live ? "🔒" : "⏳"} ${esc(pickLabel(p))}</span>
+    </div>`;
+}
+function predHist(p, g){
+  const home = g?.home?.name || p.home || "";
+  const away = g?.away?.name || p.away || "";
+  const score = (typeof p.hs === "number" && typeof p.as === "number") ? `${p.hs} : ${p.as}` : "";
+  const hit = p.res === "hit";
+  const bits = [p.leagueName || "", score, `내 예측 ${pickLabel(p)}`].filter(Boolean).join(" · ");
+  return `<div class="hrow">
+      <span class="hm">${esc(home)} vs ${esc(away)}<small>${esc(bits)}</small></span>
+      <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중" : "😅 아깝다"}</span>
+    </div>`;
+}
+function renderPredict(){
+  const st = predStats();
+  const pv = $("#pbValue");
+  if (pv){
+    pv.textContent = st.total
+      ? `적중률 ${st.rate}% · 🔥 ${st.streak}연승 · 기다리는 예측 ${st.pending}경기`
+      : (st.pending ? `기다리는 예측 ${st.pending}경기` : "카드에서 이길 팀을 골라 보세요");
+  }
+  const sTotal = $("#sPredTotal");
+  if (sTotal) sTotal.textContent = `${st.hits} / ${st.total}`;
+  const sPend = $("#sPredPending");
+  if (sPend) sPend.textContent = `${st.pending}경기`;
+
+  const body = $("#predictBody");
+  if (!body) return;
+  const byId = new Map(gameList().map(g => [String(g.id), g]));
+  const waiting = st.all.filter(p => !p.res).sort((a, b) => predStart(a) - predStart(b));
+  const open = gameList()
+    .filter(g => g.state === "upcoming" && g.away?.name && !predOf(g.id))
+    .sort((a, b) => (predStart({date: a.date, time: a.time}) - predStart({date: b.date, time: b.time})))
+    .slice(0, 6);
+
+  let html = `<div class="psum">
+      <h2>🎯 내 승부예측</h2>
+      <div class="sub">${st.total ? "맞히면 연승이 이어져요! 🔥" : "이길 팀을 찍어 보세요!"}</div>
+      <div class="kgrid">
+        <div class="k"><b>${st.rate === null ? "-" : st.rate + "%"}</b><span>적중률</span></div>
+        <div class="k"><b>${st.hits}/${st.total}</b><span>맞힌 수</span></div>
+        <div class="k streak"><b>${st.streak ? "🔥 " + st.streak : "0"}</b><span>연승</span></div>
+        <div class="k"><b>${st.pending}</b><span>대기 중</span></div>
+      </div>
+    </div>`;
+
+  html += `<div class="sectitle">⏳ 기다리는 내 예측 <span class="count">${waiting.length}경기</span></div>`;
+  html += waiting.length
+    ? waiting.map(p => predMini(p, byId.get(p.id))).join("")
+    : `<div class="empty">아직 기다리는 예측이 없어요.<br>아래 경기에서 이길 팀을 찍어 보세요 😊</div>`;
+
+  if (open.length){
+    html += `<div class="sectitle">🕒 예측해 볼 경기 <span class="count">${open.length}경기</span></div>
+      <div class="grid">${open.map(gameCard).join("")}</div>`;
+  }
+
+  html += `<div class="sectitle">✅ 채점 결과 <span class="count">${st.graded.length}경기</span></div>`;
+  html += st.graded.length
+    ? st.graded.slice(0, 10).map(p => predHist(p, byId.get(p.id))).join("")
+    : `<div class="empty">아직 채점한 경기가 없어요.<br>경기가 끝나면 자동으로 채점해 드려요 🎯</div>`;
+
+  body.innerHTML = html;
+}
 
 /* ── 유틸 ──────────────────────────────── */
 function kstNow(){ return new Date(Date.now() + (new Date().getTimezoneOffset()*60000) + KST_OFFSET); }
@@ -429,13 +691,24 @@ async function loadAll(){
     state.standingSport = state.standings.leagues[0].sport;
     state.league = state.standings.leagues[0].id;
   }
+  gradePreds();
   renderAll();
 }
 
 /* ── 오늘 경기 ─────────────────────────── */
+/* 저장된 스냅샷의 옛 이름도 리그별 사전으로 바로잡는다 (MUN=바이에른 등) */
+function normTeam(t, leagueKey){
+  if (!t || !t.code || !leagueKey) return t;
+  const ko = koFor(leagueKey)[String(t.code).toUpperCase()];
+  return (ko && ko !== t.name) ? {...t, name: ko} : t;
+}
+function normGame(g){
+  if (!g || !g.league) return g;
+  return {...g, home: normTeam(g.home, g.league), away: normTeam(g.away, g.league)};
+}
 function gameList(){
   const base = state.today?.games || [];
-  if (!state.directGames) return base;
+  if (!state.directGames) return base.map(normGame);
   const byId = new Map(base.map(g => [g.id, g]));
   for (const g of state.directGames){
     if (byId.has(g.id)){
@@ -443,7 +716,7 @@ function gameList(){
       byId.set(g.id, {...old, ...g, sport: old.sport || g.sport, emoji: old.emoji || g.emoji});
     }
   }
-  return [...byId.values()];
+  return [...byId.values()].map(normGame);
 }
 function filteredGames(){
   const all = gameList().filter(g => state.sport === "전체" || g.sport === state.sport);
@@ -503,17 +776,25 @@ function gameCard(g){
     ? `<div class="event-title">${esc(g.home?.name || g.leagueName)}</div>`
     : `<div class="match">${teamBlock(g.home, homeWin)}${middle}${teamBlock(g.away, awayWin)}</div>`;
 
-  const st = g.state === "live" ? (g.status || "진행 중") : "";
-  const when = g.state === "upcoming" ? `⏰ ${dayLabel(g.date)}${g.time}` :
-    (g.state === "done" ? `${dayLabel(g.date)}${g.time}` : `${dayLabel(g.date)}${g.time}`);
-  const bits = [st, when, g.leagueName, g.stadium, g.channel].filter(Boolean);
+  const when = `${dayLabel(g.date)}${g.time || ""}`.trim();
+  const m1 = g.state === "live"
+    ? `🔴 LIVE${g.status ? " · " + g.status : ""}`
+    : g.state === "done" ? `✅ 종료 · ${when}`
+    : g.state === "cancel" ? `⛔ 취소 · ${when}`
+    : `🕒 ${when || "시간 미정"}`;
+  const meta = `<div class="meta">
+        <div class="m1">${esc(m1)}</div>
+        ${g.stadium ? `<div class="m2">📍 ${esc(g.stadium)}</div>` : ""}
+        <div class="m3">${g.emoji || "🏅"} ${esc(g.leagueName)}</div>
+      </div>`;
   return `<article class="${cls}">
       <div class="hd">
         <span class="league">${g.emoji || "🏅"} ${esc(g.leagueName)}</span>
         <span style="display:flex;gap:6px;align-items:center">${fav?'<span class="mytag">⭐ 우리 팀</span>':""}${badge}</span>
       </div>
       ${match}
-      <div class="ft"><span class="st">${esc(bits.join(" · "))}</span></div>
+      ${meta}
+      ${predBlock(g)}
     </article>`;
 }
 function renderToday(){
@@ -787,7 +1068,7 @@ function renderAll(){
   renderSportChips(); renderToday();
   renderStandingChips(); renderStandings();
   renderNewsChips(); renderNews();
-  renderSettings();
+  renderSettings(); renderPredict();
   $("#todayLabel").textContent = fmtToday();
   window.__diag = {
     games: state.today?.total ?? 0,
@@ -837,11 +1118,31 @@ const ESPN_LEAGUES = [
 ];
 const INT_LEAGUES = new Set(ESPN_LEAGUES.filter(l => l.intl).map(l => l.espn));
 const KO_BY_LEAGUE = {
+  /* 리그별로 약어가 겹쳐서 한 장으로는 맞출 수 없는 이름들
+     (MUN = 분데스리가 바이에른 / 프리미어리그 맨유, LEV = 라리가 레반테 / 분데스리가 레버쿠젠 등) */
+  "soccer/ger.1": {B04:"레버쿠젠", BMG:"묀헨글라트바흐", DOR:"도르트문트", ELV:"엘버스베르크",
+                   FCA:"아우크스부르크", FCU:"우니온 베를린", HSV:"함부르크", KOE:"쾰른",
+                   M05:"마인츠", MUN:"바이에른", RBL:"라이프치히", S04:"샬케",
+                   SCF:"프라이부르크", SCP:"파더보른", SGE:"프랑크푸르트", SVW:"브레멘",
+                   TSG:"호펜하임", VFB:"슈투트가르트"},
+  "soccer/esp.1": {ALA:"알라베스", ATH:"아틀레틱", ATM:"아틀레티코", BAR:"바르셀로나",
+                   BET:"베티스", CEL:"셀타", DEP:"데포르티보", ELC:"엘체", ESP:"에스파뇰",
+                   GET:"헤타페", LEV:"레반테", MCF:"말라가", OSA:"오사수나", RAC:"라싱",
+                   RAY:"라요", RMA:"레알마드리드", RSO:"레알소시에다드", SEV:"세비야",
+                   VAL:"발렌시아", VIL:"비야레알"},
+  "soccer/eng.1": {ARS:"아스널", AVL:"애스턴빌라", BHA:"브라이턴", BOU:"본머스",
+                   BRE:"브렌트퍼드", CHE:"첼시", COV:"코번트리", CRY:"크리스털팰리스",
+                   EVE:"에버턴", FUL:"풀럼", HUL:"헐", IPS:"입스위치", LEE:"리즈",
+                   LIV:"리버풀", MAN:"맨체스터 유나이티드", MNC:"맨체스터 시티", NEW:"뉴캐슬",
+                   NFO:"노팅엄", SUN:"선덜랜드", TOT:"토트넘"},
   "soccer/ita.1": {MIL:"AC밀란", TOR:"토리노", ROM:"로마", INT:"인터밀란", JUV:"유벤투스",
                    NAP:"나폴리", LAZ:"라치오", ATA:"아탈란타", FIO:"피오렌티나", BOL:"볼로냐",
                    UDI:"우디네세", GEN:"제노아"},
   "soccer/uefa.champions": {MIL:"AC밀란", TOR:"토리노", ROM:"로마", INT:"인터밀란",
-                            JUV:"유벤투스", NAP:"나폴리", LAZ:"라치오", ATA:"아탈란타"},
+                            JUV:"유벤투스", NAP:"나폴리", LAZ:"라치오", ATA:"아탈란타",
+                            MUN:"바이에른", SCP:"스포르팅", PSG:"파리 생제르맹",
+                            PSV:"PSV 에인트호번", DOR:"도르트문트", VFB:"슈투트가르트",
+                            RBL:"라이프치히"},
 };
 
 /* 리그별 한국어 이름표 (수집기가 만든 data/ko-teams.json) */
@@ -964,7 +1265,8 @@ async function probeDirect(){
   state.directOK = Array.isArray(games);
   if (state.directOK && games.length){
     state.directGames = games;
-    renderSportChips(); renderToday();
+    gradePreds();
+    renderSportChips(); renderToday(); renderPredict();
   }
   if (!state.directOK) state.liveMode = false;
   renderSettings();
@@ -974,7 +1276,8 @@ async function refreshDirect(){
   const games = await fetchEspn().catch(() => null);
   if (!games){ state.directOK = false; state.liveMode = false; setupLive(); renderSettings(); return; }
   state.directGames = games;
-  renderSportChips(); renderToday(); renderSettings();
+  gradePreds();
+  renderSportChips(); renderToday(); renderSettings(); renderPredict();
 }
 
 /* ── 이벤트 연결 ─────────────────────── */
@@ -983,12 +1286,26 @@ function bind(){
     t.onclick = () => {
       state.tab = t.dataset.tab;
       $("#tabs").querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
-      for (const name of ["today","standings","news","settings"]){
+      for (const name of ["today","predict","standings","news","settings"]){
         $(`#tab-${name}`).classList.toggle("hide", name !== state.tab);
       }
       if (state.tab === "settings") renderSettings();
+      if (state.tab === "predict") renderPredict();
       window.scrollTo({top:0, behavior:"smooth"});
     };
+  });
+  $("#predBanner").onclick = () => {
+    const t = $("#tabs").querySelector('.tab[data-tab="predict"]');
+    if (t) t.click();
+  };
+  /* 예측 버튼은 화면을 다시 그려도 살아 있도록 한 곳에서 받는다 */
+  document.addEventListener("click", (e) => {
+    const b = e.target && e.target.closest ? e.target.closest("[data-pred]") : null;
+    if (!b) return;
+    e.preventDefault();
+    const gid = b.dataset.gid, pick = b.dataset.pred;
+    const g = gameList().find(x => String(x.id) === gid);
+    if (g) setPick(g, pick);
   });
   $("#refreshBtn").onclick = async (e) => {
     e.currentTarget.textContent = "⏳ 받는 중";
@@ -1011,6 +1328,11 @@ function bind(){
     state.interval = 5; localStorage.setItem("sports.interval","5");
     state.liveMode = false; localStorage.setItem("sports.live","0");
     setupTimer(); setupLive(); renderAll();
+  };
+  $("#resetPredBtn").onclick = () => {
+    if (!Object.keys(state.preds).length){ alert("지울 예측 기록이 없어요."); return; }
+    if (!confirm("내 승부예측 기록을 모두 지울까요? 되돌릴 수 없어요.")) return;
+    state.preds = {}; savePreds(); renderToday(); renderPredict(); renderSettings();
   };
   $("#shClose").onclick = closeArticle;
   $("#shDone").onclick = closeArticle;
