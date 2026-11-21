@@ -17,6 +17,9 @@
         와 남은 시간으로 바뀌고, 오른쪽 작은 글씨는 다음 모험 시각('아침 루틴 오전 7시')이 된다.
      ⑤ 방학 낮(9:00~16:00)도 휴식 화면으로 — 1024×600·800×1280 에서도 모든 크기가 패널 높이
         (--rh)에 비례해 함께 줄어 넘치지 않는다(fitRestPanel).
+     ⑥ 등교 모드 시간대(11-21 사용자 조정) — 아침 07:00~09:00(출발 안내 08:35 그대로) · 하교
+        16:00~18:00 · 그 뒤 18:00~20:59 는 자유 시간, 취침 21:00~21:40. 방과후(10:20~14:00)도
+        afterTo 뒤는 자유 시간 화면이다.
      v64·v65 의 오늘의 공부 타이머·✓ 끝·파트너 대화·과일 효과음 코드는 그대로다. -->
 <!-- v65 — '오늘의 공부' 항목 카드마다 [⏱️ 타이머] 버튼을 붙였다(시안 2안).
      평소엔 버튼 하나만 보이고, 누르면 카드 안에서 '직접 입력 [ 분 ] ▶ 시작' + '빠른 선택 10·15·20·30분'
@@ -3152,7 +3155,10 @@ const MODE_DEFS = {
     stripLabel:'LUKA의 아침 준비', emoji:'☀️', countdown:'등교까지',
     alertToast:'🏫 가랏, 피카츄!',
     tasks: TASKS, xp: 50,
-    afterTasks: AFTER_TASKS, afterXp: 50, afterFrom: 16*60,     // 하교 오후 4시부터
+    /* v66-3 — 아침 카드는 09:00 까지(출발 안내 08:35 는 그대로). 09:00 부터 낮 자유 시간 화면 */
+    morningEnd: 9*60,
+    /* 하교 루틴 16:00~18:00 — 18:00 이 지나면 취침 루틴(21:00)까지 자유 시간 화면 */
+    afterTasks: AFTER_TASKS, afterXp: 50, afterFrom: 16*60, afterTo: 18*60,
   },
   afterschool: {
     id:'afterschool', label:'🎒 방과후', name:'방과후',
@@ -3237,12 +3243,15 @@ function routineKeyAt(min){
   const m = (min == null) ? nowMinutes() : min;
   const M = MODE_DEFS[modeId] || MODE_DEFS.school;
   if(m < M.wake) return 'rest';                                      // v66 — 기상 전
-  const morningEnd = (M.morningEnd != null) ? M.morningEnd : 16*60;   // 등교: 16시까지 아침 화면 유지
+  const morningEnd = (M.morningEnd != null) ? M.morningEnd : 16*60;
   if(m < morningEnd) return 'morning';
   if(m >= NIGHT_BED) return nightAllDone() ? 'rest' : 'night';       // v66 — 취침 완료 뒤
   if(M.afterTasks){
-    if(m < (M.afterFrom || 16*60)) return 'rest';   // 오후 루틴 시작 전 — 쉬는 화면
-    return m < 21*60 ? 'after' : 'night';
+    const from = M.afterFrom || 16*60;
+    const to = M.afterTo || 21*60;                  // v66-3 — 오후 루틴이 끝나는 시각
+    if(m < from) return 'rest';                     // 오후 루틴 시작 전 — 자유 시간
+    if(m < to) return 'after';                      // 오후 루틴(하교 16~18시 · 방과후 정리 10:20~14시)
+    return m < 21*60 ? 'rest' : 'night';            // 오후 루틴이 끝나면 취침 전까지 자유 시간
   }
   return m < 21*60 ? 'rest' : 'night';             // 공휴일: 아침이 끝나면 저녁까지 휴식 화면
 }
