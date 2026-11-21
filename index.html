@@ -4,19 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
-<!-- v66 — 비루틴 시간대 전면 개편(사용자가 고른 2안 · 파트너 말꿍선 응원 대화형).
-     ① routineKeyAt — 기상 전(그 모드의 아침 시작 전)과 찭침 완료 뒤(21:40 이후)도 'rest' 로 넘긴다.
-        찭침 카드를 다 못 채쳤을 때는 21:40 뒤에도 카드를 그대로 두어 마저 체크할 수 있게 했다.
+<!-- v66 — 비루틴 시간대 전면 개편(사용자가 고른 2안 · 파트너 말풍선 응원 대화형).
+     ① routineKeyAt — 기상 전(그 모드의 아침 시작 전)과 취침 완료 뒤(21:40 이후)도 'rest' 로 넘긴다.
+        취침 카드를 다 못 채웠을 때는 21:40 뒤에도 카드를 그대로 두어 마저 체크할 수 있게 했다.
      ② buildRestPanel — 잠만보 그림 + 제목이던 휴식 화면을, **지금 파트너 포켓몬**이 루카에게
         말을 거는 말풍선 화면으로 바꿨다. 그림은 art(id) → artCdn(id) → 내장 PK_PIX → 몬스터볼
         사슬(pkImg) 그대로라 오프라인·태블릿에서도 비지 않는다.
-     ③ 시간대 3가지 — 새벽(밤하늘·별·💤 자는 느낌) / 낮(파스텔 하늘) / 찭침 뒤(보라 밤하늘·달).
-        문구는 '루카야, 쉿! …오전 7시에 같이 아침 먹으러 가자!' 처럼 다음 모험으로 이어진다.
-     ④ renderProgress — 시간 바 문구도 '☀️ 아침 루틴까지 / 🌙 찭침 루틴까지 / ☀️ 내일 아침 루틴까지'
+     ③ 시간대 3가지 — 새벽(밤하늘·별·Zzz 뱃지) / 낮(파스텔 하늘) / 취침 뒤(보라 밤하늘·달).
+        새벽은 파트너가 **자고 있는** 화면(리본 '💤 … 새근새근 자고 있어요', 대사 'Zzz… …도 아직
+        꿈나라예요'), 취침 뒤는 조용한 잘자 멘트, 낮은 '자유 시간'(신나게 놀거나 오늘의 공부도) 멘트다.
+     ④ renderProgress — 시간 바 문구도 '☀️ 아침 루틴까지 / 🌙 취침 루틴까지 / ☀️ 내일 아침 루틴까지'
         와 남은 시간으로 바뀌고, 오른쪽 작은 글씨는 다음 모험 시각('아침 루틴 오전 7시')이 된다.
      ⑤ 방학 낮(9:00~16:00)도 휴식 화면으로 — 1024×600·800×1280 에서도 모든 크기가 패널 높이
         (--rh)에 비례해 함께 줄어 넘치지 않는다(fitRestPanel).
-      v64·v65 의 오늘의 공부 타이머·✓ 끝·파트너 대화·과일 효과음 코드는 그대로다. -->
+     v64·v65 의 오늘의 공부 타이머·✓ 끝·파트너 대화·과일 효과음 코드는 그대로다. -->
 <!-- v65 — '오늘의 공부' 항목 카드마다 [⏱️ 타이머] 버튼을 붙였다(시안 2안).
      평소엔 버튼 하나만 보이고, 누르면 카드 안에서 '직접 입력 [ 분 ] ▶ 시작' + '빠른 선택 10·15·20·30분'
      바가 펼쳐졌다 다시 접힌다. 시작하면 같은 자리에 MM:SS / N분 · 진행 막대 · ⏸(일시정지/재개) ·
@@ -703,11 +704,13 @@
   /* 기상 전 — 자는 느낌: 조금 가라앉힌 색 + 느린 호흡 + 💤 */
   .rest2.band-prewake .rart{animation:restBreathe 5.6s ease-in-out infinite;
     filter:drop-shadow(0 clamp(6px,calc(var(--rh) * .03),12px) clamp(7px,calc(var(--rh) * .035),14px) rgba(30,40,80,.32)) saturate(.82) brightness(.9);}
-  .rest2 .rzzz{display:none;position:absolute;z-index:2;color:#dfe6ff;font-weight:900;line-height:1;
-    text-shadow:0 2px 6px rgba(20,30,70,.45);pointer-events:none;}
+  /* 기상 전 — 포켓몬 머리 옆에서 둥실둥실 떠오르는 'Zzz' 뱃지 (자는 중이라는 표시) */
+  .rest2 .rzzz{display:none;position:absolute;z-index:3;left:66%;top:5%;pointer-events:none;
+    font-size:clamp(11px,calc(var(--rh) * .055),22px);font-weight:900;font-style:italic;letter-spacing:.6px;
+    color:#eef2ff;background:rgba(26,35,74,.5);border:2px solid rgba(198,214,255,.55);border-radius:999px;
+    padding:1px clamp(7px,calc(var(--rh) * .026),12px);line-height:1.5;
+    box-shadow:0 4px 10px rgba(10,18,44,.35);animation:restZzz 4.4s ease-in-out infinite;}
   .rest2.band-prewake .rzzz{display:block;}
-  .rest2.band-prewake .rzzz.a{font-size:clamp(14px,calc(var(--rh) * .075),28px);left:63%;top:7%;animation:restZzz 3.6s ease-in-out infinite;}
-  .rest2.band-prewake .rzzz.b{font-size:clamp(11px,calc(var(--rh) * .05),20px);left:72%;top:1%;animation:restZzz 3.6s ease-in-out .9s infinite;opacity:.8;}
   .rest2 .rname{position:relative;z-index:2;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
     margin-top:clamp(-10px,calc(var(--rh) * -.026),-4px);background:#fff;border-radius:999px;
     padding:clamp(2px,calc(var(--rh) * .012),5px) clamp(9px,calc(var(--rh) * .032),15px);
@@ -749,8 +752,8 @@
   @keyframes restHop{0%,100%{transform:translateY(0)}45%{transform:translateY(-9px)}}
   @keyframes restBreathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(3px) scale(.985)}}
   @keyframes restPop{from{transform:translateY(10px) scale(.97);opacity:0}to{transform:none;opacity:1}}
-  @keyframes restZzz{0%{transform:translate(0,0) rotate(-6deg);opacity:.25}
-    40%{opacity:.95}100%{transform:translate(-7px,-16px) rotate(6deg);opacity:0}}
+  @keyframes restZzz{0%,100%{transform:translate(0,0) rotate(-5deg);opacity:.75}
+    50%{transform:translate(-7px,-11px) rotate(4deg);opacity:1}}
   /* 세로 화면(800×1280 등) — 파트너를 위에, 말풍선을 아래에 세로로 쌓는다.
      가로 화면처럼 나란히 두면 패널이 높아질수록 빈 곳만 커져서 어색하다. */
   @media (max-aspect-ratio:5/4){
@@ -762,8 +765,7 @@
     .rest2 .rbubble::before{display:none;}
     .rest2 .rchips{padding-left:0;justify-content:center;}
     .rest2 .rmoon{top:8px;}
-    .rest2 .rzzz.a{right:auto;left:calc(50% + 20%);top:2%;}
-    .rest2 .rzzz.b{right:auto;left:calc(50% + 30%);top:-2%;}
+    .rest2 .rzzz{left:calc(50% + 16%);top:1%;}
   }
 
   /* ===== Progress strip ===== */
@@ -4206,18 +4208,21 @@ function josaGa(name){
   return '가';
 }
 /* 지금이 어느 휴식 시간대이고, 다음 모험이 언제인지 */
-function restPlan(){
+function restPlan(partnerName){
   const M = MODE_DEFS[modeId] || MODE_DEFS.school;
   const now = nowMinutes();
   const wake = M.wake;                       // 이 모드의 아침 루틴 시작
   const wakeTxt = restClockText(wake);
+  let nm = partnerName;
+  if(!nm){ try{ const p = partnerPk(); nm = (p && p.name) || '파트너'; }catch(e){ nm = '파트너'; } }
   const NIGHT_AT = 21*60;                    // 취침 루틴 시작 21:00
   let band, nextMin, nextEmoji, nextName, nextTime, say, chipLead, barLabel, depart, pct;
-  if(now < wake){                            // ── 기상 전 (새벽) ──
+  if(now < wake){                            // ── 기상 전 (새벽) — 파트너도 자고 있다 ──
     band = 'prewake';
     nextMin = wake;
     nextEmoji = '☀️'; nextName = '아침 루틴'; nextTime = wakeTxt;
-    say = `루카야, 쉿! 지금은 새벽이야.<br>조금 더 자고 <em>${wakeTxt}</em>에 같이 아침 먹으러 가자!`;
+    /* v66-2 — 말을 거는 대신 '파트너도 아직 자고 있다'는 안내. 루카도 같이 자도록 권한다 */
+    say = `Zzz… ${nm}도 아직 꿈나라예요.<br>루카도 푹 자고 <em>${wakeTxt}</em>에 같이 일어나자!`;
     chipLead = '⏳ 아침 모험까지 ';
     depart = `아침 루틴 ${wakeTxt}`;
     pct = 0;
@@ -4242,7 +4247,8 @@ function restPlan(){
     } else {
       nextMin = NIGHT_AT; nextEmoji = '🌙'; nextName = '취침 루틴'; nextTime = restClockText(NIGHT_AT);
     }
-    say = `루카야, 오늘 아침도 정말 잘했어!<br>지금은 <em>푹 쉬고</em>, 이따 ${nextTime}에 다시 모험하자!`;
+    /* v66-1 — 낮에는 '푹 쉬고'만이 아니라 **놀 수도, 오늘의 공부를 할 수도 있는 자유 시간**임을 알린다 */
+    say = `루카야, 오늘 아침도 정말 잘했어!<br>지금은 자유 시간이야 — 신나게 놀거나 <em>오늘의 공부</em>도 해 보고, 이따 ${nextTime}에 다시 모험하자!`;
     chipLead = '⏳ 다음 모험까지 ';
     depart = `${nextName} ${nextTime}`;
     const mr = rday('morning'), mt = (M.tasks || []).length || 1;
@@ -4271,25 +4277,30 @@ function fitRestPanel(){
 function buildRestPanel(wrap){
   wrap.classList.remove('six');
   wrap.classList.add('has-rest');
-  const plan = restPlan();
   const pk = partnerPk() || DEX_BY_ID[PARTNER_DEFAULT];
+  const plan = restPlan(pk.name);
+  /* v66-2 — 기상 전에는 '말을 걸었어요'가 아니라 '새근새근 자고 있어요' 리본을 단다 */
+  const kick = plan.band === 'prewake'
+    ? `💤 ${pk.name}${josaGa(pk.name)} 새근새근 자고 있어요`
+    : `💬 ${pk.name}${josaGa(pk.name)} 말을 걸었어요`;
   const el = document.createElement('div');
   el.className = 'rest2 band-' + plan.band;
   el.id = 'restPanel';
   el.setAttribute('role', 'note');
-  el.setAttribute('aria-label', `${pk.name}의 응원 — ${plan.nextName} ${plan.nextTime}`);
+  el.setAttribute('aria-label', plan.band === 'prewake'
+    ? `${pk.name}${josaGa(pk.name)} 새근새근 자고 있어요 — ${plan.nextName} ${plan.nextTime}`
+    : `${pk.name}의 응원 — ${plan.nextName} ${plan.nextTime}`);
   el.innerHTML = `
     <span class="rmoon" aria-hidden="true"></span>
     <div class="rstage">
       <span class="rglow" aria-hidden="true"></span>
       <img class="rart" alt="${pk.name}">
-      <span class="rzzz a" aria-hidden="true">💤</span>
-      <span class="rzzz b" aria-hidden="true">💤</span>
+      <span class="rzzz" aria-hidden="true">Zzz</span>
       <span class="rname">${pk.name}<i>파트너</i></span>
     </div>
     <div class="rright">
       <div class="rbubble">
-        <span class="rkick">💬 ${pk.name}${josaGa(pk.name)} 말을 걸었어요</span>
+        <span class="rkick">${kick}</span>
         <div class="rsay">${plan.say}</div>
       </div>
       <div class="rchips">
