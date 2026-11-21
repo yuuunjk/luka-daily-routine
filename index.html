@@ -4,11 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
-<!-- v60 — 사용자가 지정한 웹폰트(하하타입 LevelUp). 이 CSS 가 @font-face(font-family:"LevelUp",
-     weight 400/600/700 + italic)를 선언하고, 아래 <style> 의 font-family 스택이 그 이름을 쓴다.
-     build-pages.py 는 <head> 안의 아이콘·매니페스트 링크만 바꿔 달고 이 링크는 그대로 넘긴다. -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/hada0127/hada-type-levelup/css/levelup.css">
+<!-- v61 — 웹폰트를 사용자가 지정한 '빗썸고딕 오리지널'(Bithumb Gothic Original)로 교체.
+     v60 의 외부 CSS(levelup.css) <link> 는 없애고, 폰트 선언을 아래 <style> 맨 위 @font-face 로 옮겼다.
+     build-pages.py 는 <head> 안의 아이콘·매니페스트 링크만 바꿔 달고 이 부분은 그대로 넘긴다. -->
 <style>
+  /* v61 — 사용자가 지정한 @font-face. 폰트 파일은 Bold Italic 한 벌뿐이라(weight 700 / style italic)
+     이 선언 하나가 모든 굵기·스타일 요청을 받는다. 파일 안 글자 자체가 기울어진 디자인이라
+     body 를 normal 로 두어도 기울임이 한 번만 적용된다(이중 기울임 없음, 실제 렌더 확인).
+     URL 의 공백은 브라우저가 %20 으로 바꿔 요청하며 jsDelivr 200 응답을 확인했다. */
+  @font-face {
+      font-family: 'BithumbGothicOriginal';
+      src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2610082345@original/original/Bithumb Gothic Original.woff2') format('woff2');
+      font-weight: 700;
+      font-display: swap;
+      font-style: italic;
+  }
   :root{
     --bg1:#aee3ff; --bg2:#d8f3e6; --card:#fffdf7;
     --ink:#4a3b2a; --ink2:#8a7a66;
@@ -21,17 +31,17 @@
   html,body{height:100%;}
   body{
     margin:0; overflow:hidden; color:var(--ink);
-    /* v60 — 사용자가 지정한 웹폰트 'LevelUp'(하하타입 레벨업)을 전체 UI 최우선 글꼴로 쓴다.
-       위 <link> 가 jsDelivr CSS 를 받아 @font-face(font-family:"LevelUp")를 선언하고,
-       폰트 파일이 늦게 와도 font-display:swap 이라 sans-serif 로 먼저 그린 뒤 바뀐다.
-       (v59 까지는 기기 설정 폰트를 따르려고 sans-serif 단독이었다. 폰트에 없는 이모지·기호는
-       브라우저가 알아서 시스템 폰트로 넘긴다. 한글 11,172자·영문·숫자는 폰트 안에 있다.) */
-    font-family:'LevelUp', sans-serif;
+    /* v61 — 사용자가 지정한 웹폰트 'BithumbGothicOriginal'(빗썸고딕 오리지널)을 전체 UI 최우선 글꼴로 쓴다.
+       위 <style> 맨 위 @font-face 가 폰트 파일을 선언하고, 파일이 늦게 와도 font-display:swap 이라
+       sans-serif 로 먼저 그린 뒤 바뀐다. (v59 까지는 기기 설정 폰트를 따르려고 sans-serif 단독이었다.)
+       이 폰트에 없는 이모지·기호는 브라우저가 알아서 시스템 폰트로 넘긴다.
+       화면에 쓰는 한글 음절 239자·영문·숫자는 모두 폰트 안에 있다(빗썸고딕 오리지널은 2,350자 서브셋). */
+    font-family:'BithumbGothicOriginal', sans-serif;
     background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 60%,#f7f7e8 100%);
     user-select:none; -webkit-user-select:none; touch-action:manipulation;
   }
   /* 폼 컨트롤도 브라우저 기본 UI 폰트로 바뀌지 않게 같은 웹폰트를 쓴다 */
-  button,input,textarea,select{font-family:'LevelUp', sans-serif;}
+  button,input,textarea,select{font-family:'BithumbGothicOriginal', sans-serif;}
   #app{height:100vh; height:100dvh; display:flex; flex-direction:column; padding:10px 14px 12px; gap:10px;}
 
   /* ===== Header — Pokémon sky banner =====
