@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v63 — 태블릿 화면이 꺼지지 않게 잡아 두던 기능을 코드·화면·부모 설정에서 전부 걷어냈다.
+     (상단 칩, 부모 설정의 상태 안내 섹션, 관련 자바스크립트 변수·함수·이벤트 리스너,
+      파일로 열었을 때 쓰던 무음 반복 동영상까지 삭제. 사용자가 기능 자체를 빼 달라고 했다.
+      소리·루틴·포켓몬 기능은 그대로다.) -->
 <!-- v61 — 웹폰트를 사용자가 지정한 '빗썸고딕 오리지널'(Bithumb Gothic Original)로 교체.
      v60 의 외부 CSS(levelup.css) <link> 는 없애고, 폰트 선언을 아래 <style> 맨 위 @font-face 로 옮겼다.
      build-pages.py 는 <head> 안의 아이콘·매니페스트 링크만 바꿔 달고 이 부분은 그대로 넘긴다. -->
@@ -238,18 +242,6 @@
   header.sky .soundbtn{padding:0 .62em;}
   header.sky .powerbtn{padding:0 .6em;}
   header.sky .gear{width:calc(var(--u) * 2); padding:0;}
-  /* 🔆 화면 켜짐 유지 — v39: 바로 옆 '소리 켜기' 버튼과 똑같은 캡슐 모양·크기·색으로 통일.
-     켜져 있을 때만 나타나고, 상태는 🔆 아이콘과 문구로만 알린다(색은 소리 버튼과 같다). */
-  header.sky .wakechip{display:none; font-family:inherit; font-weight:900;
-    font-size:.9em; line-height:1; padding:0 .62em; white-space:nowrap;
-    box-sizing:border-box; height:calc(var(--u) * 2); min-height:calc(var(--u) * 2);
-    border:2px solid rgba(255,255,255,.75); border-radius:.62em;
-    background:rgba(23,74,116,.24); color:#fff; text-shadow:0 1px 2px rgba(25,70,110,.35);}
-  header.sky[data-sky="day"] .wakechip, header.sky[data-sky="morning"] .wakechip{background:rgba(20,66,108,.3);}
-  header.sky[data-sky="dusk"] .wakechip{background:rgba(40,18,52,.44);}
-  header.sky[data-sky="night"] .wakechip{background:rgba(6,18,40,.52);}
-  header.sky .wakechip.show{display:inline-flex; align-items:center; gap:.22em;}
-
   /* --- 아랫줄: 브랜드 · 시계 · XP 패널 · 날씨 카드 ---
      시계는 왼쪽에 두고, XP 패널과 날씨 카드는 서로 붙여 오른쪽에 나란히 둔다.
      XP 패널의 margin-left:auto 가 남는 폭을 전부 시계 쪽으로 밀어내므로
@@ -1871,7 +1863,6 @@
     .hgroup{min-width:0;}
     .datetab{min-width:0;}
     .datetab .dtop{flex-wrap:wrap;row-gap:3px;max-width:100%;}
-    .wakechip{font-size:9.5px;padding:1px 6px;}
   }
   /* 낮은 화면에서도 부모 확인 창이 잘리지 않게 */
   @media (max-height:720px){
@@ -2271,7 +2262,6 @@
         <button class="tab" id="tabDex">📕 도감<span class="tbadge" id="dexBadge">0</span></button>
       </div>
       <div class="spacer"></div>
-      <span class="wakechip" id="wakeChip">🔆 화면 켜짐 유지</span>
       <button class="soundbtn on" id="soundBtn" type="button" aria-pressed="true" title="효과음 켜기/끄기">🔊 소리 켜짐</button>
       <button class="powerbtn" id="powerBtn" type="button" aria-pressed="true" title="사용 ON · 부모 비밀번호로 끌 수 있어요">🟢 ON</button>
       <button class="gear" id="gearBtn" title="설정">⚙️</button>
@@ -2714,10 +2704,6 @@
   </div>
 </div>
 
-<!-- 화면 켜짐 유지 대체 수단 (wakeLock 이 막히는 file:// 환경용, 무음·반복) -->
-<video id="keepAlive" src="data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwEAAAAAAATEEU2bdLpNu4tTq4QVSalmU6yBbk27i1OrhBZUrmtTrIGTTbuMU6uEH0O2dVOsggETTbuMU6uEHFO7a1OsggSx7K0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmoCrXsYMPQkBEiYRFBUszTYCGQ2hyb21lV0GGQ2hyb21lFlSua/uuuteBAXPFh6O16CqzCEODgQFV7oEBhoVWX1ZQOeCdsIEguoEgU8CBAVWwkFWxgQFVuYECVbqBDVW7gQGuvdeBAnPFh2d+gGegQO6DgQKGhkFfT1BVU2Oik09wdXNIZWFkAQIAAIC7AAAAAADhjbWERzuAAJ+BAmJkgSAfQ7Z1AQAAAAAAA5LngQCgQLuh3YEAAACCSYNCUAHwAfYIOCQcGGIAACBAACLb//917obXxX/GW2l8HU/F3OnL6lbM5I6yEWOeiDGLD2F///lbAPGtJKZ+EhOuYxVJN3UAdp6gTLvA0nl5YncuNqYAAHWh2abX7oEBpdKCSYNCAAHwAfYaOCQcGPwAACBAACe///vWE9nUjMO97U0O4fb5HUrocukI8vbakmvXDUP//zZEJfjfhLgq8B6va/XpKpYYVja0npV/AWMHgAAAo5OCACOAGAL5LmgvIUrMS8Rw4DOoo5KCAF2AGAHxrMOM2AvXBba9ENKjkoIAooAYAfGsw4zYC9cFtr0Q0qOSggDWgBgB8azDjNgL1wW2vRDSo5KCARGAGAHxrMOM2AvXBba9ENKjkoIBVoAYAfGsw4zYC9cFtr0Q0qOSggGKgBgB8azDjNgL1wW2vRDSo5KCAcWAGAHxrMOM2AvXBba9ENKjkoICCoAYAfGsw4zYC9cFtr0Q0qOSggI+gBgB8azDjNgL1wW2vRDSo5KCAnmAGAHxrMOM2AvXBba9ENKjkoICvoAYAfGsw4zYC9cFtr0Q0qOSggLygBgB8azDjNgL1wW2vRDSo5KCAy2AGAHxrMOM2AvXBba9ENKjkoIDcoAYAfGsw4zYC9cFtr0Q0qOSggOmgBgB8azDjNgL1wW2vRDSo5KCA+GAGAHxrMOM2AvXBba9ENKjkoIEJoAYAfGsw4zYC9cFtr0Q0qOSggRagBgB8azDjNgL1wW2vRDSo5KCBJWAGAHxrMOM2AvXBba9ENKjkoIE2oAYAfGsw4zYC9cFtr0Q0qOSggUOgBgB8azDjNgL1wW2vRDSo5KCBUmAGAHxrMOM2AvXBba9ENKjkoIFhIAYAfGsw4zYC9cFtr0Q0qOSggXCgBgB8azDjNgL1wW2vRDSo5KCBf2AGAHxrMOM2AvXBba9ENKjkoIGOIAYAfGsw4zYC9cFtr0Q0qOSggZ2gBgB8azDjNgL1wW2vRDSo5KCBrGAGAHxrMOM2AvXBba9ENKjkoIG7YAYAfGsw4zYC9cFtr0Q0qOSggcrgBgB8azDjNgL1wW2vRDSo5KCB2aAGAHxrMOM2AvXBba9ENKjkoIHoYAYAfGsw4zYC9cFtr0Q0qOSggfegBgB8azDjNgL1wW2vRDSo5KCCBmAGAHxrMOM2AvXBba9ENKjkoIIVIAYAfGsw4zYC9cFtr0Q0hxTu2uOu4yzgQC3h/eBAfGCARM=" loop playsinline preload="auto" aria-hidden="true"
-       style="position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:.01;pointer-events:none;"></video>
-
 <!-- 부모 확인 (PIN) -->
 <div class="overlay pinoverlay" id="pinOverlay">
   <div class="modal pinmodal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
@@ -2795,11 +2781,6 @@
         <button class="pbtn pmode" type="button" data-set-mode="vacation" aria-pressed="false">🏖️ 방학</button>
       </div>
       <span class="phint">테스트 시간은 화면을 미리 보는 값이에요. 아이가 한 기록·보상은 그대로 남습니다.</span>
-
-      <!-- v62 — 🔆 화면 켜짐 유지: 진행 중인 루틴 시간에만 켜지고 끝나면 저절로 꺼진다 -->
-      <div class="psec">🔆 화면 켜짐 유지</div>
-      <div class="pnow" id="wakeNow">확인하는 중…</div>
-      <span class="phint">진행 중인 루틴 시간에 할 일이 남아 있을 때만 켜지고, 루틴을 다 끝내거나 시간이 지나면 배터리 보호를 위해 자동으로 꺼져요. 완료 체크를 풀거나 다음 루틴 시간이 되면 다시 켜져요.</span>
 
       <!-- v45 — 루틴별 파트너 대화 횟수 초기화 -->
       <div class="psec">💬 파트너 대화</div>
@@ -4075,7 +4056,6 @@ function toggleTask(i, forceOn){
   /* 완료해 둔 루틴의 체크를 하나라도 풀면, 그 루틴이 준 경험치와 오늘 잡은 포켓몬을 함께 되돌린다 */
   const returned = (!rd.tasks[i] && was) ? revokeRoutineReward(key) : null;
   save(); renderTasks(); renderProgress();
-  syncWake();                              // v62 — 루틴을 다 끝내면 바로 끄고, 체크를 풀면 바로 다시 켠다
   if(rd.tasks[i] && !was) checkAllComplete();
   if(key === 'night') syncNightReward();   // 9:40 전 취침 완료 → 강화권 5번 세기
   if(returned){
@@ -5329,7 +5309,6 @@ function setMode(id, opts){
   renderModePills();
   renderProgress();
   renderTasks();
-  initWake();
   if(!opts.silent) toast(`${MODE_DEFS[id].label} 모드로 바꿨어요!`);
 }
 document.getElementById('modes').addEventListener('click', e=>{
@@ -5340,159 +5319,6 @@ document.getElementById('modes').addEventListener('click', e=>{
   if(target === modeId){ blip(); return; }      // 이미 켜진 모드를 다시 누르면 그냥 둔다
   /* 오늘 모드는 부모님만 바꿀 수 있다 — 실수로 아이가 눌러도 그대로 */
   askPin(()=> setMode(target));
-});
-
-/* ---------- 화면 켜짐 유지 (아침 루틴 시간 동안) ----------
-   Galaxy Tab S9에서 아침 루틴을 보는 동안 화면이 꺼지지 않게 한다.
-   1순위 Screen Wake Lock API, 2순위(파일로 열었을 때) 무음·반복 동영상. */
-let wakeLockObj = null, wakePending = false, wakeNativeBlocked = false, wakeRetryAt = 0;
-let keepVideo = null, keepVideoPlaying = false, keepVideoArmed = false;
-
-/* v62 — 화면 켜짐 유지는 '지금 진행 중인 루틴 시간'에만 켠다.
-     · 아침: 시작 10분 전 ~ 출발(마감) 30분 뒤
-     · 오후(하교·방과후 정리): 시작 10분 전 ~ 끝(없으면 취침 시작 21:00)
-     · 취침: 21:00 10분 전 ~ 21:40
-     그 밖(휴식 화면·루틴과 루틴 사이)은 null → 절대 켜지 않는다.
-     루틴이 끝나면 배터리를 아끼도록 스스로 꺼지고, 다시 진행 중인 루틴 시간이
-     되면(다음 루틴 시작·완료 체크 해제) syncWake 가 다시 잡는다. */
-function wakeWindow(){
-  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
-  const key = routineKeyAt();
-  if(key === 'morning') return { key, start: WAKE - 10, end: DEPART + 30 };
-  if(key === 'after')   return { key, start: (M.afterFrom || 16*60) - 10, end: (M.afterTo || NIGHT_START) };
-  if(key === 'night')   return { key, start: NIGHT_START - 10, end: NIGHT_BED };
-  return null;
-}
-function wakeWanted(){        // 진행 중인 루틴 시간대 + 아직 안 끝난 할 일이 있을 때만
-  if(!appOn()) return false;                        // 🔴 OFF(잠금) 상태에서는 배터리를 쓰지 않는다
-  const w = wakeWindow();
-  if(!w) return false;                              // 휴식 화면 — 켜지 않는다
-  const now = nowMinutes();
-  if(now < w.start || now > w.end) return false;    // 루틴 시간대가 끝났다
-  const rd = rday(w.key);
-  return rd.tasks.length > 0 && rd.tasks.some(v => !v);   // 할 일을 다 끝냈으면 끈다
-}
-/* 루틴 이름 — 설정 화면 안내 문구용 */
-const WAKE_KEY_LABEL = { morning:'아침', after:'오후', night:'취침' };
-function updateWakeChip(){
-  const chip = document.getElementById('wakeChip');
-  if(!chip) return;
-  const on = !!wakeLockObj || keepVideoPlaying;
-  chip.classList.toggle('show', on);
-  if(on){
-    chip.textContent = '🔆 화면 켜짐 유지';
-    chip.title = wakeLockObj
-      ? '진행 중인 루틴 시간에만 켜져요 — 루틴을 다 끝내거나 시간이 지나면 배터리 보호를 위해 저절로 꺼져요'
-      : '진행 중인 루틴 시간에만 켜져요 — 루틴을 다 끝내거나 시간이 지나면 배터리 보호를 위해 저절로 꺼져요 (동영상 방식)';
-  }
-  renderWakeStatus();          // 부모 설정을 열어 두었으면 상태 안내도 같이 맞춘다
-}
-/* 부모 설정 > 🧪 테스트 탭의 '🔆 화면 켜짐 유지' 상태 안내 */
-function renderWakeStatus(){
-  const el = document.getElementById('wakeNow');
-  if(!el) return;
-  if(!panel.classList.contains('show') || panelTab !== 'time') return;   // 안 보이면 글자만 만들지 않는다
-  const on = !!wakeLockObj || keepVideoPlaying;
-  const w = wakeWindow();
-  const left = w ? rday(w.key).tasks.filter(v => !v).length : 0;
-  let html;
-  if(on){
-    html = `지금 <b>켜짐</b> — ${WAKE_KEY_LABEL[w ? w.key : routineKeyAt()] || ''} 루틴 ${left}개 남았어요`;
-  }else if(!appOn()){
-    html = '지금 <b>꺼짐</b> — 앱이 OFF(잠금) 상태예요';
-  }else if(!w){
-    html = '지금 <b>꺼짐</b> — 진행 중인 루틴 시간이 아니에요 (휴식)';
-  }else if(left === 0){
-    html = '지금 <b>꺼짐</b> — 루틴을 다 끝내서 배터리 보호로 저절로 꺼졌어요';
-  }else{
-    html = '지금 <b>꺼짐</b> — 이 환경에서는 화면 잠금을 잡지 못했어요';
-  }
-  el.innerHTML = html;
-}
-async function acquireWakeLock(){
-  if(!wakeWanted() || wakePending || wakeLockObj) return;
-  if(!('wakeLock' in navigator) || !navigator.wakeLock){ wakeNativeBlocked = true; updateWakeChip(); return; }
-  if(wakeNativeBlocked && Date.now() < wakeRetryAt) return;
-  wakePending = true;
-  try{
-    const wl = await navigator.wakeLock.request('screen');
-    wakeLockObj = wl;
-    wakeNativeBlocked = false;
-    wl.addEventListener('release', ()=>{
-      if(wakeLockObj === wl){ wakeLockObj = null; updateWakeChip(); }
-    });
-    stopKeepVideo();               // 화면 잠금을 잡았으면 동영상 방식은 끈다
-  }catch(err){
-    wakeNativeBlocked = true;      // file://·권한·정책으로 막힌 경우 → 동영상 방식
-    wakeRetryAt = Date.now() + 60000;
-  }
-  wakePending = false;
-  updateWakeChip();
-}
-function releaseWakeLock(){
-  const w = wakeLockObj;
-  wakeLockObj = null;
-  if(w) { try{ w.release(); }catch(e){} }
-  updateWakeChip();
-}
-function ensureKeepVideo(){
-  if(keepVideo) return keepVideo;
-  keepVideo = document.getElementById('keepAlive');
-  if(!keepVideo) return null;
-  keepVideo.addEventListener('playing', ()=>{ keepVideoPlaying = true; updateWakeChip(); });
-  keepVideo.addEventListener('pause',   ()=>{ keepVideoPlaying = false; updateWakeChip(); });
-  keepVideo.addEventListener('ended',   ()=>{ keepVideoPlaying = false; updateWakeChip(); });
-  return keepVideo;
-}
-function startKeepVideo(){
-  const v = ensureKeepVideo();
-  if(!v || keepVideoPlaying) return;
-  /* 무음 트랙이 들어 있어 소리는 나지 않는다. 첫 터치 안에서 시작하면 소리 있는 재생도 허용된다. */
-  try{
-    v.muted = false;
-    const p = v.play();
-    if(p && p.catch) p.catch(()=>{
-      try{ v.muted = true; const p2 = v.play(); if(p2 && p2.catch) p2.catch(()=>{}); }catch(e){}
-    });
-  }catch(e){
-    try{ v.muted = true; v.play(); }catch(e2){}
-  }
-}
-function stopKeepVideo(){
-  if(keepVideo){
-    try{ keepVideo.pause(); }catch(e){}
-  }
-  keepVideoPlaying = false;
-  updateWakeChip();
-}
-/* 첫 터치에서 동영상 방식을 준비 (안드로이드 자동재생 정책) */
-function armKeepVideo(){
-  if(keepVideoArmed) return;
-  keepVideoArmed = true;
-  ensureKeepVideo();
-  if(wakeWanted() && !wakeLockObj) startKeepVideo();
-}
-function syncWake(){
-  if(!wakeWanted()){
-    if(wakeLockObj) releaseWakeLock();
-    if(keepVideoPlaying) stopKeepVideo();
-  }else{
-    if(document.visibilityState === 'visible' && !wakeLockObj) acquireWakeLock();
-    if(!wakeLockObj && (wakeNativeBlocked || !('wakeLock' in navigator)) && keepVideoArmed && !keepVideoPlaying) startKeepVideo();
-  }
-  renderWakeStatus();
-}
-function initWake(){
-  wakeNativeBlocked = !('wakeLock' in navigator);
-  syncWake();
-}
-document.addEventListener('pointerdown', armKeepVideo, {passive:true});
-document.addEventListener('click', armKeepVideo, {passive:true});
-document.addEventListener('visibilitychange', ()=>{   // 탭으로 돌아오면 다시 잡는다
-  if(document.visibilityState !== 'visible' || !wakeWanted()) return;
-  wakeRetryAt = 0;
-  acquireWakeLock();
-  if(keepVideoArmed && !wakeLockObj && (wakeNativeBlocked || !('wakeLock' in navigator))) startKeepVideo();
 });
 
 /* ---------- weather ---------- */
@@ -7068,7 +6894,7 @@ function switchPanelTab(name, opts){
   });
   panel.querySelectorAll('.ppane').forEach(p=> p.classList.toggle('show', p.dataset.ppane === name));
   if(name === 'say'){ renderAffirmSettings(); renderMissionSettings(); }
-  if(name === 'time'){ renderPanelStatus(); renderPanelMode(); renderWakeStatus(); }
+  if(name === 'time'){ renderPanelStatus(); renderPanelMode(); }
   if(name === 'reward'){ renderFruitSettings(); }        // 🍎 v48 — 열 때마다 지금 보유량으로 맞춘다
   const body = document.getElementById('setBody');
   if(body && !(opts && opts.silent)) body.scrollTop = 0;
@@ -7414,7 +7240,6 @@ function renderPower(){
 function setAppEnabled(on, src){
   state.appEnabled = !!on;
   save(); renderPower();
-  syncWake();                               // v62 — OFF 로 잠그면 화면 켜짐 유지도 바로 끓다
   const remote = src === 'sheet';           // 시트 원격 제어로 바뀐 경우
   if(on){ blip(); toast(remote ? '🟢 사용 ON — 부모님이 시트에서 켰어요!' : '🟢 사용 ON — 이제 루틴을 할 수 있어요!'); }
   else { toast(remote ? '🔴 사용 OFF — 부모님이 시트에서 껐어요' : '🔴 사용 OFF — 지금은 잠금 화면이에요'); }
@@ -7579,7 +7404,7 @@ function setPreview(v){
     save();
     toast(`⏰ 미리보기 ${v}`);
   }
-  tick(true);
+  tick();
   renderStudy();
   return true;
 }
@@ -7593,7 +7418,7 @@ document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   state.routineCatch = null;           // 오늘 잡은 포켓몬 기록도 비운다 (도감은 그대로 둔다)
   revertNightCount({ silent:true });   // 오늘 취침 완료로 올린 별 하나도 함께 되돌린다
   save();
-  buildTasks(); renderProgress(); syncWake();
+  buildTasks(); renderProgress();
   renderStudy(); renderDex();
   toast('오늘 할 일과 경험치를 리셋했어요');
 }));
@@ -7707,7 +7532,7 @@ function restoreData(file){
       renderAffirm(); renderAffirmSettings(); renderMissionSettings();
       renderPanelMode(); renderPanelStatus();
       renderFruitBadge(); updatePartnerPopup();     // 🍎 백업에 담긴 과일 수를 바로 반영
-      tick(true);
+      tick();
       toast('✅ 백업을 불러왔어요');
     }catch(e){
       toast('⚠️ 백업 파일을 읽을 수 없어요 (.json 확인)');
@@ -7736,7 +7561,7 @@ document.getElementById('resetAll').addEventListener('click', parentOnly(()=>{
     curRKey = null;
     renderTasks(); renderWild(); renderDex(); renderStudy(); renderMission();
     renderFruitBadge(); updatePartnerPopup();       // 🍎 과일도 0으로
-    tick(true);
+    tick();
     toast('전체 초기화 완료');
   }
 }));
@@ -7954,9 +7779,8 @@ function syncRoutine(){
   try{ ppSyncTalkBtn(); }catch(e){}  // v50 — 루틴이 바뀌면 대화권도 새로 열린다
   return true;
 }
-let wakeAcc = 0;
 let curMissionDay = todayKey();
-function tick(force){
+function tick(){
   renderClock();
   syncRoutine();
   if(rollXpDay()) renderWild();      // 자정을 넘기면 경험치가 0으로
@@ -7973,8 +7797,6 @@ function tick(force){
   /* 아침 마감 알림 — 방과후·공휴일 모드는 마감 뒤 대기·휴식 화면으로 넘어가지만 알림은 그대로 울린다 */
   if(now < DEPART + 15) checkDepartAlert(now);
   checkNightStart(now);              // 21:00 취침 시작음·안내 (하루 한 번)
-  if(force){ wakeAcc = 0; syncWake(); }
-  else if(++wakeAcc >= 4){ wakeAcc = 0; syncWake(); }   // 1초에 한 번만 확인
 }
 setInterval(tick, 250);
 
@@ -8005,7 +7827,6 @@ setInterval(()=>{
   sheetFetch('poll');
 }, SHEET_POLL_MS);document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) sheetFetch('visible'); });
 window.addEventListener('focus', ()=> sheetFetch('focus'));
-initWake();             // 아침 루틴 시간대면 화면 켜짐 유지 시작
 ensureMissionAudio();   // 미션 효과음 미리 준비 (data URI라 즉시)
 /* 저장해 둔 날씨를 먼저 그려 네트워크를 기다리지 않게 한다 */
 (function paintCachedWeather(){
