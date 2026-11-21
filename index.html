@@ -419,6 +419,12 @@
     header.sky .hxp-partner .hxp-lab b.l6{font-size:1.35em;}
     header.sky .hxp-tk{font-size:1.2em;}
     header.sky .hxp-boost .hxp-lab{gap:.18em;}
+    /* v60 — 폭이 좁은 세로 화면에서는 글자 폭이 넓은 웹폰트가 '이상해씨'와 '0/8'을 밀어낸다.
+       '다음 목표' 라벨을 감추는 기존 방식과 같이 '강화 XP' 낱말도 감추고,
+       ⚡ 아이콘·개수·강화권은 그대로 둔다. 숫자와 이름은 줄어들지 않게 한다. */
+    header.sky .hxp-boost .hxp-word{display:none;}
+    header.sky .hxp-boost .hxp-lab b,
+    header.sky .hxp-routine .hxp-lab b{flex:0 0 auto;}
   }
 
   /* ===== v42 — 파트너 터치 응원: 카드를 누르면 파트너가 폴짝 뛰고 말풍선이 뜬다 ===== */
@@ -2307,7 +2313,7 @@
         </div>
         <!-- 오른쪽 열 아래 — ⚡ 강화 XP (위 칸과 너비가 같다) -->
         <div class="hxp-card hxp-boost" id="hxpBoost" title="⚡ 강화 XP 8개를 모으면 포켓몬 강화권 1장">
-          <div class="hxp-lab"><span>⚡ 강화 XP</span><b id="hxpCnt">0/8</b><span class="hxp-tk" id="hxpTicket">🎟 0장</span></div>
+          <div class="hxp-lab"><span class="hxp-k">⚡<span class="hxp-word"> 강화 XP</span></span><b id="hxpCnt">0/8</b><span class="hxp-tk" id="hxpTicket">🎟 0장</span></div>
           <div class="hxp-gauge" id="hxpGauge" aria-hidden="true"></div>
         </div>
       </div>
