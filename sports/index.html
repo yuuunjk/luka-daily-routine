@@ -545,6 +545,16 @@
         <button class="teambtn" id="hardRefreshBtn" style="width:100%;min-height:52px;font-size:19px">🔄 웹앱 새로고침</button>
       </div>
       <div class="panel">
+        <h3>💾 데이터 백업 · 불러오기</h3>
+        <p class="hint">우리 팀·승부예측 기록·잠금 시간 같은 설정을 JSON 파일 하나로 저장해요. 새 기기로 옮기거나 되돌릴 때 써요.<br>불러오면 지금 기록이 백업 파일 내용으로 바뀌어요.</p>
+        <div class="btnrow">
+          <button class="teambtn" id="backupBtn" type="button" style="min-height:52px;font-size:19px">💾 백업하기</button>
+          <button class="teambtn" id="restoreBtn" type="button" style="min-height:52px;font-size:19px">📂 불러오기</button>
+          <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+        </div>
+        <p class="hint" id="backupNote" style="margin-top:10px;margin-bottom:0">부모 비밀번호는 파일에 담지 않아요 (시트에서 다시 받아 와요).</p>
+      </div>
+      <div class="panel">
         <h3>⏱️ 자동 새로고침</h3>
         <p class="hint">앱을 켜 두면 이 간격으로 새 소식을 받아요.</p>
         <div class="seg" id="intervalSeg"></div>
@@ -574,16 +584,6 @@
         <div class="row"><span class="k">채점한 경기</span><span class="v" id="sPredTotal">-</span></div>
         <div class="row"><span class="k">기다리는 예측</span><span class="v" id="sPredPending">-</span></div>
         <button class="ghost" id="resetPredBtn">예측 기록 지우기</button>
-      </div>
-      <div class="panel">
-        <h3>💾 데이터 백업 · 불러오기</h3>
-        <p class="hint">우리 팀·승부예측 기록·잠금 시간 같은 설정을 JSON 파일 하나로 저장해요. 새 기기로 옮기거나 되돌릴 때 써요.<br>불러오면 지금 기록이 백업 파일 내용으로 바뀌어요.</p>
-        <div class="btnrow">
-          <button class="teambtn" id="backupBtn" type="button" style="min-height:52px;font-size:19px">💾 백업하기</button>
-          <button class="teambtn" id="restoreBtn" type="button" style="min-height:52px;font-size:19px">📂 불러오기</button>
-          <input type="file" id="restoreFile" accept=".json,application/json" hidden>
-        </div>
-        <p class="hint" id="backupNote" style="margin-top:10px;margin-bottom:0">부모 비밀번호는 파일에 담지 않아요 (시트에서 다시 받아 와요).</p>
       </div>
       <div class="panel">
         <h3>🧹 초기화 (처음으로)</h3>
