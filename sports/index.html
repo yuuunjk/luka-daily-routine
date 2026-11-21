@@ -6,6 +6,7 @@
 <title>오늘의 경기장</title>
 <meta name="description" content="오늘의 경기장 — 오늘 경기, 순위, 주요 소식을 우리 아이 눈높이로.">
 <meta name="theme-color" content="#2563eb">
+<link rel="preload" href="./assets/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./app-icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="./app-icon-180.png">
@@ -17,8 +18,10 @@
      기기 기본 글꼴(갤럭시탭의 둥근 손글씨체) 대신 네모 반듯한 글꼴로 보여 준다. */
   @font-face{
     font-family:"Pretendard";
-    src:url("./assets/fonts/PretendardVariable.woff2") format("woff2-variations");
-    font-weight:45 920;
+    /* 두 표기를 나란히 적는다 — 한쪽 표기를 모르는 브라우저도 폰트를 건너뛰지 않게 */
+    src:url("./assets/fonts/PretendardVariable.woff2") format("woff2-variations"),
+        url("./assets/fonts/PretendardVariable.woff2") format("woff2");
+    font-weight:45 920;        /* Pretendard 가변 폰트의 실제 굵기 범위(Thin~Black) */
     font-style:normal;
     font-display:swap;
   }
@@ -32,6 +35,12 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0;}
+  /* 글꼴은 상속에만 기대지 않고 모든 요소에 직접 적는다.
+     삼성 인터넷 ‘기기 글꼴을 웹페이지에 사용’(설정 → 실험실)이 켜진 갤럭시탭에서는
+     html·body 에만 적어 두면 아래 요소들로 기기 글꼴이 상속돼 들어오기 때문이다. */
+  *, *::before, *::after{
+    font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
+  }
   body, button, input, select, textarea{
     font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
     font-variant-numeric: tabular-nums;   /* 점수·순위 숫자 폭을 똑같이 맞춘다 */
@@ -415,6 +424,8 @@
   .seg button{border:2px solid var(--line); background:#fff; border-radius:999px; padding:8px 14px;
     font-size:17px; font-weight:800; color:var(--sub); min-height:44px;}
   .seg button.on{background:var(--blue); border-color:var(--blue); color:#fff;}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap;}
+  .btnrow .teambtn{flex:1 1 0; min-width:0; justify-content:center;}
   .ghost{background:#fff; border:2px solid var(--line); border-radius:999px; padding:10px 18px;
     font-weight:800; color:var(--red); min-height:48px;}
 
@@ -563,6 +574,16 @@
         <div class="row"><span class="k">채점한 경기</span><span class="v" id="sPredTotal">-</span></div>
         <div class="row"><span class="k">기다리는 예측</span><span class="v" id="sPredPending">-</span></div>
         <button class="ghost" id="resetPredBtn">예측 기록 지우기</button>
+      </div>
+      <div class="panel">
+        <h3>💾 데이터 백업 · 불러오기</h3>
+        <p class="hint">우리 팀·승부예측 기록·잠금 시간 같은 설정을 JSON 파일 하나로 저장해요. 새 기기로 옮기거나 되돌릴 때 써요.<br>불러오면 지금 기록이 백업 파일 내용으로 바뀌어요.</p>
+        <div class="btnrow">
+          <button class="teambtn" id="backupBtn" type="button" style="min-height:52px;font-size:19px">💾 백업하기</button>
+          <button class="teambtn" id="restoreBtn" type="button" style="min-height:52px;font-size:19px">📂 불러오기</button>
+          <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+        </div>
+        <p class="hint" id="backupNote" style="margin-top:10px;margin-bottom:0">부모 비밀번호는 파일에 담지 않아요 (시트에서 다시 받아 와요).</p>
       </div>
       <div class="panel">
         <h3>🧹 초기화 (처음으로)</h3>
@@ -2497,6 +2518,88 @@ async function hardRefreshApp(){
   location.replace(base);            // 쿼리 없이 깨끗한 주소로 다시 연다
 }
 
+/* ── 💾 백업 / 📂 불러오기 ────────────────
+   기기에 저장된 스포츠 설정(sports.* )을 JSON 파일 하나로 내려받고 다시 넣는다.
+   · 부모 비밀번호 캐시(sports.parentPin)와 이번 밤 해제 표시(sports.nightUnlock)는 뻔다 —
+     비번이 파일에 적히지 않게 하고, 비번은 어차피 시트에서 다시 받아 오기 때문이다. */
+const BACKUP_APP = "sports-dashboard";
+const BACKUP_SKIP = new Set(["sports.parentPin", "sports.nightUnlock"]);
+function sportsKeys(){
+  const keys = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (k && k.indexOf("sports.") === 0 && !BACKUP_SKIP.has(k)) keys.push(k);
+    }
+  } catch {}
+  return keys.sort();
+}
+function backupSports(){
+  const data = {};
+  for (const k of sportsKeys()){
+    try { data[k] = localStorage.getItem(k) ?? ""; } catch {}
+  }
+  const d = kstNow();
+  const stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const payload = {
+    app: BACKUP_APP, name: "오늘의 경기장", version: 1,
+    savedAt: new Date().toISOString(), keys: data,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `sports-backup-${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast(`💾 백업 파일을 내려받았어요 — 우리 팀 ${state.favorites.length}개 · 예측 ${Object.keys(state.preds).length}건`);
+}
+/* 백업에 담긴 값을 state 와 화면에 바로 반영한다 (새로고침 없이) */
+function applyRestoredState(){
+  state.favorites = loadFav();
+  state.preds = loadPreds();
+  const iv = Number(localStorage.getItem("sports.interval"));
+  state.interval = Number.isFinite(iv) && iv >= 0 ? iv : 5;
+  state.liveMode = localStorage.getItem("sports.live") === "1";
+  state.rankMode = localStorage.getItem("sports.rankMode") === "player" ? "player" : "team";
+  state.appEnabled = loadAppEnabled();
+  state.nightUnlockKey = loadNightUnlockKey();
+  state.nightFrom = loadClockPref(NIGHT_FROM_KEY, NIGHT_DEFAULT_FROM);
+  state.nightTo = loadClockPref(NIGHT_TO_KEY, NIGHT_DEFAULT_TO);
+  state.standingSport = null;              /* 순위 탭의 리그 선택은 데이터에 맞춰 다시 고른다 */
+  state.league = null;
+  nightWasLocked = appLocked();
+  renderNightLock();
+  renderAll();
+  setupTimer(); setupLive();
+}
+function restoreSports(file){
+  const fr = new FileReader();
+  fr.onload = () => {
+    let obj;
+    try { obj = JSON.parse(String(fr.result)); }
+    catch { toast("⚠️ 백업 파일을 읽을 수 없어요 (.json 파일인지 확인해 주세요)"); return; }
+    /* {app, keys:{...}} 형식과, sports.* 만 담긴 객체 둘 다 받는다 */
+    const map = (obj && typeof obj === "object" && obj.keys && typeof obj.keys === "object") ? obj.keys : obj;
+    const pairs = [];
+    if (map && typeof map === "object" && !Array.isArray(map)){
+      for (const k of Object.keys(map)){
+        if (k.indexOf("sports.") !== 0 || BACKUP_SKIP.has(k)) continue;
+        const raw = map[k];
+        if (raw == null) continue;
+        pairs.push([k, typeof raw === "string" ? raw : JSON.stringify(raw)]);
+      }
+    }
+    if (!pairs.length){ toast("⚠️ 오늘의 경기장 백업 파일이 아니에요"); return; }
+    /* 지금 기기의 스포츠 설정을 백업 내용으로 바꾼다 */
+    for (const k of sportsKeys()){ try { localStorage.removeItem(k); } catch {} }
+    for (const [k, v] of pairs){ try { localStorage.setItem(k, v); } catch {} }
+    applyRestoredState();
+    toast(`✅ 백업을 불러왔어요 — 우리 팀 ${state.favorites.length}개 · 예측 ${Object.keys(state.preds).length}건`);
+  };
+  fr.onerror = () => toast("⚠️ 파일을 읽지 못했어요");
+  fr.readAsText(file);
+}
+
 /* ── 이벤트 연결 ─────────────────────── */
 let showTabGlobal = null;            // 부모님 확인을 거친 뒤 설정 탭을 열기 위해 바깥에 둔다
 function openSettingsTab(){ if (showTabGlobal) showTabGlobal("settings"); }
@@ -2597,6 +2700,18 @@ function bind(){
     setupTimer(); setupLive(); renderAll();
   };
   $("#hardRefreshBtn").onclick = hardRefreshApp;
+  $("#backupBtn").onclick = backupSports;
+  $("#restoreBtn").onclick = () => {
+    const f = $("#restoreFile");
+    if (!f) return;
+    f.value = "";                       // 같은 파일을 다시 골라도 읽도록
+    f.click();
+  };
+  $("#restoreFile").onchange = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) restoreSports(f);
+    e.target.value = "";
+  };
   $("#nightSaveBtn").onclick = saveNightRange;
   $("#resetPredBtn").onclick = () => {
     if (!Object.keys(state.preds).length){ alert("지울 예측 기록이 없어요."); return; }
