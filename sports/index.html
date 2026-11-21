@@ -468,6 +468,121 @@
     td.teamcell{font-size:18px;}
     .grid{grid-template-columns:1fr;}
   }
+
+  /* ══ 선수 카드 팝업 (1안 · 트레이딩 카드) ═══════════════════
+     순위 → 선수 순위 표에서 선수를 누르면 뜬다. 카드 하나는 436×610,
+     화면이 좁으면 통째로 줄여서(scale) 잘리지 않게 보여 준다. */
+  table.leadtable tbody tr.pc-tap{cursor:pointer; transition:background .12s ease;}
+  table.leadtable tbody tr.pc-tap:hover{background:var(--sky);}
+  table.leadtable tbody tr.pc-tap:active{background:#dbeafe;}
+  table.leadtable tbody tr.pc-tap:focus-visible{outline:3px solid var(--blue); outline-offset:-3px;}
+  body.pc-lock{overflow:hidden;}
+
+  .pc-overlay{
+    position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center; padding:14px;
+    background:radial-gradient(120% 100% at 50% 0%, rgba(10,20,40,.44), rgba(5,10,22,.70));
+    -webkit-backdrop-filter:blur(4px) saturate(1.04); backdrop-filter:blur(4px) saturate(1.04);
+    animation:pc-fade .2s ease-out;
+  }
+  @keyframes pc-fade{from{opacity:0} to{opacity:1}}
+  @keyframes pc-pop{from{opacity:0; transform:translateY(16px) scale(.96)} to{opacity:1; transform:none}}
+  .pc-shell{position:relative; display:inline-block;}
+  .pc-shell > .pc1-frame{animation:pc-pop .28s cubic-bezier(.2,.8,.25,1);}
+  .pc-close{
+    position:absolute; top:-17px; right:-17px; z-index:9; width:44px; height:44px; border-radius:999px;
+    display:grid; place-items:center; font-size:19px; font-weight:900; line-height:1; color:#fff;
+    background:rgba(13,22,38,.80); border:1.5px solid rgba(255,255,255,.5);
+    box-shadow:0 8px 20px rgba(0,0,0,.42); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+    cursor:pointer; padding:0;
+  }
+  .pc-close:hover{background:rgba(30,48,80,.95);}
+
+  /* 카드 테두리(홀로그램) */
+  .pc1-frame{
+    width:436px; height:610px; border-radius:30px; padding:6px;
+    background:conic-gradient(from 205deg, #ffffff 0deg, #cfe6ff 52deg, #ffe7bd 118deg,
+                #ffffff 168deg, #e2d5ff 232deg, #bfe9ff 288deg, #ffffff 360deg);
+    box-shadow:0 26px 60px rgba(3,10,26,.58), 0 2px 0 rgba(255,255,255,.6) inset;
+  }
+  .pc1-card{
+    position:relative; width:100%; height:100%; border-radius:24px; overflow:hidden; color:#fff;
+    background:
+      radial-gradient(95% 52% at 50% 42%, color-mix(in srgb, var(--c-light) 45%, transparent) 0%, transparent 68%),
+      linear-gradient(168deg, var(--c-dark) 0%, var(--c-main) 48%, #060b16 100%);
+    box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35);
+  }
+  .pc1-card::before{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:4; mix-blend-mode:soft-light;
+    background:linear-gradient(118deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,0) 26%),
+               linear-gradient(-52deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 22%),
+               repeating-linear-gradient(112deg, rgba(255,255,255,.055) 0 1.5px, transparent 1.5px 9px);
+  }
+  .pc1-card::after{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:3; opacity:.5;
+    background:radial-gradient(1.8px 1.8px at 22% 18%, #fff 50%, transparent 52%),
+               radial-gradient(1.6px 1.6px at 76% 11%, #fff 50%, transparent 52%),
+               radial-gradient(1.4px 1.4px at 88% 33%, #fff 50%, transparent 52%),
+               radial-gradient(1.8px 1.8px at 12% 42%, #fff 50%, transparent 52%),
+               radial-gradient(1.4px 1.4px at 64% 26%, #fff 50%, transparent 52%);
+  }
+  .pc1-top{position:relative; z-index:6; display:flex; align-items:flex-start; justify-content:space-between;
+    gap:10px; padding:19px 18px 0 21px;}
+  .pc1-eyebrow{font-size:13.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase;
+    color:rgba(255,255,255,.82); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .pc1-name{margin:4px 0 0; font-size:34px; font-weight:900; letter-spacing:-.9px; line-height:1.08;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 2px 10px rgba(0,0,0,.38);}
+  .pc1-en{margin-top:4px; font-size:12.5px; font-weight:800; letter-spacing:.05em; opacity:.75;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase;}
+  .pc1-crest{width:54px; height:54px; border-radius:999px; background:rgba(255,255,255,.95); flex:none;
+    display:grid; place-items:center; box-shadow:0 6px 16px rgba(0,0,0,.32);}
+  .pc1-crest img{width:37px; height:37px; object-fit:contain;}
+  .pc1-rarity{
+    position:absolute; left:20px; top:112px; z-index:7; display:inline-flex; align-items:center; gap:5px;
+    padding:5px 11px 5px 9px; border-radius:999px; font-size:13px; font-weight:900; letter-spacing:.01em;
+    color:#3a2a00; background:linear-gradient(100deg,#ffe9a8,#ffd463 55%,#ffe9a8);
+    box-shadow:0 3px 10px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.72);
+  }
+  .pc1-stage{position:absolute; left:0; right:0; top:92px; bottom:172px; z-index:2;
+    display:flex; align-items:flex-end; justify-content:center; overflow:hidden;}
+  .pc1-stage::after{content:""; position:absolute; left:0; right:0; bottom:0; height:66px; z-index:3;
+    background:linear-gradient(180deg, transparent, rgba(4,9,18,.55));}
+  .pc1-halo{position:absolute; left:50%; top:46%; width:350px; height:350px; transform:translate(-50%,-50%);
+    background:radial-gradient(circle, rgba(255,255,255,.42) 0%, rgba(255,255,255,.10) 44%, transparent 70%);
+    filter:blur(2px);}
+  .pc1-numghost{position:absolute; right:-6px; bottom:-26px; font-size:214px; font-weight:900; line-height:.8;
+    letter-spacing:-14px; color:rgba(255,255,255,.09); -webkit-text-stroke:1.5px rgba(255,255,255,.13);}
+  .pc1-photo{position:relative; z-index:2; height:100%; width:auto; max-width:100%; border-radius:18px;
+    object-fit:contain; object-position:bottom center; box-shadow:0 16px 30px rgba(0,0,0,.45);}
+  .pc1-jersey{position:relative; z-index:2; width:352px; max-height:104%; height:auto;
+    filter:drop-shadow(0 18px 26px rgba(0,0,0,.5));}
+  .pc1-crestghost{position:absolute; left:50%; top:42%; width:222px; height:222px; transform:translate(-50%,-50%);
+    object-fit:contain; opacity:.16; filter:saturate(.7);}
+  .pc1-panel{position:absolute; left:0; right:0; bottom:0; z-index:6; padding:15px 15px 15px;
+    background:linear-gradient(180deg, rgba(6,12,24,.10) 0%, rgba(6,12,24,.62) 26%, rgba(4,9,18,.92) 100%);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); border-top:1px solid rgba(255,255,255,.16);}
+  .pc1-stats{display:grid; grid-template-columns:repeat(3,1fr); gap:7px;}
+  .pc1-stat{text-align:center; padding:9px 4px 8px; border-radius:14px; background:rgba(255,255,255,.10);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);}
+  .pc1-stat .v{display:block; font-size:34px; font-weight:900; line-height:1.02; letter-spacing:-1px; color:#fff;
+    text-shadow:0 2px 8px rgba(0,0,0,.42);}
+  .pc1-stat .k{display:block; margin-top:3px; font-size:13.5px; font-weight:800; letter-spacing:.01em;
+    color:rgba(255,255,255,.76);}
+  .pc1-meta{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:11px; min-width:0;}
+  .pc1-chips{display:flex; align-items:center; gap:5px; flex-wrap:wrap; min-width:0;}
+  .pc1-chip{display:inline-flex; align-items:center; gap:4px; padding:5px 9px; border-radius:9px;
+    font-size:13.5px; font-weight:800; color:rgba(255,255,255,.93); white-space:nowrap;
+    background:rgba(255,255,255,.13); box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);}
+  .pc1-team{font-size:13.5px; font-weight:900; color:rgba(255,255,255,.9); flex:none;
+    display:inline-flex; align-items:center; gap:5px; white-space:nowrap;}
+  .pc1-team .pc-flag{width:26px; height:18px;}
+  .pc-flag{display:inline-block; width:26px; height:18px; border-radius:4px; object-fit:cover;
+    box-shadow:0 0 0 1.5px rgba(255,255,255,.55), 0 2px 6px rgba(0,0,0,.22); vertical-align:-3px; flex:none;}
+  .pc1-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:9px;
+    font-size:12px; font-weight:800; color:rgba(255,255,255,.62);}
+  .pc1-foot .src{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  @media (max-width:470px){
+    .pc-close{top:-14px; right:-10px; width:40px; height:40px; font-size:17px;}
+  }
 </style>
 </head>
 <body>
@@ -1457,6 +1572,163 @@ function renderStandings(){
 }
 
 /* ── 선수 순위 ───────────────────────────── */
+/* ══ 선수 카드 팝업 (1안 · 트레이딩 카드) ═══════════════════════
+   순위 → 선수 순위 표의 선수를 누르면 뜨는 카드.
+   카드에 필요한 값은 data/leaders.json 의 행에 함께 실려 온다
+   (등번호·포지션·키·몸무게·나이·국가·사진·시즌 기록 4개).
+   사진이 없으면(null) 팀 색 유니폼 + 등번호 + 팀 로고 + 국기로 그린다. */
+const PC_FALLBACK = "#24406f";
+let pcSeq = 0;
+let pcEl = null;
+
+function pcHex(v){ v = String(v || "").replace(/^#/, "").trim(); return /^[0-9a-f]{6}$/i.test(v) ? "#" + v : ""; }
+function pcRgb(hex){ return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)]; }
+function pcMix(a, b, t){
+  const A = pcRgb(a), B = pcRgb(b);
+  return "#" + [0,1,2].map(i => Math.round(A[i] * (1 - t) + B[i] * t).toString(16).padStart(2, "0")).join("");
+}
+function pcLum(hex){ const [r,g,b] = pcRgb(hex); return (0.299*r + 0.587*g + 0.114*b) / 255; }
+/* 카드 배경색 — 팀 대표 색에서 어두운 색·밝은 색을 만든다 */
+function pcTheme(row){
+  let main = pcHex(row.color) || pcHex(row.altColor) || PC_FALLBACK;
+  const alt = pcHex(row.altColor);
+  if (pcLum(main) < 0.12) main = (alt && pcLum(alt) > 0.28) ? alt : pcMix(main, "#5b7aa8", 0.5);   // 검은 유니폼 팀
+  if (pcLum(main) > 0.72) main = pcMix(main, "#0b1626", 0.55);      // 너무 밝은 팀 색은 카드 배경용으로 진하게
+  return { main, dark: pcMix(main, "#060b16", 0.62), light: pcMix(main, "#ffffff", 0.30) };
+}
+/* 사진이 없을 때: 팀 색 유니폼 + 큰 등번호 + 팀 로고 + 국기 패치 */
+function pcJerseySVG(row, t){
+  const id = "pcj" + (++pcSeq);
+  const num = esc(row.jersey || "");
+  const crest = esc(row.emblem || "");
+  const flag = esc(row.flag || "");
+  return `<svg class="pc1-jersey" viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(row.player || "")} 유니폼">
+    <defs>
+      <linearGradient id="${id}g" x1="0" y1="0" x2="0.35" y2="1">
+        <stop offset="0%" stop-color="${t.main}"/><stop offset="58%" stop-color="${t.main}"/>
+        <stop offset="100%" stop-color="${t.dark}"/>
+      </linearGradient>
+      <linearGradient id="${id}s" x1="0.1" y1="0" x2="0.9" y2="1">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity=".26"/>
+        <stop offset="42%" stop-color="#ffffff" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity=".26"/>
+      </linearGradient>
+    </defs>
+    <path d="M105 26 L56 44 L16 122 L60 150 L74 340 L226 340 L240 150 L284 122 L244 44 L195 26
+             C186 54 114 54 105 26 Z" fill="url(#${id}g)"/>
+    <path d="M105 26 L56 44 L16 122 L60 150 L74 340 L226 340 L240 150 L284 122 L244 44 L195 26
+             C186 54 114 54 105 26 Z" fill="url(#${id}s)"/>
+    <path d="M105 26 C114 54 186 54 195 26" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M16 122 L60 150" stroke="rgba(255,255,255,.55)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M284 122 L240 150" stroke="rgba(255,255,255,.55)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M74 340 L74 300 L226 300 L226 340" fill="rgba(0,0,0,.18)"/>
+    ${num ? `<text x="150" y="252" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="132"
+          font-weight="900" fill="#ffffff" opacity=".96" letter-spacing="-6">${num}</text>` : ""}
+    ${crest ? `<image href="${crest}" x="104" y="96" width="46" height="46" preserveAspectRatio="xMidYMid meet" opacity=".95"/>` : ""}
+    ${flag ? `<image href="${flag}" x="152" y="104" width="30" height="20" preserveAspectRatio="xMidYMid slice" opacity=".95"/>` : ""}
+  </svg>`;
+}
+
+function pcCardHTML(row, lg, cat){
+  const t = pcTheme(row);
+  const name = row.player || "";
+  const nameSize = name.length > 16 ? 26 : name.length > 11 ? 30 : 34;
+  const jerseyPart = row.jersey ? ` · NO.${esc(row.jersey)}` : "";
+  const en = row.en || "";
+  const stats = (row.stats4 || []).slice(0, 3);
+  const chips = [];
+  if (row.position) chips.push(esc(row.position));
+  if (row.height && row.weight) chips.push(`${esc(row.height)}cm · ${esc(row.weight)}kg`);
+  else if (row.height) chips.push(`${esc(row.height)}cm`);
+  if (row.age) chips.push(`${esc(row.age)}세`);
+  const medal = row.rank === 1 ? "🥇" : row.rank === 2 ? "🥈" : row.rank === 3 ? "🥉" : "";
+  const rarity = (medal && cat) ? `<div class="pc1-rarity">${medal} ${esc(cat.name)} ${esc(row.rank)}위</div>` : "";
+  const figure = row.photo
+    ? `<img class="pc1-photo" src="${esc(row.photo)}" alt="${esc(name)}" loading="eager" referrerpolicy="no-referrer">`
+    : pcJerseySVG(row, t);
+  const flag = row.flag ? `<img class="pc-flag" src="${esc(row.flag)}" alt="" onerror="this.remove()">` : "";
+  return `
+  <div class="pc-shell">
+    <div class="pc1-frame" style="--c-main:${t.main}; --c-dark:${t.dark}; --c-light:${t.light}">
+      <article class="pc1-card" role="dialog" aria-modal="true" aria-label="${esc(name)} 선수 카드">
+        <div class="pc1-top">
+          <div style="min-width:0">
+            <div class="pc1-eyebrow">${esc(lg.name)} · ${esc(lg.season)}${jerseyPart}</div>
+            <h2 class="pc1-name" style="font-size:${nameSize}px">${esc(name)}</h2>
+            ${en ? `<div class="pc1-en">${esc(en)}</div>` : ""}
+          </div>
+          ${row.emblem ? `<div class="pc1-crest"><img src="${esc(row.emblem)}" alt="" onerror="this.remove()"></div>` : ""}
+        </div>
+        ${rarity}
+        <div class="pc1-stage">
+          <span class="pc1-halo"></span>
+          <div class="pc1-numghost">${esc(row.jersey || "")}</div>
+          ${row.photo ? "" : (row.emblem ? `<img class="pc1-crestghost" src="${esc(row.emblem)}" alt="">` : "")}
+          ${figure}
+        </div>
+        <div class="pc1-panel">
+          <div class="pc1-stats" style="grid-template-columns:repeat(${Math.max(stats.length, 1)},1fr)">
+            ${stats.length ? stats.map(s => `<div class="pc1-stat"><span class="v">${esc(s.v)}</span><span class="k">${esc(s.k)}</span></div>`).join("")
+                           : `<div class="pc1-stat"><span class="v">${esc(row.value ?? "-")}</span><span class="k">${esc(cat ? cat.name : "기록")}</span></div>`}
+          </div>
+          <div class="pc1-meta">
+            <div class="pc1-chips">${chips.map(c => `<span class="pc1-chip">${c}</span>`).join("")}</div>
+            <span class="pc1-team">${esc(row.team || "")} ${flag}</span>
+          </div>
+          <div class="pc1-foot">
+            <span class="src">${esc(lg.season)} 시즌 · ${esc(cat ? cat.name : "")} · 출처 ${esc(lg.source || lg.name)}</span>
+            <span>바깥을 눌러 닫기</span>
+          </div>
+        </div>
+      </article>
+    </div>
+    <button class="pc-close" type="button" aria-label="닫기">✕</button>
+  </div>`;
+}
+
+function pcFit(){
+  if (!pcEl) return;
+  const shell = pcEl.querySelector(".pc-shell");
+  if (!shell) return;
+  shell.style.transform = "";
+  const r = shell.getBoundingClientRect();
+  const s = Math.min(1, (window.innerWidth - 28) / r.width, (window.innerHeight - 28) / r.height);
+  shell.style.transformOrigin = "center center";
+  if (s < 1) shell.style.transform = `scale(${s})`;
+}
+function pcCloseCard(){
+  if (pcEl){ pcEl.remove(); pcEl = null; }
+  document.body.classList.remove("pc-lock");
+  window.removeEventListener("resize", pcFit);
+  document.removeEventListener("keydown", pcKey);
+}
+function pcKey(e){ if (e.key === "Escape") pcCloseCard(); }
+function openPlayerCard(row, lg, cat){
+  if (!row) return;
+  pcCloseCard();
+  const el = document.createElement("div");
+  el.className = "pc-overlay";
+  el.innerHTML = pcCardHTML(row, lg, cat);
+  el.addEventListener("click", (e) => {
+    if (e.target === el || e.target.closest(".pc-close")) pcCloseCard();
+  });
+  document.body.appendChild(el);
+  document.body.classList.add("pc-lock");
+  pcEl = el;
+  /* 사진이 깨지면 유니폼 카드로 바꿔 그린다 */
+  const img = el.querySelector(".pc1-photo");
+  if (img) img.addEventListener("error", () => {
+    const box = document.createElement("div");
+    box.innerHTML = pcJerseySVG(row, pcTheme(row));
+    if (box.firstElementChild) img.replaceWith(box.firstElementChild);
+  });
+  pcFit();
+  window.addEventListener("resize", pcFit);
+  document.addEventListener("keydown", pcKey);
+  const btn = el.querySelector(".pc-close");
+  if (btn) btn.focus({ preventScroll: true });
+}
+
 function renderLeaders(){
   const body = $("#leadersBody");
   if (!body) return;
@@ -1478,8 +1750,8 @@ function renderLeaders(){
   if (!cats.some(c => c.key === chosen)) chosen = cats[0].key;
   state.leaderCat[lg.id] = chosen;
   const cat = cats.find(c => c.key === chosen) || cats[0];
-  const rows = (cat.rows || []).map(r => `
-    <tr>
+  const rows = (cat.rows || []).map((r, i) => `
+    <tr class="pc-tap" tabindex="0" role="button" data-i="${i}" aria-label="${esc(r.player)} 선수 카드 열기">
       <td class="rank">${esc(r.rank)}</td>
       <td class="plead"><span class="pwrap">
         ${r.emblem ? `<img class="emb" src="${esc(r.emblem)}" alt="" loading="lazy" onerror="this.remove()">` : ""}
@@ -1497,9 +1769,16 @@ function renderLeaders(){
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <div class="livebar"><span>${esc(lg.name)} · ${esc(lg.season)} 시즌 · ${esc(cat.name)} TOP ${cat.rows.length} · ${esc(lg.source || "")}</span></div>`;
+    <div class="livebar"><span>${esc(lg.name)} · ${esc(lg.season)} 시즌 · ${esc(cat.name)} TOP ${cat.rows.length} · ${esc(lg.source || "")} · 선수를 누르면 카드가 열려요</span></div>`;
   body.querySelectorAll(".leadchips .chip").forEach(b => {
     b.onclick = () => { state.leaderCat[lg.id] = b.dataset.cat; renderLeaders(); };
+  });
+  body.querySelectorAll("table.leadtable tbody tr.pc-tap").forEach(tr => {
+    const open = () => openPlayerCard(cat.rows[Number(tr.dataset.i)], lg, cat);
+    tr.onclick = open;
+    tr.onkeydown = (ev) => {
+      if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); open(); }
+    };
   });
 }
 
