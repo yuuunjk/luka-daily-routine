@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v67 — 🌙 밤 9시 잘 준비 시작 파트너 팝업 + 잘 준비 완료 차분한 보상(🌟 스페셜 과일 +1 · ⚡ 강화 XP +1).
+     ① checkNightAsk — 21:00~21:39 에 루틴 화면을 보고 있고 잘 준비를 하나도 체크하지 않았을 때,
+        지금 파트너 포켓몬이 어두운 밤 톤의 작은 팝업으로 먼저 말을 건다. 닫기(✕)도 NO 도 없다.
+        [🍎 좋아! 출발하자!] → 팝업을 닫고 첫 카드로 데려다 주며 오늘은 다시 묻지 않는다.
+        [⏰ 3분만 더!]      → '알겠어, 3분 뒤에 다시 부를게!' 토스트 + 시간 바 옆 조용한
+                              ⏰ 3분 카운트다운 칩 → 3분 뒤 한 번 더. 하루 두 번까지만 미룰 수 있고
+                              (세 번째에는 조용히 끝), 아이가 잘 준비를 하나라도 체크하면 자동 해제.
+     ② syncNightFruit — 잘 준비 6개를 다 채우면 하루 1세트 🌟 스페셜 과일 +1 · ⚡ 강화 XP +1
+        (폭죽 없이 잔잔한 토스트와 soft 음 하나). 체크를 풀면 아직 안 먹인 스페셜 과일이 있을 때만
+        스페셜 −1 · 강화 XP −1 로 정확히 돌려놓고 다시 받을 수 있게 두며, 이미 먹여 0개면 'eaten' 으로
+        남겨 풀었다 다시 채우는 꼼수로 중복 적립되지 않는다(그때는 이미 쓴 보상이라 XP 도 그대로 둔다).
+        9:40 전 완료의 기존 강화 XP 보너스는 그대로라 그 시간에 끝내면 보상 +1 에 보너스 +1,
+        밤 9:40 이후에는 완료 보상 +1 만 오른다.
+        상태는 day().nightFruit('none'·'held'·'eaten'), 팝업 기록은 day().nightAsk 에 남는다.
+     ③ 부모 설정 🧪 테스트 탭에 '🌙 9시 팝업 띄우기 / ↩ 팝업 초기화' 두 버튼.
+     v65(공부 타이머·과일 +2)·v66(휴식 화면·등교 07~09 / 16~18) 코드는 그대로다. -->
 <!-- v66 — 비루틴 시간대 전면 개편(사용자가 고른 2안 · 파트너 말풍선 응원 대화형).
      ① routineKeyAt — 기상 전(그 모드의 아침 시작 전)과 취침 완료 뒤(21:40 이후)도 'rest' 로 넘긴다.
         취침 카드를 다 못 채웠을 때는 21:40 뒤에도 카드를 그대로 두어 마저 체크할 수 있게 했다.
@@ -771,6 +787,44 @@
     .rest2 .rzzz{left:calc(50% + 16%);top:1%;}
   }
 
+  /* ===== v67 — 🌙 밤 9시 잘 준비 시작 팝업 =====
+     자기 전 분위기를 깨지 않게 어두운 남보라 바탕에 작은 달빛만 두고, 소리·폭죽 없이 조용히 뜬다.
+     닫기(✕)·NO 버튼은 없다 — [🍎 좋아! 출발하자!] 로 시작하거나 [⏰ 3분만 더!] 로 미룰 수만 있다. */
+  .nqov.show{display:flex;align-items:center;justify-content:center;padding:14px;
+    background:radial-gradient(circle at 50% 38%, rgba(38,42,92,.62) 0%, rgba(8,11,30,.88) 72%);}
+  .nqcard{position:relative;display:flex;flex-direction:column;gap:9px;
+    width:min(430px, calc(100vw - 28px)); max-height:calc(100vh - 28px); overflow:auto;
+    padding:16px 18px 18px; border:2px solid #4a4f8f; border-radius:24px;
+    background:linear-gradient(180deg,#2c3060 0%,#1b1f42 100%);
+    box-shadow:0 16px 44px rgba(3,6,20,.62), inset 0 0 26px rgba(120,140,255,.10);
+    animation:pop .42s cubic-bezier(.3,1.4,.6,1);}
+  .nqcard::before{content:'';position:absolute;inset:0;border-radius:22px;pointer-events:none;
+    background:radial-gradient(circle at 78% 8%, rgba(255,255,255,.16) 0 2px, transparent 3px),
+               radial-gradient(circle at 17% 15%, rgba(255,255,255,.12) 0 1.5px, transparent 2.5px),
+               radial-gradient(circle at 62% 21%, rgba(255,255,255,.10) 0 1.5px, transparent 2.5px);}
+  .nqstage{position:relative;display:flex;align-items:flex-end;justify-content:center;height:132px;}
+  .nqmoon{position:absolute;right:7%;top:-8px;width:44px;height:44px;border-radius:50%;
+    background:radial-gradient(circle at 36% 34%, #fdf7e0 0 46%, #e8dfb8 70%, #cfc39a 100%);
+    box-shadow:0 0 26px rgba(255,246,205,.42); opacity:.82;}
+  .nqart{position:relative;z-index:2;height:126px;width:auto;max-width:76%;object-fit:contain;
+    filter:drop-shadow(0 6px 10px rgba(2,6,20,.55));}
+  .nqname{display:flex;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:900;color:#cfd4ff;}
+  .nqname b{font-size:15px;color:#ffffff;}
+  .nqname i{font-style:normal;font-size:10.5px;font-weight:800;color:#a9b0e6;
+    border:1.5px solid rgba(169,176,230,.5);border-radius:999px;padding:1px 6px;}
+  .nqsay{margin:0;padding:11px 14px;border-radius:16px;border:1.5px solid rgba(197,206,255,.34);
+    background:rgba(255,255,255,.07);font-size:15.5px;font-weight:800;line-height:1.45;
+    color:#eef0ff;text-align:center;word-break:keep-all;}
+  .nqb{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px;}
+  .nqbtn{border:none;border-radius:16px;font-family:inherit;font-weight:900;font-size:15px;
+    line-height:1.25;padding:12px 8px;cursor:pointer;word-break:keep-all;}
+  .nqbtn.go{background:linear-gradient(180deg,#eef1ff 0%,#c8d2ff 100%);color:#232a5e;
+    box-shadow:0 4px 0 #8f9bd8, 0 10px 20px rgba(0,0,0,.3);}
+  .nqbtn.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8f9bd8;}
+  .nqbtn.later{background:rgba(255,255,255,.10);color:#dfe3ff;
+    border:1.5px solid rgba(186,194,255,.5);}
+  .nqbtn.later:active{transform:scale(.97);}
+
   /* ===== Progress strip ===== */
   .strip{
     flex:0 0 auto; background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
@@ -808,6 +862,15 @@
   /* '출발 오전 8:35' — 2배로 커진 포켓몬이 바 끝에서도 글자를 가리지 않도록
      바가 아니라 왼쪽 시간 칸(.pblock) 아래 작은 캡션으로 둔다 */
   .depart{font-size:11.5px;font-weight:800;color:#9a8d78;white-space:nowrap;text-align:left;line-height:1.3;margin-top:.12em;}
+  /* v67 — '⏰ 3분만 더!' 를 눌렀을 때만 시간 바 왼쪽 아래에 조용히 붙는 작은 칩 */
+  .pblock .nchip{align-self:flex-start;display:flex;align-items:center;gap:4px;margin-top:2px;
+    padding:2px 9px;border-radius:999px;border:1.5px solid #cfc1f4;background:#f4f0ff;
+    color:#54408f;font-size:11.5px;font-weight:800;line-height:1.5;white-space:nowrap;}
+  .pblock .nchip b{font-variant-numeric:tabular-nums;font-weight:900;color:#42307a;}
+  .pblock .nchip[hidden]{display:none;}
+  /* [🍎 좋아! 출발하자!] — 첫 잘 준비 카드가 조용히 한 번 빛난다 */
+  #tasks .card.startpulse{animation:nqPulse 1.6s ease-out 2;}
+  @keyframes nqPulse{0%{box-shadow:0 0 0 0 rgba(108,92,196,.5);}100%{box-shadow:0 0 0 15px rgba(108,92,196,0);}}
 
   /* ===== Task cards ===== */
   .tasks{flex:1 1 auto;display:flex;gap:12px;min-height:0;padding-bottom:2px;}
@@ -2588,6 +2651,8 @@
       <div class="plabel" id="stripLabel">등교까지</div>
       <div class="pmain" id="leftLabel">－</div>
       <div class="depart" id="departLabel">출발 오전 8:35</div>
+      <!-- v67 — '⏰ 3분만 더!' 를 누른 동안만 보이는 조용한 카운트다운 칩 -->
+      <div class="nchip" id="nightChip" hidden aria-live="polite">⏰ <b id="nightChipN">3:00</b> 뒤에 다시 부를게</div>
     </div>
     <div class="pbar">
       <div class="track" id="track">
@@ -2924,6 +2989,22 @@
   </div>
 </div>
 
+<!-- v67 — 🌙 밤 9시 잘 준비 시작 팝업. 파트너가 조용히 먼저 말을 건다 (닫기·NO 버튼 없음) -->
+<div class="overlay nqov" id="nightAsk" aria-hidden="true">
+  <div class="nqcard" role="dialog" aria-modal="true" aria-label="잘 준비 시작 안내">
+    <div class="nqstage">
+      <span class="nqmoon" aria-hidden="true"></span>
+      <img class="nqart" id="nqArt" data-pk="art" alt="파트너 포켓몬">
+    </div>
+    <div class="nqname"><span id="nqIcon" aria-hidden="true">⚡</span><b id="nqName">피카추</b><i>파트너</i></div>
+    <p class="nqsay" id="nqSay">루카야, 잘 준비하고 스페셜 과일이랑 강화 XP 챙겨서 같이 잘까? 🌙</p>
+    <div class="nqb">
+      <button class="nqbtn go" id="nqGo" type="button">🍎 좋아! 출발하자!</button>
+      <button class="nqbtn later" id="nqLater" type="button">⏰ 3분만 더!</button>
+    </div>
+  </div>
+</div>
+
 <!-- 부모 확인 (PIN) -->
 <div class="overlay pinoverlay" id="pinOverlay">
   <div class="modal pinmodal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
@@ -3008,6 +3089,14 @@
         <button class="pbtn wide" id="testCheerReset" type="button">💬 파트너 대화 초기화</button>
       </div>
       <span class="phint">아침 08:00~11:59 · 낮 12:00~17:59 · 저녁 18:00~20:50, 시간대마다 3번씩 주고받기 대화가 나가고 3회째에 다음 시간대를 알려 줘요. 20:51~07:59는 파트너 쉬는 시간이고, 이 버튼은 지금 바로 처음으로 되돌리고 설정창은 그대로 열어 둡니다.</span>
+
+      <!-- v67 — 🌙 밤 9시 잘 준비 팝업 테스트 -->
+      <div class="psec">🌙 잘 준비(밤 9시) 팝업</div>
+      <div class="pgrid">
+        <button class="pbtn" id="testNightAsk" type="button">🌙 9시 팝업 띄우기</button>
+        <button class="pbtn" id="testNightAskReset" type="button">↩ 팝업 초기화</button>
+      </div>
+      <span class="phint">밤 9시~9시 39분에 루틴 화면을 보고 있고 잘 준비를 아직 하나도 체크하지 않았을 때 파트너가 조용히 말을 걸어요. '띄우기'는 지금 한 번 보여 주고, '초기화'는 오늘 팝업 기록(미룸 포함)을 지워 다시 뜰 수 있게 해요.</span>
     </div>
 
     <!-- 탭 2: 확언 · 미션 -->
@@ -3822,6 +3911,11 @@ function freshDay(){
     nightStarted:false,
     /* 9:40 을 넘겨 취침 루틴을 끝냈을 때 축하를 한 번만 */
     nightLateDone:false,
+    /* v67 — 🌙 밤 9시 잘 준비 팝업 기록: 오늘은 다 물었는지(done) · 미룬 횟수(snoozed) · 다시 부를 시각(ms)
+       v67 — 잘 준비 완료 보상(스페셜 과일 + 강화 XP) 상태: 'none'(아직) · 'held'(받아서 들고 있음)
+              · 'eaten'(스페셜을 먹여서 다시 줄 수 없음) */
+    nightAsk:{ done:false, snoozed:0, until:0 },
+    nightFruit:'none',
   };
 }
 /* 예전 모양({tasks:[5]} 또는 루틴별 칸) → 모드별 slots */
@@ -3848,6 +3942,12 @@ function migrateDay(d){
   out.alertDone = !!d.alertDone;
   out.nightStarted = !!d.nightStarted;   // 새로 고침해도 21:00 시작음을 다시 울리지 않는다
   out.nightLateDone = !!d.nightLateDone;
+  /* v67 — 팝업 기록·잘 준비 과일 상태 (없거나 망가졌으면 처음 상태로) */
+  const na = (d.nightAsk && typeof d.nightAsk === 'object') ? d.nightAsk : {};
+  out.nightAsk = { done:!!na.done,
+                   snoozed:Math.max(0, Math.min(9, Math.floor(Number(na.snoozed) || 0))),
+                   until:Math.max(0, Number(na.until) || 0) };
+  out.nightFruit = (d.nightFruit === 'held' || d.nightFruit === 'eaten') ? d.nightFruit : 'none';
   return out;
 }
 function day(){
@@ -4185,6 +4285,131 @@ function checkNightStart(now){
   playMissionSfx(chime);               // 미션 MP3, 막히면 잔잔한 차임
   toast('🌙 오후 9시! 잘 준비 시작해요!');
 }
+
+/* =========================================================
+   v67 — 🌙 밤 9시 잘 준비 시작 팝업 (파트너가 조용히 먼저 말을 건다)
+   · 21:00~21:39 사이, 루틴 화면을 보고 있고, 잘 준비를 **하나도** 체크하지 않았을 때만
+   · [🍎 좋아! 출발하자!] → 닫고 첫 카드로 데려다 준다 (오늘은 다시 묻지 않는다)
+   · [⏰ 3분만 더!]      → 3분 뒤 한 번 더. 하루 두 번까지만 미룰 수 있고(세 번째는 조용히 끝),
+                           아이가 잘 준비를 하나라도 체크하면 자동으로 물러난다
+   · 자기 전 분위기를 지키려고 소리 없이 뜨고, 닫기(✕)·NO 버튼은 두지 않는다.
+   · 기록은 day().nightAsk 에 남아 새로고침에도 반복해서 묻지 않는다.
+   ========================================================= */
+const NQ_SNOOZE_MS = 3*60*1000;      // '3분만 더'
+const NQ_SNOOZE_MAX = 2;             // 하루 두 번까지 미룰 수 있다
+function nqRec(){
+  const d = day();
+  if(!d.nightAsk || typeof d.nightAsk !== 'object') d.nightAsk = { done:false, snoozed:0, until:0 };
+  return d.nightAsk;
+}
+function nqEl(id){ return document.getElementById(id); }
+function nqShown(){ const ov = nqEl('nightAsk'); return !!(ov && ov.classList.contains('show')); }
+function nqWindow(now){ return now >= NIGHT_START && now < NIGHT_BED; }
+/* 다른 창(파트너·도감·포켓몬·배틀·비밀번호)이 떠 있으면 양보한다 */
+function nqOverlayBusy(){
+  return ['partnerOverlay','pokeOverlay','catchOverlay','btOverlay','pinOverlay'].some(id=>{
+    const el = nqEl(id); return !!(el && el.classList.contains('show'));
+  });
+}
+function nqOpen(){
+  const ov = nqEl('nightAsk');
+  if(!ov) return;
+  const pk = partnerPk();
+  const art = nqEl('nqArt');
+  if(art && pk){ pkImg(art, pk.id, 'art'); art.alt = pk.name; }   // 공식 일러스트 → CDN → 내장 스프라이트
+  if(pk){
+    const nm = nqEl('nqName'); if(nm) nm.textContent = pk.name;
+    const ic = nqEl('nqIcon'); if(ic) ic.textContent = cheerTypeIcon(pk);
+  }
+  ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
+}
+function nqClose(){
+  const ov = nqEl('nightAsk');
+  if(!ov || !ov.classList.contains('show')) return;
+  ov.classList.remove('show'); ov.setAttribute('aria-hidden', 'true');
+}
+/* '⏰ 3분 카운트다운' — 남은 시간만 다시 쓴다 */
+function nqSyncChip(){
+  const chip = nqEl('nightChip'), num = nqEl('nightChipN');
+  if(!chip) return;
+  const st = nqRec();
+  const left = Math.max(0, (Number(st.until) || 0) - Date.now());
+  if(st.done || !st.until || left <= 0){ if(!chip.hidden) chip.hidden = true; return; }
+  const s = Math.ceil(left / 1000);
+  const tx = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  if(num && num.textContent !== tx) num.textContent = tx;
+  if(chip.hidden) chip.hidden = false;
+}
+function nqCanShow(now){
+  const st = nqRec();
+  if(st.done) return false;
+  if(!state.appEnabled) return false;
+  if(curTab !== 'dash') return false;                              // 루틴 화면일 때만
+  if(document.body.classList.contains('app-off')) return false;
+  const panel = nqEl('panel'); if(panel && panel.classList.contains('show')) return false;
+  if(nqOverlayBusy()) return false;
+  if(!nqWindow(now)) return false;
+  if(nightAllDone()) return false;
+  if(rday('night').tasks.some(Boolean)) return false;              // 이미 시작했으면 조용히 물러난다
+  return true;
+}
+/* tick(250ms)마다 — 팝업을 띄울 때인지, 미뤄 둔 3분이 지났는지 본다 */
+function checkNightAsk(now){
+  const st = nqRec();
+  if(st.done){ if(nqShown()) nqClose(); nqSyncChip(); return; }
+  /* 아이가 잘 준비를 하나라도 체크했으면 오늘은 더 묻지 않는다
+     (21시 전에 잠깐 체크했다 풀어 둔 경우까지 팝업을 잃지 않게, 시간대 안에서만 적용한다) */
+  if(nqWindow(now) && rday('night').tasks.some(Boolean)){
+    st.done = true; st.until = 0; save();
+    if(nqShown()) nqClose();
+    nqSyncChip(); return;
+  }
+  /* 밤 9시 40분이 지났거나 6개를 다 채쳤으면 닫는다 */
+  if(!nqWindow(now) || nightAllDone()){ if(nqShown()) nqClose(); }
+  if(nqShown()){
+    if(!nqCanShow(now)) nqClose();     // 탭을 옮기거나 다른 창이 뜨면 조용히 물러난다
+    nqSyncChip(); return;
+  }
+  if((Number(st.until) || 0) > Date.now()){ nqSyncChip(); return; }   // 아직 3분이 안 지났다
+  if(st.until){ st.until = 0; save(); }                              // 3분이 지났다 → 이제 다시 불러도 된다
+  nqSyncChip();
+  if(nqCanShow(now)) nqOpen();
+}
+function nqGoTap(){
+  const st = nqRec();
+  st.done = true; st.until = 0; save();
+  nqClose(); nqSyncChip();
+  blip();
+  toast('🌙 좋아, 같이 잘 준비해 보자!');
+  const c = nqEl('card0');
+  if(c){
+    try{ c.scrollIntoView({ block:'center', behavior:'smooth' }); }catch(e){ try{ c.scrollIntoView(); }catch(e2){} }
+    c.classList.remove('startpulse'); void c.offsetWidth; c.classList.add('startpulse');
+    setTimeout(()=> c.classList.remove('startpulse'), 3600);
+  }
+}
+function nqLaterTap(){
+  const st = nqRec();
+  nqClose();
+  if((st.snoozed || 0) >= NQ_SNOOZE_MAX){          // 더는 미루지 않는다 — 조용히 마무리
+    st.done = true; st.until = 0; save();
+    nqSyncChip(); blip();
+    toast('알겠어! 준비되면 스스로 시작하자 🌙');
+    return;
+  }
+  st.snoozed = (st.snoozed || 0) + 1;
+  st.until = Date.now() + NQ_SNOOZE_MS;
+  save(); nqSyncChip(); blip();
+  toast('알겠어, 3분 뒤에 다시 부를게!');
+}
+(function bindNightAsk(){
+  const go = nqEl('nqGo'), later = nqEl('nqLater'), ov = nqEl('nightAsk');
+  if(go) go.addEventListener('click', nqGoTap);
+  if(later) later.addEventListener('click', nqLaterTap);
+  /* 바깥을 눌러도 아이를 가두지 않는다 — '3분만 더' 와 똑같이 조용히 미룬다 */
+  if(ov) ov.addEventListener('click', e=>{ if(e.target === ov) nqLaterTap(); });
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && nqShown()) nqLaterTap(); });
+})();
 
 /* ---------- tasks ---------- */
 function allDone(){
@@ -6492,6 +6717,47 @@ function decrementSelfProgress(src, opts){
   }
 }
 
+/* ---------- v67 — 잘 준비(취침 루틴) 완료 = 🌟 스페셜 과일 +1 · ⚡ 강화 XP +1 (하루 1세트) ----------
+   6개를 다 채우면 그날 처음 한 번만 보상을 준다. 폭죽·요란한 효과 없이 조용한 토스트와
+   잔잔한 음 하나만 난다. 회수·중복 방지는 공부 과일(v48·v65)과 같은 원칙이다.
+   · 'held'  — 받은 스페셜 과일을 아직 안 먹였다 → 하나를 풀면 스페셜 −1·강화 XP −1 로 정확히
+               돌려주고 'none' (다시 다 채우면 한 세트를 다시 받는다)
+   · 'eaten' — 이미 파트너에게 줘서 스페셜이 0개였다 → 돌려줄 과일이 없으니 그대로 남기고
+               강화 XP 도 이미 쓴 보상으로 보고 두며, 다시 채워도 새 보상이 나오지 않는다
+               (먹고 다시 받는 꼼수 차단). 9:40 전 완료의 기존 강화 XP 보너스는 건드리지 않는다. */
+function nightFruitState(){
+  const d = day();
+  if(d.nightFruit !== 'held' && d.nightFruit !== 'eaten') d.nightFruit = 'none';
+  return d.nightFruit;
+}
+function setNightFruitState(v){ day().nightFruit = v; }
+function nightSoftSound(){ beep(587,.55,0,'sine',.26); beep(494,.6,.42,'sine',.2); }
+function syncNightFruit(){
+  const all = nightAllDone();
+  const st = nightFruitState();
+  if(all && st === 'none'){
+    setNightFruitState('held');
+    setSpecialFruits(specialCount() + 1);          // 🌟 스페셜 과일 +1
+    fruitBumpBadge();
+    incrementSelfProgress('night', { silent:true });  // ⚡ 강화 XP +1 (8개가 차면 강화권 1장)
+    nightSoftSound();
+    toast('🌙 잘 준비 완료! 🌟 스페셜 과일 +1 · ⚡ 강화 XP +1 챙겼어요');
+    save();
+    return;
+  }
+  if(!all && st === 'held'){
+    if(specialCount() > 0){
+      setSpecialFruits(specialCount() - 1);
+      decrementSelfProgress('night', { silent:true });
+      setNightFruitState('none');       // 아직 안 먹었으니 돌려주고, 다시 채우면 또 받는다
+      toast('🌙 잘 준비 보상(스페셜 과일·강화 XP)을 도로 담았어요');
+    }else{
+      setNightFruitState('eaten');      // 이미 먹었다 — 다시 채워도 새 보상은 없다
+    }
+    save();
+  }
+}
+
 /* ---------- 취침 루틴 완료 → 강화권 세기 (9:40 전에 6개 다 했을 때만) ---------- */
 function nightAllDone(){
   const R = ROUTINES.night;
@@ -6519,6 +6785,7 @@ function syncNightReward(){
   }else if(!all && counted){                // 하나라도 풀리면 오늘 취침 별을 되돌린다
     revertNightCount();
   }
+  syncNightFruit();                         // v67 — 잘 준비 완료 과일 (강화권 안내 뒤에 과일 안내가 보이게)
   save();
   renderStudy(); renderDex();
 }
@@ -7995,6 +8262,8 @@ document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   d.alertDone = false;
   d.nightStarted = nowMinutes() < NIGHT_START ? false : d.nightStarted;   // 21:00 전에만 시작음 다시 울리기
   d.nightLateDone = false;
+  d.nightAsk = { done:false, snoozed:0, until:0 };   // v67 — 오늘 잘 준비 팝업도 처음으로
+  d.nightFruit = 'none';                            // v67 — 잘 준비 과일도 처음으로
   state.routineCatch = null;           // 오늘 잡은 포켓몬 기록도 비운다 (도감은 그대로 둔다)
   revertNightCount({ silent:true });   // 오늘 취침 완료로 올린 별 하나도 함께 되돌린다
   save();
@@ -8046,6 +8315,15 @@ document.getElementById('testPoke1').addEventListener('click', parentOnly(()=> r
 document.getElementById('testPoke3').addEventListener('click', parentOnly(()=> registerTestPokemon(3)));
 /* v45 — 🧪 테스트 탭: 루틴별 대화 횟수를 지금 처음으로 (설정창은 닫지 않는다) */
 document.getElementById('testCheerReset').addEventListener('click', parentOnly(()=> resetPartnerCheer()));
+/* v67 — 🌙 9시 잘 준비 팝업 테스트 (엄마·아빠가 저녁에 미리 보기) */
+document.getElementById('testNightAsk').addEventListener('click', parentOnly(()=>{
+  const st = nqRec(); st.done = false; st.until = 0; save();
+  nqOpen(); toast('🌙 9시 잘 준비 팝업 — 테스트');
+}));
+document.getElementById('testNightAskReset').addEventListener('click', parentOnly(()=>{
+  const st = nqRec(); st.done = false; st.snoozed = 0; st.until = 0; save();
+  nqClose(); nqSyncChip(); toast('↩ 잘 준비 팝업 기록을 지웠어요');
+}));
 
 /* ---------- 🍎 v48 — 🎁 보상·도감: 파트너 간식(과일) 직접 지급 · 차감 ----------
    아이가 '오늘의 공부'로 모으는 과일을 부모가 필요할 때 바로 주거나 되돌린다.
@@ -8382,6 +8660,7 @@ function tick(){
   /* 아침 마감 알림 — 방과후·공휴일 모드는 마감 뒤 대기·휴식 화면으로 넘어가지만 알림은 그대로 울린다 */
   if(now < DEPART + 15) checkDepartAlert(now);
   checkNightStart(now);              // 21:00 취침 시작음·안내 (하루 한 번)
+  checkNightAsk(now);                // v67 — 21:00~21:39 잘 준비 시작 팝업 (3분 미룸 포함)
 }
 setInterval(tick, 250);
 
