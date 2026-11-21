@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v68 — 🍎 휴식 화면에서 바로 과일 주기 (사용자가 고른 2안 · 말풍선 아래 액션 칩 통합).
+     휴식 화면(새벽·낮·취침 뒤)의 칩 줄 오른쪽에 얇은 점선 구분선을 두고
+     [🍎 과일 주기 (N)] [🌟 스페셜 (N)] 을 나란히 붙였다(buildRestPanel · restGiveHTML).
+     ① 누르면 v47 의 과일 함수를 그대로 쓴다 — setFruits/setSpecialFruits 가 하나 줄이고
+        renderFruitBadge·updatePartnerPopup 으로 헤더 배지와 파트너 팝업(버튼·안내)까지 함께 맞춘다.
+        fruitBumpBadge() 로 배지가 톡 튀고 fruitSfx()/specialFruitSfx() 가 그 자리에서 울린다.
+     ② 말풍선(.rsay)이 기쁜 대사(PARTNER_FRUIT_LINES · PARTNER_SPECIAL_LINES)로 2.4초 바뀌었다
+        제자리로 돌아오고, 파트너 위로 하트·별이 톡톡 떠오른다(.rf-pop · restBurst).
+     ③ 보유 0개 — 버튼이 흐려지고(.empty) 눌러도 안내 토스트만.
+        새벽(prewake, 파트너가 자는 중) — 💤 잠금 톤(.sleeping)으로 두고 눌러도
+        '💤 파트너가 자고 있어요' 토스트만 뜬다(하나도 줄지 않는다).
+     ④ 1280×800 에서 가장 긴 밤 문구와도 칩 줄이 한 줄 — 이 줄의 기존 칩 글자만 18px→16px 로
+        살짝 줄이고(.rchips .rchip2), 버튼 높이는 --rh 에 비례해 1280×800 에서 약 41px 로 넉넉히
+        잡아 손가락으로 누르기 편하다(1024×600 약 27px · 800×1280 은 칩 줄 아래 줄로 내려간다).
+     ⑤ 실시간 동기화 — updateRestLeft 가 tick 마다 개수·잠금 모양만 다시 맞춘다(restGiveSync).
+     v67(밤 9시 팝업·완료 보상)·v66(휴식 화면) 코드는 그대로다. -->
 <!-- v67 — 🌙 밤 9시 잘 준비 시작 파트너 팝업 + 잘 준비 완료 차분한 보상(🌟 스페셜 과일 +1 · ⚡ 강화 XP +1).
      ① checkNightAsk — 21:00~21:39 에 루틴 화면을 보고 있고 잘 준비를 하나도 체크하지 않았을 때,
         지금 파트너 포켓몬이 어두운 밤 톤의 작은 팝업으로 먼저 말을 건다. 닫기(✕)도 NO 도 없다.
@@ -785,6 +801,59 @@
     .rest2 .rchips{padding-left:0;justify-content:center;}
     .rest2 .rmoon{top:8px;}
     .rest2 .rzzz{left:calc(50% + 16%);top:1%;}
+  }
+
+  /* ===== v68 — 휴식 화면에서 바로 과일 주기 (사용자가 고른 2안 · 말풍선 아래 칩 줄에 통합) =====
+     칩 줄 오른쪽에 얇은 점선 구분선 + [🍎 과일 주기 (N)] [🌟 스페셜 (N)].
+     버튼 높이만 --rh 에 비례해 따로 잡는다 — 1280×800 약 41px · 1024×600 약 27px · 800×1280 44px. */
+  .rest2 .rchips{align-items:center;row-gap:clamp(4px,calc(var(--rh) * .018),8px);}
+  /* 과일 버튼과 한 줄에 서야 해서, 이 줄의 기존 칩 글자만 조금 줄인다(18px → 16px) */
+  .rest2 .rchips .rchip2{font-size:clamp(10px,calc(var(--rh) * .042),16px);}
+  /* 과일 버튼 묶음 — 점선과 두 버튼이 한 덩어리로 줄을 바꾼다(세로 화면에서 둘째 줄로 내려간다) */
+  .rest2 .rf-givebox{display:inline-flex;align-items:center;flex:0 0 auto;
+    gap:clamp(4px,calc(var(--rh) * .016),7px);}
+  .rest2 .rf-div{flex:0 0 auto;align-self:center;width:0;height:1.45em;
+    margin:0 clamp(1px,calc(var(--rh) * .006),3px);border-left:2px dashed rgba(150,178,212,.85);}
+  .rest2.band-prewake .rf-div,.rest2.band-night .rf-div{border-left-color:rgba(198,212,255,.55);}
+  .rest2 .rfgive{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+    gap:clamp(2px,calc(var(--rh) * .011),5px);
+    border:0;border-radius:999px;font-family:inherit;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    font-size:clamp(10px,calc(var(--rh) * .041),15.5px);font-weight:900;letter-spacing:-.35px;line-height:1.1;
+    color:#7d5b16;padding:0 clamp(7px,calc(var(--rh) * .029),12px);
+    min-height:clamp(26px,calc(var(--rh) * .108),44px);
+    background:linear-gradient(180deg,#fffdf4 0%,#ffe9b8 100%);
+    box-shadow:inset 0 0 0 2px #f2d99b, 0 3px 0 #e6cb92, 0 6px 12px rgba(120,100,60,.16);
+    transition:transform .12s ease, box-shadow .12s ease, opacity .2s ease;}
+  .rest2 .rfgive .e{font-size:1.12em;line-height:1;}
+  .rest2 .rfgive .n{font-weight:900;color:#a4831f;font-variant-numeric:tabular-nums;}
+  .rest2 .rfgive:active{transform:translateY(2px) scale(.98);
+    box-shadow:inset 0 0 0 2px #f2d99b, 0 1px 0 #e6cb92, 0 2px 6px rgba(120,100,60,.16);}
+  .rest2 .rfgive:focus-visible{outline:3px solid #7fb1ff;outline-offset:2px;}
+  .rest2 .rfgive.sp{color:#7d5708;background:linear-gradient(180deg,#fffdf0 0%,#ffe298 100%);
+    box-shadow:inset 0 0 0 2px #f2cf76, 0 3px 0 #e8c26a, 0 6px 12px rgba(150,120,40,.2);}
+  .rest2 .rfgive.sp .n{color:#a07610;}
+  /* 다 먹었을 때 — 흐려지고, 눌러도 안내 토스트만 뜬다 */
+  .rest2 .rfgive.empty{opacity:.42;filter:saturate(.5);}
+  /* 새벽 — 파트너가 자는 동안은 잠금 톤(💤). 누르면 '파트너가 자고 있어요' 토스트만 */
+  .rest2 .rfgive.sleeping{color:#b6bfe4;background:rgba(255,255,255,.10);cursor:default;
+    box-shadow:inset 0 0 0 1.5px rgba(186,198,240,.42);}
+  .rest2 .rfgive.sleeping .n{color:#a9b3da;}
+  /* 먹였을 때 — 말풍선 대사가 잠깐 반짝이고, 파트너 위로 하트·별이 톡톡 */
+  .rest2 .rsay.rf-tasty{color:#c2501f;animation:rfTasty .46s ease-out;}
+  .rest2 .rsay.rf-tasty em{background:linear-gradient(transparent 56%,#ffd9b8 56%);}
+  .rest2 .rf-pop{position:absolute;left:50%;top:44%;z-index:5;pointer-events:none;
+    animation:rfPop 1.05s ease-out forwards;}
+  .rest2.rf-nope{animation:rfNope .34s ease-in-out;}
+  @keyframes rfPop{
+    0%{transform:translate(-50%,-50%) scale(.5);opacity:0;}
+    35%{transform:translate(calc(-50% + var(--dx) * .5),calc(-50% + var(--dy) * .55)) scale(1.15);opacity:1;}
+    100%{transform:translate(calc(-50% + var(--dx)),var(--dy)) scale(.9);opacity:0;}}
+  @keyframes rfTasty{0%{transform:scale(.96);}55%{transform:scale(1.03);}100%{transform:none;}}
+  @keyframes rfNope{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+  /* 세로 화면 — 과일 버튼 묶음이 칩 줄 아래로 내려가므로 그때는 점선을 두지 않는다 */
+  @media (max-aspect-ratio:5/4){
+    .rest2 .rf-div{display:none;}
   }
 
   /* ===== v67 — 🌙 밤 9시 잘 준비 시작 팝업 =====
@@ -4492,6 +4561,113 @@ function restPlan(partnerName){
   return { band, nextMin, nextEmoji, nextName, nextTime, say, chipLead, barLabel, depart, pct,
            left: restSpanText(nextMin - now) };
 }
+/* v68 — 휴식 화면 칩 줄 오른쪽의 [🍎 과일 주기 (N)] [🌟 스페셜 (N)] 묶음.
+   · 보유 0개 → .empty (흐리게) · 새벽(prewake) → 💤 잠금 톤(.sleeping)
+   · 두 버튼은 한 묶음(.rf-givebox)이라 세로 화면에서는 점선과 함께 아래 줄로 내려간다 */
+function restGiveHTML(band){
+  const asleep = band === 'prewake';
+  const one = (kind, emoji, label, n) => {
+    const cls = 'rfgive' + (kind === 'special' ? ' sp' : '')
+      + (asleep ? ' sleeping' : (n <= 0 ? ' empty' : ''));
+    const cnt = asleep ? '💤' : `(${n})`;
+    const aria = asleep ? `${label} — 파트너가 자는 중이라 지금은 줄 수 없어요`
+                        : `${label} — ${n}개 남음`;
+    return `<button class="${cls}" type="button" data-give="${kind}" aria-label="${aria}">`
+      + `<span class="e">${emoji}</span>${label} <b class="n">${cnt}</b></button>`;
+  };
+  return `<span class="rf-givebox"><span class="rf-div" aria-hidden="true"></span>`
+    + one('fruit', '🍎', '과일 주기', fruitCount())
+    + one('special', '🌟', '스페셜', specialCount())
+    + `</span>`;
+}
+/* 개수·잠금 모양만 다시 맞춘다(tick 마다 updateRestLeft 가 부른다) — DOM 을 새로 그리지 않는다 */
+function restGiveSync(panel){
+  const el = panel || document.getElementById('restPanel');
+  if(!el) return;
+  const asleep = /band-prewake/.test(el.className);
+  el.querySelectorAll('[data-give]').forEach(b => {
+    const special = b.dataset.give === 'special';
+    const n = special ? specialCount() : fruitCount();
+    const nb = b.querySelector('.n');
+    if(nb){
+      const t = asleep ? '💤' : `(${n})`;
+      if(nb.textContent !== t) nb.textContent = t;
+    }
+    b.classList.toggle('empty', !asleep && n <= 0);
+    b.classList.toggle('sleeping', asleep);
+    const aria = asleep ? `${special ? '스페셜' : '과일 주기'} — 파트너가 자는 중이라 지금은 줄 수 없어요`
+                        : `${special ? '스페셜' : '과일 주기'} — ${n}개 남음`;
+    if(b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
+  });
+}
+/* 안 될 때(0개·자는 중) — 패널이 살짝 흔들리고 안내 토스트만 뜬다 */
+function restNope(panel){
+  panel.classList.remove('rf-nope');
+  void panel.offsetWidth;                    // 같은 애니메이션을 처음부터 다시
+  panel.classList.add('rf-nope');
+  clearTimeout(panel._nope);
+  panel._nope = setTimeout(()=> panel.classList.remove('rf-nope'), 420);
+}
+/* 말풍선이 기쁜 대사로 잠깐 바뀌었다 제자리로 돌아온다 (2.4초) */
+function restSayTasty(panel, say){
+  const rs = panel.querySelector('.rsay');
+  if(!rs) return;
+  if(!rs._restOrig) rs._restOrig = rs.innerHTML;
+  rs.innerHTML = say;
+  rs.classList.remove('rf-tasty');
+  void rs.offsetWidth;
+  rs.classList.add('rf-tasty');
+  clearTimeout(rs._restT);
+  rs._restT = setTimeout(()=>{
+    if(!rs._restOrig) return;
+    rs.innerHTML = rs._restOrig;
+    rs.classList.remove('rf-tasty');
+  }, 2400);
+}
+/* 파트너 위로 하트·별이 톡톡 떠오른다 (스페셜은 더 많이, 더 멀리) */
+function restBurst(panel, n, special){
+  const host = panel.querySelector('.rstage') || panel;
+  const icons = special ? ['🌟', '✨', '💛', '🌈', '⭐'] : ['❤️', '✨', '🍎', '💚'];
+  for(let i = 0; i < n; i++){
+    const s = document.createElement('span');
+    s.className = 'rf-pop';
+    s.textContent = icons[i % icons.length];
+    s.style.setProperty('--dx', Math.round((Math.random() * 2 - 1) * 60) + 'px');
+    s.style.setProperty('--dy', Math.round(-(60 + Math.random() * 60)) + 'px');
+    s.style.fontSize = Math.round(13 + Math.random() * 9) + 'px';
+    s.style.animationDelay = (i * 24) + 'ms';
+    host.appendChild(s);
+    setTimeout(()=>{ try{ s.remove(); }catch(e){} }, 1100 + i * 24);
+  }
+}
+/* [🍎 과일 주기] [🌟 스페셜] — 앱의 기존 과일 함수를 그대로 쓴다.
+   setFruits/setSpecialFruits 가 −1 하고 헤더 배지·파트너 팝업까지 함께 맞춘다. */
+function restGiveTap(kind, panel){
+  const el = panel || document.getElementById('restPanel');
+  if(!el) return;
+  const special = kind === 'special';
+  /* 새벽 — 파트너가 자는 중이라 먹일 수 없다(하나도 줄지 않는다) */
+  if(/band-prewake/.test(el.className)){
+    restNope(el);
+    toast('💤 파트너가 자고 있어요 — 깨어나면 먹여 주자!');
+    return;
+  }
+  const have = special ? specialCount() : fruitCount();
+  if(have <= 0){
+    restNope(el);
+    toast(special ? '🌟 스페셜 과일이 없어요 — 공부를 모두 끝내면 받을 수 있어요!'
+                  : '🍎 보유한 과일이 없어요 — 오늘의 공부를 끝내면 받을 수 있어요!');
+    return;
+  }
+  if(special) setSpecialFruits(have - 1); else setFruits(have - 1);
+  save();
+  fruitBumpBadge();
+  const lines = special ? PARTNER_SPECIAL_LINES : PARTNER_FRUIT_LINES;
+  restSayTasty(el, lines[Math.floor(Math.random() * lines.length)]);
+  restBurst(el, special ? 14 : 9, special);
+  restGiveSync(el);
+  try{ special ? specialFruitSfx() : fruitSfx(); }catch(e){}
+}
 /* 패널 높이에 맞춰 --rh(모든 크기의 기준)를 넣고, 넘치면 조금씩 줄여 다시 앉힌다 */
 function fitRestPanel(){
   const p = document.getElementById('restPanel');
@@ -4540,9 +4716,13 @@ function buildRestPanel(wrap){
       <div class="rchips">
         <span class="rchip2">${plan.chipLead}<b class="cd">${plan.left}</b></span>
         <span class="rchip2 g">${plan.nextEmoji} 다음: ${plan.nextName} · ${plan.nextTime}</span>
+        ${restGiveHTML(plan.band)}
       </div>
     </div>`;
   wrap.appendChild(el);
+  /* v68 — 칩 줄의 [🍎 과일 주기] [🌟 스페셜] */
+  el.querySelectorAll('[data-give]').forEach(b =>
+    b.addEventListener('click', e => { e.stopPropagation(); restGiveTap(b.dataset.give, el); }));
   const img = el.querySelector('.rart');
   pkImg(img, pk.id, 'art');            // 공식 일러스트 → CDN → 내장 스프라이트 → 몬스터볼
   if(img) img.addEventListener('load', ()=> fitRestPanel());
@@ -4560,6 +4740,7 @@ function updateRestLeft(plan){
     const t = restSpanText((plan || restPlan()).nextMin - nowMinutes());
     if(cd.textContent !== t) cd.textContent = t;
   }
+  restGiveSync(el);          // v68 — 과일 개수·잠금 모양도 tick 마다 맞춰 둔다
 }
 window.addEventListener('resize', ()=> fitRestPanel());
 function buildTasks(){
