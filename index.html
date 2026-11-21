@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v71 — 🧹 중복 기능·문구·긍정 확언 정리 (사용자가 승인한 점검 보고서 D1·D2·D3·D5·D6·C2·C6·C7·C8).
+     ① D1 — 21:00 정각에 잘 준비 팝업이 뜰 상황이면 checkNightStart 의 차임·토스트를 생략하고
+        팝업만 조용히 띄운다(nqCanShow 로 미리 판단). 다른 탭에 있어 팝업이 못 뜰 때만 차임·토스트.
+     ② D2 — 축하 카드가 뜨는 완료에서는 같은 내용의 완료 토스트를 생략(checkAllComplete·syncNightFruit).
+        카드가 없는 복구 경로(팝업이 없을 때·새로고침 복구)에서만 토스트로 알린다.
+     ③ D3 — 21:41~21:59 연장 도전 완료의 토스트 2개(⏰ 연장 도전 성공! → 🌙 잘 준비 완료!)를
+        하나로 합쳤다. 연장 성공 문구는 nightRewardLine() 안에 있어 '🌙 잘 준비 완료! 연장 도전 성공! …' 한 줄.
+     ④ D5·D6 — 부모 설정 안의 중복 버튼 2개 삭제: '🔄 시트에서 지금 불러오기'(공부 탭 시트 새로고침이 있음)
+        · '🔊 소리 켜기/끄기'(헤더 🔊 버튼이 있음). '오늘 모드' 4버튼은 그대로 둔다(사용자가 삭제를 지정하지 않음).
+     ⑤ C2·C6·C7 — 아이 화면의 '취침'을 '잘 준비'로 통일(LUKA의 잘 준비 · 잘 준비 오후 9시 ·
+        잘 준비 목표 오후 9:40). 부모 테스트 탭 라벨(취침 5초 전·취침 시작)은 구분상 그대로.
+        공휴일·방학 아침의 '아침 루틴 종료' 표기 띄어쓰기를 바로잡고, 파트너 기본 이름 오타를 피카츄로 고쳤다.
+     ⑥ C8 — 긍정 확언 46문장 중 다짐체가 아니던 12문장을 다짐체로 다듬고, 뜻이 겹치던 한 쌍은
+        감정조절 다짐('화가 나면 먼저 열까지 세고 말할 거야!')으로 바꿨다. '잘될 거야' → '잘 될 거야'.
+     v70(새벽 몬스터볼 휴식 화면)·v69(확인 팝업·연장 도전) 코드는 그대로 살렸다. -->
 <!-- v70 — 💤 새벽 휴식 화면 = 구름 위 커다란 수채화 몬스터볼 (사용자 요청 · 3안 계열).
      ① 기상 전(prewake) 휴식 화면의 왼쪽 무대를 파트너 공식 일러스트 대신
         assets/sleep_pokeball.png 한 장으로 바꿨다 — 잠만보가 자던 그 구름 위에, 같은 수채화
@@ -2993,7 +3008,7 @@
   <div class="kcard" role="dialog" aria-modal="true" aria-labelledby="adTitle">
     <div class="kstage"><span class="kglow" aria-hidden="true"></span>
       <img class="kart" id="adArt" alt="파트너 포켓몬"></div>
-    <div class="kname"><span id="adIcon" aria-hidden="true">⚡</span><b id="adName">피카추</b><i>파트너</i></div>
+    <div class="kname"><span id="adIcon" aria-hidden="true">⚡</span><b id="adName">피카츄</b><i>파트너</i></div>
     <p class="ktx" id="adTitle">아침 루틴 모두 다 끝냈어?</p>
     <p class="ksub" id="adSub">다 끝냈으면 경험치 +50 을 받아요!</p>
     <div class="kb">
@@ -3008,7 +3023,7 @@
   <div class="kcard" id="dnCard" role="dialog" aria-modal="true" aria-labelledby="dnTitle">
     <div class="kstage"><span class="kglow" aria-hidden="true"></span>
       <img class="kart" id="dnArt" alt="파트너 포켓몬"></div>
-    <div class="kname"><span id="dnIcon" aria-hidden="true">⚡</span><b id="dnName">피카추</b><i>파트너</i></div>
+    <div class="kname"><span id="dnIcon" aria-hidden="true">⚡</span><b id="dnName">피카츄</b><i>파트너</i></div>
     <p class="ktx" id="dnTitle">아침 루틴 완료!</p>
     <p class="ksub" id="dnSub">경험치 +50 챙겼어요!</p>
     <div class="kb one"><button class="kbtn yes" id="dnOk" type="button">좋아!</button></div>
@@ -3177,7 +3192,7 @@
       <span class="nqmoon" aria-hidden="true"></span>
       <img class="nqart" id="nqArt" data-pk="art" alt="파트너 포켓몬">
     </div>
-    <div class="nqname"><span id="nqIcon" aria-hidden="true">⚡</span><b id="nqName">피카추</b><i>파트너</i></div>
+    <div class="nqname"><span id="nqIcon" aria-hidden="true">⚡</span><b id="nqName">피카츄</b><i>파트너</i></div>
     <p class="nqsay" id="nqSay">루카야, 잘 준비하고 스페셜 과일이랑 강화 XP 챙겨서 같이 잘까? 🌙</p>
     <div class="nqb">
       <button class="nqbtn go" id="nqGo" type="button">🍎 좋아! 출발하자!</button>
@@ -3337,7 +3352,6 @@
         <button class="pbtn" id="testTicket">🎟 강화권 +1</button>
         <button class="pbtn" id="testPoke1">🔴 도감 포켓몬 +1</button>
         <button class="pbtn" id="testPoke3">🔴 도감 포켓몬 +3</button>
-        <button class="pbtn" id="toggleSoundSetting">🔊 소리 켜기/끄기</button>
       </div>
       <span class="phint">도감 +1/+3은 아직 잡지 않은 포켓몬을 등록해요 (배틀·카드 확인용).</span>
     </div>
@@ -3354,7 +3368,6 @@
       <div class="psec">오늘의 공부 시트</div>
       <div class="pgrid">
         <a class="pbtn wide" id="sheetOpenLink" target="_blank" rel="noopener">📊 오늘의 공부 시트 열기 ↗</a>
-        <button class="pbtn wide" id="panelSheetRefresh">🔄 시트에서 지금 불러오기</button>
       </div>
       <div class="psec">부모 비밀번호</div>
       <span class="phint">🔑 비밀번호는 구글 시트의 '비밀번호' 칸에서 바꿔요.</span>
@@ -3454,7 +3467,7 @@ const MODE_DEFS = {
     id:'holiday', label:'🗓️ 공휴일', name:'공휴일',
     /* v65 — 공휴일 아침 루틴은 07:00 ~ 12:00. 낮 12:00 이 지나면 휴식 화면으로 넘어간다. */
     wake:7*60, deadline:12*60, deadlineLabel:'완료 낮 12:00', deadlineTip:'아침 완료',
-    stripLabel:'LUKA의 공휴일 아침', emoji:'🗓️', countdown:'아침루틴 종료까지',
+    stripLabel:'LUKA의 공휴일 아침', emoji:'🗓️', countdown:'아침 루틴 종료까지',
     alertToast:'🗓️ 공휴일 아침 완료! 이제 푹 쉬어요!',
     tasks: HOLIDAY_TASKS, xp: 100,             // 오후 루틴이 없으니 아침만으로 100 XP → 포켓몬 1마리
     morningEnd: 12*60,                         // 12:00 부터는 휴식 화면(v65 → v66 2안)
@@ -3462,7 +3475,7 @@ const MODE_DEFS = {
   vacation: {
     id:'vacation', label:'🏖️ 방학', name:'방학',
     wake:8*60, deadline:9*60, deadlineLabel:'완료 오전 9:00', deadlineTip:'아침 완료',
-    stripLabel:'LUKA의 방학 아침', emoji:'🏖️', countdown:'아침루틴 종료까지',
+    stripLabel:'LUKA의 방학 아침', emoji:'🏖️', countdown:'아침 루틴 종료까지',
     alertToast:'🏖️ 아침 완료 시간이에요!',
     tasks: VACATION_TASKS, xp: 50,
     morningEnd: 9*60,                          // v66 — 아침 마감 9:00 부터 오후 4시까지는 방학 낮 휴식 화면
@@ -3495,12 +3508,12 @@ function buildRoutineTable(){
     /* 오후 루틴이 없는 모드(공휴일·방과후의 빈 시간) — 휴식 화면 */
     rest: {
       key:'rest', emoji:M.emoji, stripLabel:M.stripLabel,
-      depart:'취침 오후 9시',
+      depart:'잘 준비 오후 9시',
       tasks: [], xp: 0, panel:true,
     },
     night: {
-      key:'night', emoji:'🌙', stripLabel:'LUKA의 취침 루틴',
-      depart:'취침 오후 9시',
+      key:'night', emoji:'🌙', stripLabel:'LUKA의 잘 준비',
+      depart:'잘 준비 오후 9시',
       tasks: NIGHT_TASKS, xp: 0,
     },
   };
@@ -4089,7 +4102,7 @@ function migrate(s){
      (앱에서 비밀번호로 직접 켜고 끈 것이 언제나 최우선) */
   if(s.lastSheetWebControl !== 'on' && s.lastSheetWebControl !== 'off') s.lastSheetWebControl = null;
   /* ⚡ 파트너 포켓몬 — 도감에서 '너로 정했다!' 로 고른 포켓몬.
-     저장값이 없거나(처음) 그 포켓몬이 도감에 없거나 반납되었으면 null → 기본 파트너(피카추 #025). */
+     저장값이 없거나(처음) 그 포켓몬이 도감에 없거나 반납되었으면 null → 기본 파트너(피카츄 #025). */
   if(!Number.isInteger(s.partnerId) || !DEX_BY_ID[s.partnerId] || !s.caught[s.partnerId]) s.partnerId = null;
   if(!Number.isInteger(s.partnerPrev) || !DEX_BY_ID[s.partnerPrev] || s.partnerPrev === s.partnerId) s.partnerPrev = null;
   /* 오늘 루틴 경험치로 잡은 포켓몬 기록 — 체크를 풀면 반납할 때 쓴다 */
@@ -4468,7 +4481,7 @@ function renderProgress(){
   const dl = document.getElementById('departLabel');
   const dep = depFix != null ? depFix
             : key === 'after' ? (R.depart || '')     // 하교 루틴은 제한시간 없음 · 방과후 정리는 10:20~14:00
-            : key === 'night' ? (now >= NIGHT_BED && now < NIGHT_END ? '연장 도전 · 밤 10시까지' : '취침 목표 오후 9:40')
+            : key === 'night' ? (now >= NIGHT_BED && now < NIGHT_END ? '연장 도전 · 밤 10시까지' : '잘 준비 목표 오후 9:40')
             : R.depart;
   if(dl && dl.textContent !== dep) dl.textContent = dep;
   return now;
@@ -4499,7 +4512,11 @@ function checkNightStart(now){
   }
   if(d.nightStarted) return;
   d.nightStarted = true; save();
-  if(now >= NIGHT_BED) return;         // 취침 시간이 이미 지났으면 시작음은 생략
+  if(now >= NIGHT_BED) return;         // 잘 준비 마감(21:40)이 이미 지났으면 시작음은 생략
+  /* v71 — D1: 바로 뒤 checkNightAsk 가 파트너 팝업을 띄울 상황이면 차임·토스트를 양보한다.
+     팝업은 원래 '소리 없이 조용히' 뜨는 설계라, 둘이 0.25초 안에 겹치면 시끄럽고 같은 말이 두 번 된다.
+     아이가 다른 탭에 있어 팝업이 못 뜰 때만 예전처럼 차임과 토스트로 알린다. */
+  if(nqCanShow(now)) return;
   playMissionSfx(chime);               // 미션 MP3, 막히면 잔잔한 차임
   toast('🌙 오후 9시! 잘 준비 시작해요!');
 }
@@ -4708,7 +4725,7 @@ function restPlan(partnerName){
       nextName = (modeId === 'afterschool') ? '방과후 정리' : '오후 루틴';
       nextTime = restClockText(afterFrom);
     } else {
-      nextMin = NIGHT_AT; nextEmoji = '🌙'; nextName = '취침 루틴'; nextTime = restClockText(NIGHT_AT);
+      nextMin = NIGHT_AT; nextEmoji = '🌙'; nextName = '잘 준비'; nextTime = restClockText(NIGHT_AT);
     }
     /* v66-1 — 낮에는 '푹 쉬고'만이 아니라 **놀 수도, 오늘의 공부를 할 수도 있는 자유 시간**임을 알린다 */
     const head = afterAllDone() ? '루카야, 오늘 오후 루틴도 정말 잘했어!'
@@ -5100,6 +5117,10 @@ function doneSubHTML(key, res){
   }
   return '완료 확인! 이제 자유 시간이야 🎉';
 }
+/* v71 — 축하 카드가 뜰 수 있는지 (카드가 없으면 예전처럼 토스트로 알린다) */
+function doneCardReady(){
+  return !!(document.getElementById('doneCard') && document.getElementById('dnCard'));
+}
 function raiseDoneCard(key, res){
   const ov = document.getElementById('doneCard');
   const card = document.getElementById('dnCard');
@@ -5121,17 +5142,21 @@ function raiseDoneCard(key, res){
 }
 /* 확정 한 곳 — 팝업의 '응' · 다시 채운 경우 · 새로고침 복구가 모두 여기를 지난다 */
 function finishRoutine(key, opts){
-  const res = checkAllComplete(key);
   const silent = !!(opts && opts.silent);
+  /* v71 — D2: 축하 카드가 뜨는 완료에서는 같은 내용의 완료 토스트를 겹쳐 띄우지 않는다.
+     카드가 안 뜨는 복구 경로(확인 팝업이 없거나 새로고침 복구)에서만 토스트로 알린다. */
+  const card = !silent && doneCardReady();
+  const res = checkAllComplete(key, { card });
   if(key === 'night'){
-    syncNightReward();
+    syncNightReward({ card });
     if(!silent) raiseDoneCard('night', { night:true });
     return res;
   }
   if(!silent) raiseDoneCard(key, res);
   return res;
 }
-function checkAllComplete(keyArg){
+function checkAllComplete(keyArg, opts){
+  const card = !!(opts && opts.card);      /* v71 — 카드가 같은 말을 하면 토스트는 생략 */
   const key = keyArg || routineNow();
   const R = ROUTINES[key];
   if(!R) return { xp:0 };
@@ -5147,7 +5172,7 @@ function checkAllComplete(keyArg){
   const xp = R.xp || 0;
   if(key === 'morning' && now > DEPART){       /* 마감 시간을 넘기면 경험치는 없다 */
     save(); renderProgress();
-    toast('시간이 지나서 경험치는 아쉬워요 😢 내일 다시!');
+    if(!card) toast('시간이 지나서 경험치는 아쉬워요 😢 내일 다시!');
     sad();
     return { late:true };
   }
@@ -5155,7 +5180,7 @@ function checkAllComplete(keyArg){
   d.rewarded = d.rewarded || { morning:false, after:false };
   if(d.rewarded[slot]){                        /* 모드를 바꿔도 같은 보상을 두 번 받지 않는다 */
     save(); renderProgress(); renderTasks();
-    toast(`🎉 ${R.stripLabel} 완료! 오늘 경험치는 이미 받았어요`);
+    if(!card) toast(`🎉 ${R.stripLabel} 완료! 오늘 경험치는 이미 받았어요`);
     confetti();
     return { already:true };
   }
@@ -5164,7 +5189,7 @@ function checkAllComplete(keyArg){
   state.xp += xp;
   routineCatchToday().slots[slot] = true;      /* 오늘 이 루틴의 경험치를 받았다 (체크를 풀면 되돌린다) */
   save(); renderWild(); renderProgress(); renderTasks();
-  toast(`🎉 ${R.stripLabel} 완료! 경험치 +${xp}!`);
+  if(!card) toast(`🎉 ${R.stripLabel} 완료! 경험치 +${xp}!`);
   playMissionSfx(chime); confetti();
   setTimeout(maybeCatch, 900);
   return { xp };
@@ -5301,7 +5326,7 @@ function returnCaughtPokemon(entry){
   if(entry.at) state.caughtAt[id] = entry.at; else delete state.caughtAt[id];
   const i = DEX.findIndex(p => p.id === id);
   if(i >= 0) state.wildIndex = i;   // 다음 목표를 그 포켓몬으로 → 다시 체크하면 같은 포켓몬을 잡는다
-  /* 파트너를 반낚했을 때 — 이전 파트너가 아직 도감에 있으면 그쪽으로, 아니면 기본 파트너(피카추)로 */
+  /* 파트너를 반낚했을 때 — 이전 파트너가 아직 도감에 있으면 그쪽으로, 아니면 기본 파트너(피카츄)로 */
   if(state.partnerId === id){
     const prev = state.partnerPrev;
     state.partnerId = (Number.isInteger(prev) && prev !== id && state.caught[prev]) ? prev : null;
@@ -7185,17 +7210,18 @@ function incrementSelfProgress(src, opts){
     if(!opts.silent){
       playMissionSfx(()=>{ chime(); powerSfx(); }); confetti();
       toast(fromNight
-        ? '🎟 9:40 전 취침 완료로 별을 다 모았어요! 포켓몬 강화권 1장!'
+        ? '🎟 9:40 전 잘 준비 완료로 별을 다 모았어요! 포켓몬 강화권 1장!'
         : fromMission
           ? '🎟 미션으로 별을 다 모았어요! 포켓몬 강화권 1장!'
           : '🎟 포켓몬 강화권 1장을 받았어요! 도감에서 강화해요!');
     }
     return true;             // 강화권을 받았다
   }
-  if(!opts.silent){
+  /* v71 — quiet: 별 진행 토스트만 양보한다(축하 카드가 같은 말을 한다). 강화권 축하는 위에서 그대로. */
+  if(!opts.silent && !opts.quiet){
     blip();
     toast(fromNight
-      ? `🌙 9:40 전 취침 완료! 강화권 별 ${state.study.selfCount}/${BOOST_MAX}`
+      ? `🌙 9:40 전 잘 준비 완료! 강화권 별 ${state.study.selfCount}/${BOOST_MAX}`
       : fromMission
         ? `🏥 미션 완료! ⚡ 강화 XP ${state.study.selfCount}/${BOOST_MAX}`
         : `⚡ 강화 XP ${state.study.selfCount}/${BOOST_MAX}`);
@@ -7212,7 +7238,7 @@ function decrementSelfProgress(src, opts){
     if(!opts.silent){
       sad();
       toast(fromNight
-        ? `취침 완료를 취소했어요 · ${state.study.selfCount}/${BOOST_MAX}`
+        ? `잘 준비 완료를 취소했어요 · ${state.study.selfCount}/${BOOST_MAX}`
         : fromMission
           ? `🏥 미션을 한 번 취소했어요 · ${state.study.selfCount}/${BOOST_MAX}`
           : `오늘의 강화 XP를 취소했어요 · ${state.study.selfCount}/${BOOST_MAX}`);
@@ -7242,7 +7268,9 @@ function nightFruitState(){
 }
 function setNightFruitState(v){ day().nightFruit = v; }
 function nightSoftSound(){ beep(587,.55,0,'sine',.26); beep(494,.6,.42,'sine',.2); }
-function syncNightFruit(){
+function syncNightFruit(opts){
+  /* v71 — D2: 축하 카드가 뜨면 카드 부제(nightRewardLine)와 글자까지 같던 이 토스트는 생략한다 */
+  const card = !!(opts && opts.card);
   const all = nightAllDone();
   const st = nightFruitState();
   if(all && st === 'none'){
@@ -7251,7 +7279,7 @@ function syncNightFruit(){
     fruitBumpBadge();
     incrementSelfProgress('night', { silent:true });  // ⚡ 강화 XP +1 (8개가 차면 강화권 1장)
     nightSoftSound();
-    toast('🌙 잘 준비 완료! ' + nightRewardLine());   // v69 — 제시간이면 +2칸, 연장 도전이면 +1칸
+    if(!card) toast('🌙 잘 준비 완료! ' + nightRewardLine());   // 제시간이면 +2칸, 연장 도전이면 +1칸
     save();
     return;
   }
@@ -7273,7 +7301,8 @@ function syncNightFruit(){
 function isNightCounted(){
   return (state.study.nightDates || []).includes(todayKey());
 }
-function syncNightReward(){
+function syncNightReward(opts){
+  const card = !!(opts && opts.card);
   const k = todayKey();
   const d = day();
   const all = nightAllDone();
@@ -7281,16 +7310,18 @@ function syncNightReward(){
   if(all && !counted){
     if(nowMinutes() < NIGHT_BED){          // 9:40 전 완료 → 강화권 5번 세기에 +1
       state.study.nightDates.push(k);
-      incrementSelfProgress('night');
+      incrementSelfProgress('night', { quiet: card });   // v71 — 카드가 뜨면 별 진행 토스트는 양보
     }else if(!d.nightLateDone){             // v69 — 21:41~21:59 '연장 도전' 구간 완료: 컨페티 없이 조용히
       d.nightLateDone = true;
       playMissionSfx(chime);
-      toast('⏰ 연장 도전 성공! 밤 10시 전에 잘 준비를 마쳤어요 🌙');
+      /* v71 — D3: 여기서 '⏰ 연장 도전 성공!…' 토스트를 띄우면 바로 아래 syncNightFruit 의
+         '🌙 잘 준비 완료! 연장 도전 성공!…' 가 0.1초 만에 덮어 읽을 수 없었다.
+         연장 성공 문구는 nightRewardLine() 안에 있으니 한 줄로 합쳐 그 토스트(또는 카드)가 전한다. */
     }
-  }else if(!all && counted){                // 하나라도 풀리면 오늘 취침 별을 되돌린다
+  }else if(!all && counted){                // 하나라도 풀리면 오늘 잘 준비 별을 되돌린다
     revertNightCount();
   }
-  syncNightFruit();                         // v67 — 잘 준비 완료 과일 (강화권 안내 뒤에 과일 안내가 보이게)
+  syncNightFruit({ card });                 // v67 — 잘 준비 완료 과일 (강화권 안내 뒤에 과일 안내가 보이게)
   save();
   renderStudy(); renderDex();
 }
@@ -8107,7 +8138,7 @@ document.getElementById('sheetRefresh').addEventListener('click', ()=>{ sheetFet
 document.getElementById('restBtn').addEventListener('click', ()=>{
   askPin(()=> setRestToday(!isRestToday()));
 });
-document.getElementById('panelSheetRefresh').addEventListener('click', parentOnly(()=>{ sheetFetch('panel'); toast('📊 시트에서 공부 목록을 다시 불러와요'); }));
+
 /* ---------- 🔄 웹앱 새로고침 (부모 설정) ----------
    삼성 인터넷 같은 웹앱 모드에는 주소창이 없어 새로고침이 어렵다.
    http(s) 에서는 캐시를 건너뛴 주소(?v=시각)로 다시 열어 최신 배포본을 받고,
@@ -8967,9 +8998,7 @@ document.getElementById('restoreFile').addEventListener('change', e=>{
   if(f) restoreData(f);
   e.target.value = '';
 });
-document.getElementById('toggleSoundSetting').addEventListener('click', parentOnly(()=>{
-  setSoundOn(!soundOn);
-}));
+
 document.getElementById('resetAll').addEventListener('click', parentOnly(()=>{
   if(confirm('모든 기록(경험치·도감·오늘 할 일·공부 목록)을 지울까요?')){
     localStorage.removeItem(LS_KEY);
@@ -9078,19 +9107,21 @@ function confetti(){
    문장은 'YYYY-MM-DD' 날짜 문자열의 해시로 뽑으므로 같은 날에는 새로고침·재실행을 해도
    같은 문장이 나오고(기기가 달라도 같다), 바로 전날과 같은 문장이 뽑히면 한 칸 밀어
    이틀 연속 같은 문장이 나오지 않게 한다.
-   문장 46개는 2018년생 남자아이(초1) 눈높이로 성실함 12 · 긍정적인 태도와 말 12 ·
-   관용과 이해 10 · 겸손 10 · 화가 날 때의 감정 조절 2 — 다섯 갈래가 골고루 나오게
-   묶어 두었다(27자 이내, 1024x600·1280x800 한 줄, 자동 축소 없음). */
+   문장 46개는 2018년생 남자아이(초1) 눈높이로 성실함 12 · 긍정적인 태도와 말 11 ·
+   관용과 이해 9 · 겸손 10 · 화가 날 때의 감정 조절 4 — 다섯 갈래가 골고루 나오게
+   묶어 두었다(27자 이내, 1024x600·1280x800 한 줄, 자동 축소 없음).
+   v71 — 다짐체(~할 거야·~해 볼게)가 아니던 12문장을 아이가 따라 말하는 다짐체로 다듬고(C8),
+          뜻이 겹치던 '안 된다고 하기 전에 먼저 해 볼래!'를 감정조절 다짐으로 바꿨다. */
 const AFFIRMATIONS = [
   /* 성실함 — 오늘 할 일을 먼저, 끝까지, 꾸준히 */
   '오늘 할 일을 미루지 않고 먼저 해낼 거야!',
-  '작은 일도 대충 하지 않고 꼼꼼하게 해!',
+  '작은 일도 대충 하지 않고 꼼꼼하게 할 거야!',
   '내가 맡은 일은 끝까지 책임지고 마칠 거야!',
-  '어려워 보여도 포기하지 않고 끝까지 해봐!',
+  '어려워 보여도 포기하지 않고 끝까지 도전할 거야!',
   '일어날 때는 한 번에 벌떡 일어날 거야!',
   '준비물은 전날 미리 챙겨 둘 거야!',
   '시작한 일은 중간에 그만두지 않을 거야!',
-  '매일 조금씩 꾸준히 하면 다 잘하게 돼!',
+  '매일 조금씩 꾸준히 하면 다 잘하게 될 거야!',
   '내 물건은 내가 스스로 정리하고 챙길 거야!',
   '내가 하기로 한 일은 먼저 끝내고 놀 거야!',
   '오늘 할 수 있는 만큼 끝까지 해 볼 거야!',
@@ -9099,27 +9130,26 @@ const AFFIRMATIONS = [
   /* 긍정적인 태도와 말 — 밝게 인사하고 힘이 되는 말 하기 */
   '오늘도 밝은 목소리로 인사하고 시작할 거야!',
   '친구에게 힘이 되는 따뜻한 말을 해 줄 거야!',
-  '안 된다고 하기 전에 먼저 해 볼래!',
   '고마운 일이 있으면 바로 고맙다고 말할 거야!',
-  '나는 오늘도 웃는 얼굴로 하루를 시작해!',
-  '잘 안 돼도 괜찮아, 다음엔 잘될 거야!',
+  '나는 오늘도 웃는 얼굴로 하루를 시작할 거야!',
+  '잘 안 돼도 괜찮아, 다음엔 잘 될 거야!',
   '힘든 일이 있어도 씩씩하게 웃어 볼 거야!',
   '나는 오늘도 좋은 말만 골라서 할 거야!',
   '친구가 인사하면 나도 웃으며 인사할 거야!',
-  '기분이 안 좋아도 금방 다시 웃을 수 있어!',
+  '기분이 안 좋아도 금방 다시 웃을 거야!',
   '못 하겠다고 말하기 전에 한 번 더 해 볼게!',
-  '어려운 일도 웃으면서 넘길 수 있어!',
+  '어려운 일도 웃으면서 넘겨 볼 거야!',
 
   /* 관용과 이해 — 친구의 실수·다름·기분을 이해하기 */
   '친구가 실수해도 괜찮다고 웃으며 말해 줄 거야!',
   '친구 이야기를 끝까지 잘 들어 줄 거야!',
   '생각이 달라도 친구 마음을 이해해 볼 거야!',
-  '함께 놀 때 서로 양보하면 더 즐거워!',
+  '함께 놀 때 서로 양보하면 더 즐거울 거야!',
   '친구가 화가 났으면 먼저 다가가 물어볼 거야!',
-  '친구가 나랑 달라도 괜찮아, 그게 친구야!',
+  '친구가 나랑 달라도 있는 그대로 받아 줄 거야!',
   '친구가 화내도 내가 먼저 웃어 줄 거야!',
   '친구 마음을 먼저 생각하고 말할 거야!',
-  '나랑 다른 친구도 소중한 친구야!',
+  '나랑 다른 친구도 소중히 여길 거야!',
   /* 화가 날 때의 감정 조절 — 손·발 대신 말로 (2026-11-19) */
   '화가 나도 손이나 발 대신 말로 표현할 거야!',
   '친구가 장난쳐도 웃으면서 넘겨 줄 거야!',
@@ -9128,15 +9158,18 @@ const AFFIRMATIONS = [
   '잘해도 뽐내지 않고 더 열심히 할 거야!',
   '실수해도 핑계 대지 않고 솔직하게 말할게!',
   '친구가 잘한 일은 진심으로 박수 쳐 줄 거야!',
-  '내가 몰랐던 걸 배우는 건 정말 신나는 일이야!',
-  '나는 아직 배울 게 많은 아이야!',
+  '몰랐던 걸 배우면 정말 신이 날 거야!',
+  '아직 배울 게 많으니 하나씩 배워 갈 거야!',
   '칭찬받으면 고맙다고 하고 더 노력할 거야!',
-  /* 화가 날 때의 감정 조절 — 숨 고르고 말로 (2026-11-20) */
+  /* 화가 날 때의 감정 조절 — 숨 고르고 말로 (2026-11-20)
+     v71 — 뜻이 겹치던 '안 된다고 하기 전에 먼저 해 볼래!' 자리를 채운 새 문장 */
   '화나는 마음이 올라오면 깊게 숨 쉬고 말할 거야!',
+  '화가 나면 먼저 열까지 세고 말할 거야!',
+  /* 겸손 (이어서) */
   '내가 맞아도 친구 말을 더 들어 볼 거야!',
   '잘한 건 친구 덕분이라고 생각할 거야!',
   '잘 모르면 알려 달라고 부탁할 거야!',
-  '나보다 잘하는 친구를 보면 배우고 싶어!'
+  '나보다 잘하는 친구를 보면 배워 볼 거야!'
 ];
 function affirmKeyOf(d){
   d = d || getNow();
