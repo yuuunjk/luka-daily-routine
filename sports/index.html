@@ -580,15 +580,13 @@
       </div>
       <div class="panel">
         <h3>🎯 승부예측 기록</h3>
-        <p class="hint">내가 고른 예측과 채점 결과는 이 기기에만 저장돼요. 로그인도 서버도 쓰지 않아요.</p>
-        <div class="row"><span class="k">채점한 경기</span><span class="v" id="sPredTotal">-</span></div>
-        <div class="row"><span class="k">기다리는 예측</span><span class="v" id="sPredPending">-</span></div>
+        <p class="hint">내가 고른 예측과 채점 결과는 이 기기에만 저장돼요. 로그인도 서버도 쓰지 않아요.<br>맞힌 수·기다리는 예측 같은 기록은 🎯 승부예측 탭에서 봐요.</p>
         <button class="ghost" id="resetPredBtn">예측 기록 지우기</button>
       </div>
       <div class="panel">
         <h3>🧹 초기화 (처음으로)</h3>
         <p class="hint">우리 팀과 설정을 지워요. 경기 정보는 그대로예요.</p>
-        <button class="ghost" id="resetBtn">설정 지우기</button>
+        <button class="ghost" id="resetBtn">우리 팀·설정 지우기</button>
       </div>
     </section>
   </main>
@@ -724,6 +722,17 @@ const PRED_KEY = "sports.preds.v1";
 const DRAW_SPORTS = new Set(["축구", "해외축구", "국제대회"]);   // 무승부가 있는 종목
 const PRED_KEEP_MS = 7 * 86400000;                               // 오래된 미채점 예측 정리
 
+/* ⏱️ 자동 새로고침 간격은 5분·15분·끔만 쓴다.
+   1분 갱신은 헤더의 🔄 실시간이 맡으므로 설정에서 겹치지 않게 뺐다.
+   (옛 설정에 남아 있는 1분·모르는 값은 5분으로 옮긴다) */
+function normInterval(v){
+  if (v === null || v === undefined || v === "") return 5;
+  const n = Number(v);
+  if (n === 0) return 0;
+  if (n === 15) return 15;
+  return 5;
+}
+
 const state = {
   tab: "today",
   sport: "전체",
@@ -742,7 +751,7 @@ const state = {
   news: null,
   favorites: loadFav(),
   preds: loadPreds(),
-  interval: Number(localStorage.getItem("sports.interval") ?? 5),
+  interval: normInterval(localStorage.getItem("sports.interval")),
   liveMode: localStorage.getItem("sports.live") === "1",
   appEnabled: loadAppEnabled(),
   nightUnlockKey: loadNightUnlockKey(),
@@ -757,6 +766,9 @@ const state = {
   directGames: null,
   newsFlat: [],
 };
+
+/* 옛 1분 자동 새로고침 설정은 5분으로 옮겨 적는다 (🔄 실시간과 같은 주기로 두 번 요청하지 않게) */
+try { if (localStorage.getItem("sports.interval") === "1") localStorage.setItem("sports.interval", "5"); } catch {}
 
 /* ── 저장소 ─────────────────────────────── */
 function loadFav(){
@@ -882,17 +894,17 @@ function predBlock(g){
   }
   if (!p) return "";
   if (g.state === "live")
-    return `<div class="predrow"><span class="predtag mine">🔒 내 예측: ${esc(pickLabel(p))}</span></div>`;
+    return `<div class="predrow"><span class="predtag mine">🔒 내 예측 ${esc(pickLabel(p))}</span></div>`;
   if (g.state === "cancel")
-    return `<div class="predrow"><span class="predtag mine">내 예측: ${esc(pickLabel(p))}</span></div>`;
+    return `<div class="predrow"><span class="predtag mine">🔒 내 예측 ${esc(pickLabel(p))}</span></div>`;
   if (g.state === "done"){
     if (!p.res)
-      return `<div class="predrow"><span class="predtag mine">내 예측: ${esc(pickLabel(p))}</span></div>`;
+      return `<div class="predrow"><span class="predtag mine">🔒 내 예측 ${esc(pickLabel(p))}</span></div>`;
     const hit = p.res === "hit";
     const actual = p.actual === "draw" ? "무승부" : `${(p.actual === "home" ? p.home : p.away)} 승`;
     return `<div class="predrow">
         <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중!" : "😅 아깝다"}</span>
-        <span class="pd">내 예측 ${esc(pickLabel(p))} · 실제 ${esc(actual)}</span>
+        <span class="pd">🔒 내 예측 ${esc(pickLabel(p))} · 실제 ${esc(actual)}</span>
       </div>`;
   }
   return "";
@@ -901,13 +913,12 @@ function predMini(p, g){
   const home = g?.home?.name || p.home || "";
   const away = g?.away?.name || p.away || "";
   const when = g ? `${dayLabel(g.date)}${g.time || ""}` : `${p.date || ""} ${p.time || ""}`.trim();
-  const live = g?.state === "live";
   /* 경기가 아직 시작 전이면 여기서도 바로 취소하고 다시 고를 수 있다 */
   const cancel = (g && g.state === "upcoming")
     ? `<button class="predcancel" type="button" data-cancel="${esc(p.id)}">✕ 취소</button>` : "";
   return `<div class="hrow">
       <span class="hm">${esc(p.emoji || "🏅")} ${esc(home)} vs ${esc(away)}<small>${esc(p.leagueName || "")} · ${esc(when)}</small></span>
-      <span class="predside"><span class="predtag mine">${live ? "🔒" : "⏳"} ${esc(pickLabel(p))}</span>${cancel}</span>
+      <span class="predside"><span class="predtag mine">🔒 내 예측 ${esc(pickLabel(p))}</span>${cancel}</span>
     </div>`;
 }
 function predHist(p, g){
@@ -915,10 +926,10 @@ function predHist(p, g){
   const away = g?.away?.name || p.away || "";
   const score = (typeof p.hs === "number" && typeof p.as === "number") ? `${p.hs} : ${p.as}` : "";
   const hit = p.res === "hit";
-  const bits = [p.leagueName || "", score, `내 예측 ${pickLabel(p)}`].filter(Boolean).join(" · ");
+  const bits = [p.leagueName || "", score, `🔒 내 예측 ${pickLabel(p)}`].filter(Boolean).join(" · ");
   return `<div class="hrow">
       <span class="hm">${esc(home)} vs ${esc(away)}<small>${esc(bits)}</small></span>
-      <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중" : "😅 아깝다"}</span>
+      <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중!" : "😅 아깝다"}</span>
     </div>`;
 }
 /* ── 📊 종목별 · 리그별 적중률 (채점된 예측만 모아서 종목 카드 안에 리그줄) ── */
@@ -979,11 +990,6 @@ function recentGraded(st){
 }
 function renderPredict(){
   const st = predStats();
-  const sTotal = $("#sPredTotal");
-  if (sTotal) sTotal.textContent = `${st.hits} / ${st.total}`;
-  const sPend = $("#sPredPending");
-  if (sPend) sPend.textContent = `${st.pending}경기`;
-
   const body = $("#predictBody");
   if (!body) return;
   const byId = new Map(gameList().map(g => [String(g.id), g]));
@@ -1300,8 +1306,8 @@ function renderToday(){
   }
   body.innerHTML = html;
   $("#liveInfo").textContent = state.directOK
-    ? (state.liveMode ? "실시간 연결 중 · 1분마다 새 소식" : "실시간 연결이 돼요. 🔄 를 눌러 켜 보세요")
-    : "저장된 데이터 · 🔄 누르면 다시 시도";
+    ? (state.liveMode ? "실시간 연결 중 · 1분마다 새 소식" : "실시간 연결이 돼요. 🔄 실시간을 눌러 켜 보세요")
+    : "저장된 데이터 · 🔄 실시간을 누르면 다시 시도";
 }
 
 /* ── 순위 ──────────────────────────────── */
@@ -1618,10 +1624,10 @@ function openPredHistory(){
       const hit = p.res === "hit";
       const actual = p.actual === "draw" ? "무승부" : `${p.actual === "home" ? p.home : p.away} 승`;
       const score = (typeof p.hs === "number" && typeof p.as === "number") ? `${p.hs} : ${p.as}` : "";
-      const bits = [p.leagueName || "", score, `내 예측 ${pickLabel(p)}`, `실제 ${actual}`].filter(Boolean).join(" · ");
+      const bits = [p.leagueName || "", score, `🔒 내 예측 ${pickLabel(p)}`, `실제 ${actual}`].filter(Boolean).join(" · ");
       return `<div class="hrow">
         <span class="hm">${esc(p.home)} vs ${esc(p.away)}<small>${esc(bits)}</small></span>
-        <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중" : "😅 아깝다"}</span>
+        <span class="predtag ${hit ? "hit" : "miss"}">${hit ? "🎯 적중!" : "😅 아깝다"}</span>
       </div>`;
     }).join("") : `<div class="empty">아직 채점된 기록이 없어요.<br>경기가 끝나면 자동으로 채점해 드려요 🎯</div>`;
   }
@@ -1643,7 +1649,8 @@ function closePredHistory(){
 /* ── 설정 ──────────────────────────────── */
 function renderSettings(){
   /* ⭐ 우리 팀은 위쪽 '⭐ 우리 팀' 버튼이 전담한다 — 설정에는 두지 않는다 */
-  const opts = [[1,"1분"],[5,"5분"],[15,"15분"],[0,"끔"]];
+  /* 1분은 헤더 🔄 실시간이 맡는다 — 여기서는 5분·15분·끔만 고른다 */
+  const opts = [[5,"5분"],[15,"15분"],[0,"끔"]];
   $("#intervalSeg").innerHTML = opts.map(([v,l]) =>
     `<button class="${state.interval===v?"on":""}" data-v="${v}">${l}</button>`).join("");
   $("#intervalSeg").querySelectorAll("button").forEach(b => {
@@ -1657,7 +1664,9 @@ function renderSettings(){
   $("#sUpdated").textContent = fmtUpdated(state.today?.updated || state.standings?.updated);
   $("#sGames").textContent = (state.today?.total ?? "-") + "경기";
   $("#sNews").textContent = (state.news?.total ?? "-") + "건";
-  $("#sDirect").textContent = state.directOK === null ? "확인 중…" : (state.directOK ? "가능 ✅ (1분 갱신)" : "차단됨 → 5분 자동 갱신");
+  $("#sDirect").textContent = state.directOK === null ? "확인 중…"
+    : (state.directOK ? "가능 ✅ (🔄 실시간 1분)"
+                      : `차단됨 → 자동 새로고침 ${state.interval ? state.interval + "분" : "끔"}`);
   if ($("#sPower")) $("#sPower").textContent = appLocked()
     ? (state.appEnabled ? "🔴 OFF · 야간 자동 잠금 시간" : "🔴 OFF · 부모님이 잠금")
     : "🟢 ON · 지금 사용할 수 있어요";
@@ -1698,7 +1707,6 @@ function saveNightRange(){
 
 /* ── ⭐ 우리 팀 고르기 창 (상단 '⭐ 우리 팀' 버튼) ──
    팀이 200개 가까이 되니 종목 칩 → 리그별 묶음으로 나누어 찾기 쉽게 한다. */
-const leagueKeyOf = (id) => String(id || "").replace(/^(soccer|basketball|baseball|football|hockey|volleyball)\//, "");
 /* 종목 → 리그 → 팀 모음 */
 function leagueTree(){
   const tree = new Map();
@@ -1949,10 +1957,6 @@ function logoOf(team){
   if (logos.length) return logos[0]?.href || "";
   return team?.logo || "";
 }
-const KO_WEEK = (iso) => {
-  const d = new Date(iso);
-  return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
-};
 function espnStatus(comp, sport){
   const st = comp?.status || {};
   const stype = st.type || {};
@@ -2070,7 +2074,7 @@ async function refreshDirect(){
 /* =========================================================
    🌙 밤 9시 ~ 아침 8시 자동 잠금
    · 21:00 ~ 07:59 에는 앱 전체를 덮는 잠금 화면이 뜨고, 08:00 이 되면 저절로 폴린다.
-   · 잠금 중에는 1분 실시간·자동 새로고침 타이머를 멈춘다(잠금 해제·아침 8시에 재개).
+   · 잠금 중에는 실시간(1분)·자동 새로고침 타이머를 멈춘다(잠금 해제·아침 8시에 재개).
    · 부모님이 '부모님 확인' 을 누르고 구글 시트의 부모 비밀번호를 맞히면
      '그 밤 구간' 동안만 열린다(localStorage 에 밤 구간 키를 적어 두고, 다음날 21:00 은 새 구간).
    · 비밀번호는 dashboard/index.html 과 같은 시트('오늘의 공부 리스트' 의 '비밀번호' 열)에서
@@ -2557,8 +2561,7 @@ function backupSports(){
 function applyRestoredState(){
   state.favorites = loadFav();
   state.preds = loadPreds();
-  const iv = Number(localStorage.getItem("sports.interval"));
-  state.interval = Number.isFinite(iv) && iv >= 0 ? iv : 5;
+  state.interval = normInterval(localStorage.getItem("sports.interval"));
   state.liveMode = localStorage.getItem("sports.live") === "1";
   state.rankMode = localStorage.getItem("sports.rankMode") === "player" ? "player" : "team";
   state.appEnabled = loadAppEnabled();
@@ -2684,7 +2687,7 @@ function bind(){
       renderToday();
     }
     if (!state.directOK){
-      alert("지금은 실시간 직접 연결이 안 돼요.\n저장된 경기 정보를 보여 주고 있고, 🔄 새로고침을 누르면 다시 시도해요.");
+      alert("지금은 실시간 직접 연결이 안 돼요.\n저장된 경기 정보를 보여 주고 있고, 🔄 실시간을 다시 누르면 시도해요.");
       return;
     }
     state.liveMode = !state.liveMode;
