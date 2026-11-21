@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v65 — '오늘의 공부' 항목 카드마다 [⏱️ 타이머] 버튼을 붙였다(시안 2안).
+     평소엔 버튼 하나만 보이고, 누르면 카드 안에서 '직접 입력 [ 분 ] ▶ 시작' + '빠른 선택 10·15·20·30분'
+     바가 펼쳐졌다 다시 접힌다. 시작하면 같은 자리에 MM:SS / N분 · 진행 막대 · ⏸(일시정지/재개) ·
+     ↺(초기화·닫기) 가 나온다. 한 번에 한 과목만 돌고, 과목별 마지막 분(1~180)은
+     state.study.timerMins(localStorage)에 남겨 다음에도 그 값으로 열린다. 00:00 이 되면
+     soundOn 일 때 알림음을 울리고 '⏰ {과목} 공부 시간 끝!' 토스트를 띄운다.
+     v64 의 과일 효과음(fruitSfx·specialFruitSfx)·파트너 대화 시간대(ppSlotOf) 코드는 그대로다. -->
 <!-- v64 — ① 과일을 줄 때 나던 PokeAPI .ogg 울음소리를 걷어내고, 그 자리에서 합성하는 WebAudio
      효과음으로 바꿨다(일반 과일 = 통통 튀는 상승 아르페지오, 스페셜 과일 = 반짝이는 팡파르).
      네트워크 요청도 로딩 지연도 없다. ② 파트너 대화 시간대를 루틴(아침·오후·밤)이 아니라
@@ -1194,6 +1201,75 @@
   .srow.done .sbox{background:var(--green);border-color:var(--green-dark);color:#fff;}
   .srow .stxt{font-weight:800;font-size:clamp(16px,2.7vh,27px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
   .srow.done .stxt{color:#4c7a3a;}
+  /* ===== v65 — 오늘의 공부 과목별 타이머 (시안 2안) =====
+     카드 오른쪽 [⏱️ 타이머] → 카드 안에서 시간 입력 바가 펼쳐지고(다시 누르면 접힘),
+     시작하면 같은 자리에 카운트다운·진행 막대·⏸·↺ 가 나온다.
+     카드는 이제 <div> 이고 체크 영역(.smain 버튼)과 타이머 버튼이 형제로 나뉜다
+     (버튼 안에 버튼을 넣지 않는다). 돌고 있는 동안에는 [⏱️ 타이머] 는 숨는다. */
+  #studyList .srow{flex-direction:column;align-items:stretch;justify-content:center;gap:5px;
+    padding:5px 10px;cursor:default;}
+  #studyList .srow:active{transform:none;}
+  #studyList .srow.run{border-color:#8bd06e;background:#fbfff6;
+    box-shadow:0 0 0 4px rgba(126,203,95,.14),0 4px 12px rgba(70,140,60,.12);}
+  #studyList .srow.ring{border-color:var(--green);background:#f0fbe4;}
+  .shead{display:flex;align-items:center;gap:8px;min-width:0;}
+  .smain{flex:1 1 auto;display:flex;align-items:center;gap:10px;min-width:0;
+    border:none;background:none;padding:0;font-family:inherit;cursor:pointer;text-align:left;color:inherit;}
+  .smain:active .sbox{transform:scale(.94);}
+  .smain:focus-visible{outline:3px solid #7ecb5f;outline-offset:2px;border-radius:12px;}
+  .tbtn2{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 10px;
+    border:2px solid #e6d9b0;background:#fff;border-radius:10px;color:#7a5b00;font-family:inherit;
+    font-weight:900;font-size:13px;line-height:1;cursor:pointer;white-space:nowrap;
+    box-shadow:0 1px 3px rgba(120,100,50,.12);transition:background .15s,border-color .15s,transform .1s;}
+  .tbtn2:active{transform:scale(.96);}
+  .tbtn2.on{background:#fff7de;border-color:#f2c53d;}
+  .tbtn2 .em{font-style:normal;font-size:15px;}
+  /* 펼쳐지는 시간 입력 바 — 직접 입력 + 빠른 선택 */
+  .tpanel{display:flex;flex-direction:column;gap:4px;background:#fffdf0;border:2px solid #f2c53d;
+    border-radius:12px;padding:4px 7px 5px;animation:tpIn .16s ease-out;}
+  @keyframes tpIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+  .tpanel .r1,.tpanel .r2{display:flex;align-items:center;gap:5px;min-width:0;}
+  .tpanel .lab{flex:0 0 auto;font-size:11px;font-weight:900;color:#a8791a;white-space:nowrap;}
+  .tpanel .tn{flex:0 0 auto;display:flex;align-items:center;gap:2px;height:28px;padding:0 7px;
+    background:#fff;border:2px solid #ffe0a0;border-radius:8px;}
+  .tpanel .tn input{width:32px;border:none;outline:none;background:transparent;text-align:right;
+    font-family:inherit;font-weight:900;font-size:16px;color:#7a5b00;padding:0;
+    font-variant-numeric:tabular-nums;}
+  .tpanel .tn .u{font-size:11px;font-weight:900;color:#a8791a;}
+  .tpanel .tn:focus-within{border-color:#f2c53d;box-shadow:0 0 0 3px #ffeeb8;}
+  .tpanel .go{margin-left:auto;height:28px;padding:0 14px;border:none;border-radius:8px;
+    background:var(--green);color:#fff;font-family:inherit;font-weight:900;font-size:13px;
+    line-height:1;cursor:pointer;white-space:nowrap;}
+  .tpanel .go:active{transform:scale(.97);}
+  .tpanel .qp{flex:1 1 0;height:25px;border:2px solid #f0e2b6;background:#fff;border-radius:8px;
+    color:#8a6b1c;font-family:inherit;font-weight:900;font-size:12px;line-height:1;cursor:pointer;}
+  .tpanel .qp.on{background:#ffe9a8;border-color:#f2c53d;color:#7a5b00;}
+  .tpanel .qp:active{transform:scale(.96);}
+  /* 동작 중 — 카운트다운 · 진행 막대 · ⏸ · ↺ */
+  .bigt{display:flex;align-items:center;gap:7px;background:#eaf9df;border:2px solid #8bd06e;
+    border-radius:12px;padding:3px 7px;min-height:40px;}
+  .bigt.paused{background:#fff7de;border-color:#f2c53d;}
+  .bigt .v{flex:0 0 auto;font-size:26px;font-weight:900;color:#2f6b2a;line-height:1;
+    font-variant-numeric:tabular-nums;letter-spacing:.01em;}
+  .bigt.paused .v{color:#a8791a;}
+  .bigt .of{flex:0 0 auto;font-size:11px;font-weight:900;color:#7aa268;margin-left:-3px;white-space:nowrap;}
+  .bigt .bar{flex:1 1 auto;height:8px;background:#dcefd0;border-radius:999px;overflow:hidden;min-width:20px;}
+  .bigt .bar i{display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,#9fe06f,var(--green));transition:width .28s linear;}
+  .bigt .ic{flex:0 0 auto;width:32px;height:32px;border-radius:9px;border:2px solid #bfe3ab;
+    background:#fff;color:#3f7a2a;font-family:inherit;font-size:14px;font-weight:900;
+    line-height:1;cursor:pointer;}
+  .bigt .ic:active{transform:scale(.94);}
+  .bigt.done{background:#f2fbe8;border-color:var(--green);}
+  .bigt.done .v{color:#3f7a2a;}
+  .bigt .st-end{color:#3f7a2a;background:#e2f6d4;border-radius:999px;padding:2px 7px;margin-left:0;}
+  /* 좁은 화면 — 버튼은 ⏱️ 아이콘만, 카운트다운은 한 단 작게, 제목은 한 단 줄여 덜 잘리게 */
+  @media (max-width:900px){
+    .tbtn2{font-size:0;gap:0;padding:0 8px;}
+    .tbtn2 .em{font-size:17px;}
+    .bigt .v{font-size:22px;}
+    #studyList .srow .stxt{font-size:clamp(14px,2.3vh,22px);}
+  }
   .study-empty{
     grid-column:1/-1;display:flex;align-items:center;justify-content:center;text-align:center;
     color:#a99f8c;font-weight:800;font-size:16px;border:3px dashed #e6e0cf;border-radius:16px;padding:10px;
@@ -3541,6 +3617,13 @@ function migrate(s){
   }
   if(!Array.isArray(s.study.nightDates)) s.study.nightDates = [];   // 9:40 전에 취침 루틴을 끝낸 날
   if(!Array.isArray(s.study.restDates)) s.study.restDates = [];
+  /* ⏱️ v65 — 과목별 타이머의 '마지막 분'만 기억한다. 1~180 밖의 값은 버린다 */
+  if(!s.study.timerMins || typeof s.study.timerMins !== 'object' || Array.isArray(s.study.timerMins)) s.study.timerMins = {};
+  Object.keys(s.study.timerMins).forEach(k=>{
+    const v = Math.round(Number(s.study.timerMins[k]));
+    if(!Number.isFinite(v) || v < 1 || v > 180) delete s.study.timerMins[k];   // 1~180 밖은 버린다
+    else s.study.timerMins[k] = v;
+  });
   if(typeof s.xpDate !== 'string'){   // 하루 단위 경험치 기준일 (여기선 getNow를 쓰지 않는다)
     const t = new Date();
     s.xpDate = `${t.getFullYear()}-${t.getMonth()+1}-${t.getDate()}`;
@@ -6187,6 +6270,160 @@ function selfToggle(){
   save();
   renderStudy(); renderDex();
 }
+/* ---------- v65 — 오늘의 공부 과목별 타이머 (시안 2안) ----------
+   · 평소: 카드 오른쪽에 [⏱️ 타이머] 하나. 누르면 카드 안에서 입력 바가 펼쳐지고 다시 누르면 접힌다.
+   · 입력 바: '직접 입력 [ 분 ] ▶ 시작' + '빠른 선택 10·15·20·30분' (빠른 선택은 분만 채우고, 시작은 ▶)
+   · 동작 중: MM:SS / N분 · 진행 막대 · ⏸(일시정지/재개) · ↺(초기화·닫기). 이때 [⏱️ 타이머] 는 숨는다.
+   · 한 번에 한 과목만. 다른 과목을 시작하면 앞 타이머는 그 자리에서 사라진다.
+   · 과목별 마지막 분은 state.study.timerMins(localStorage)에 1~180 범위로 남는다.
+   · 00:00 → soundOn 일 때 알림음 + '⏰ {과목} 공부 시간 끝!' 토스트. 체크(완료)는 아이가 직접 누른다.
+   · 카드는 이름으로 알아본다 — 시트를 다시 받아 순서가 바뀌어도 돌고 있는 타이머가 따라간다. */
+const ST_MIN = 1, ST_MAX = 180, ST_DEF = 15;
+const ST_QUICK = [10, 15, 20, 30];
+let stTimer = { name:'', total:0, remain:0, running:false, endAt:0, done:false, open:'', draft:'', int:null };
+
+function stMinsOf(name){
+  const m = (state.study && state.study.timerMins) || {};
+  const v = Math.round(Number(m[name]));
+  return (Number.isFinite(v) && v >= ST_MIN && v <= ST_MAX) ? v : ST_DEF;
+}
+/* 1~180 밖의 값은 버리지 않고 경계로 당겨 저장한다. 숫자가 아예 없으면 마지막 분 그대로 */
+function stSaveMins(name, raw){
+  if(!name) return ST_DEF;
+  const digits = String(raw == null ? '' : raw).replace(/[^\d]/g, '');
+  const n = digits ? Math.round(Number(digits)) : NaN;
+  const v = Number.isFinite(n) ? Math.max(ST_MIN, Math.min(ST_MAX, n)) : stMinsOf(name);
+  state.study.timerMins = state.study.timerMins || {};
+  state.study.timerMins[name] = v;
+  save();
+  return v;
+}
+function stFmt(sec){
+  sec = Math.max(0, Math.ceil(sec));
+  return String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0');
+}
+function stStopTick(){ if(stTimer.int){ clearInterval(stTimer.int); stTimer.int = null; } }
+function stStartTick(){
+  stStopTick();
+  stTimer.int = setInterval(stTick, 250);   // 250ms 마다 남은 시간을 다시 계산 — 화면이 잠들어도 어긋나지 않는다
+}
+function stTick(){
+  if(!stTimer.running) return;
+  stTimer.remain = Math.max(0, (stTimer.endAt - Date.now()) / 1000);
+  if(stTimer.remain <= 0){ stFinish(); return; }
+  stPaint();
+}
+/* 카드 전체를 다시 그리지 않고 숫자·막대만 고친다 */
+function stPaint(){
+  const box = document.querySelector('#studyList [data-st-live]');
+  if(!box) return;
+  const v = box.querySelector('[data-st-val]');
+  if(v) v.textContent = stFmt(stTimer.remain);
+  const b = box.querySelector('[data-st-bar]');
+  if(b) b.style.width = Math.max(0, Math.min(100, stTimer.remain / Math.max(1, stTimer.total) * 100)) + '%';
+}
+function stStart(name, mins){
+  if(!name) return;
+  const m = stSaveMins(name, mins);
+  unlockAudio();
+  stStopTick();
+  stTimer.name = name;
+  stTimer.total = m * 60;
+  stTimer.remain = m * 60;
+  stTimer.running = true;
+  stTimer.done = false;
+  stTimer.endAt = Date.now() + m * 60000;
+  stTimer.open = '';
+  stTimer.draft = String(m);
+  stStartTick();
+  blip();
+  renderStudy();
+}
+function stPauseResume(){
+  if(!stTimer.name || stTimer.total <= 0) return;
+  unlockAudio();
+  if(stTimer.running){
+    stTimer.remain = Math.max(0, (stTimer.endAt - Date.now()) / 1000);
+    stTimer.running = false;
+    stStopTick();
+  }else if(stTimer.remain > 0){
+    stTimer.running = true;
+    stTimer.endAt = Date.now() + stTimer.remain * 1000;
+    stStartTick();
+  }
+  blip();
+  renderStudy();
+}
+function stReset(){
+  stStopTick();
+  stTimer.name = ''; stTimer.total = 0; stTimer.remain = 0;
+  stTimer.running = false; stTimer.endAt = 0; stTimer.done = false;
+  stTimer.open = ''; stTimer.draft = '';
+  blip();
+  renderStudy();
+}
+function stFinish(){
+  const name = stTimer.name;
+  stStopTick();
+  stTimer.running = false; stTimer.done = true; stTimer.remain = 0; stTimer.endAt = 0;
+  if(soundOn && name){ try{ unlockAudio(); studyTimerSfx(); }catch(e){} }
+  if(name) toast(`⏰ ${name} 공부 시간 끝!`);
+  renderStudy();
+}
+/* 타이머 종료 알림음 — 또르르·딩! 세 번 (soundOn 일 때만 · 네트워크 파일 없음) */
+function studyTimerSfx(){
+  if(!soundOn || !audioUnlocked) return;
+  [0, 0.34, 0.68].forEach(d=>{
+    tone(1046, 0.10, d,      {type:'square',   vol:0.10});
+    tone(1568, 0.14, d+0.07, {type:'triangle', vol:0.08});
+  });
+  tone(2093, 0.34, 1.02, {type:'triangle', vol:0.07});
+}
+function stTogglePanel(name){
+  if(!name) return;
+  if(stTimer.open === name){ stTimer.open = ''; stTimer.draft = ''; }
+  else { stTimer.open = name; stTimer.draft = String(stMinsOf(name)); blip(); }
+  renderStudy();
+}
+/* 펼침 바 — 직접 입력 / ▶ 시작 / 빠른 선택 */
+function stPanelHtml(name){
+  const mins = stMinsOf(name);
+  const draft = (stTimer.open === name && stTimer.draft !== '') ? stTimer.draft : String(mins);
+  return `<div class="tpanel">
+      <div class="r1"><span class="lab">직접 입력</span>
+        <label class="tn"><input type="text" inputmode="numeric" maxlength="3" value="${draft}" data-st-in aria-label="${escapeHtml(name)} 공부 시간(분)"><span class="u">분</span></label>
+        <button class="go" type="button" data-st-act="start" title="${escapeHtml(name)} 타이머 시작">▶ 시작</button></div>
+      <div class="r2"><span class="lab">빠른 선택</span>
+        ${ST_QUICK.map(v=>`<button class="qp${mins === v ? ' on' : ''}" type="button" data-q="${v}">${v}분</button>`).join('')}</div>
+    </div>`;
+}
+/* 동작 중 — MM:SS / N분 · 진행 막대 · ⏸ · ↺ (00:00 이 된 뒤에는 ⏰ 끝! 과 ↺ 만) */
+function stRunHtml(){
+  const w = Math.max(0, Math.min(100, stTimer.remain / Math.max(1, stTimer.total) * 100));
+  const done = stTimer.done || stTimer.remain <= 0;
+  return `<div class="bigt${done ? ' done' : (stTimer.running ? '' : ' paused')}" data-st-live>
+      <b class="v" data-st-val>${stFmt(stTimer.remain)}</b>
+      <span class="of">/ ${Math.round(stTimer.total/60)}분</span>
+      <div class="bar"><i data-st-bar style="width:${w}%"></i></div>
+      ${done ? '<span class="of st-end">⏰ 끝!</span>'
+             : `<button class="ic" type="button" data-st-act="pause" title="${stTimer.running ? '잠시 멈춤' : '다시 시작'}">${stTimer.running ? '⏸' : '▶'}</button>`}
+      <button class="ic" type="button" data-st-act="reset" title="타이머 초기화">↺</button>
+    </div>`;
+}
+/* 체크(완료) — 예전 카드 전체 클릭과 같은 규칙. 카드가 div 로 바뀌어도 손대는 곳은 여기 하나뿐 */
+function stToggleDone(i){
+  const done = todayDone();
+  const on = !done[i];
+  done[i] = on;
+  /* 🍎 체크 1개 = 과일 +1 (오늘 그 항목으로 처음 받을 때만) · 체크 해제 = 과일 -1(0 미만 없음)
+     모두 끝나면 스페셜 +1, 풀면 -1 — 자세한 규칙은 studyFruitSync 참고 */
+  const fr = studyFruitSync(on, i);
+  blip(); renderStudy();
+  if(fr.all){
+    setTimeout(()=>{ playMissionSfx(()=>{ chime(); pokeFanfare(); }); confetti();
+      toast(fr.special > 0 ? '🎉 오늘의 공부를 다 했어요! 🌟 스페셜 과일 +1' : '🎉 오늘의 공부를 다 했어요!'); }, 200);
+  }
+}
 function renderStudy(){
   const n = getNow();
   const d = n.getDay();
@@ -6225,21 +6462,51 @@ function renderStudy(){
   items.forEach((txt,i)=>{
     if(!txt || !txt.trim()) return;
     shown++;
-    const row = document.createElement('button');
-    row.className = 'srow' + (done[i] ? ' done' : '');
-    row.innerHTML = `<span class="sbox">✓</span><span class="stxt">${escapeHtml(txt)}</span>`;
-    row.addEventListener('click', ()=>{
-      const on = !done[i];
-      done[i] = on;
-      /* 🍎 체크 1개 = 과일 +1 (오늘 그 항목으로 처음 받을 때만) · 체크 해제 = 과일 -1(0 미만 없음)
-         모두 끝나면 스페셜 +1, 풀면 -1 — 자세한 규칙은 studyFruitSync 참고 */
-      const fr = studyFruitSync(on, i);
-      blip(); renderStudy();
-      if(fr.all){
-        setTimeout(()=>{ playMissionSfx(()=>{ chime(); pokeFanfare(); }); confetti();
-          toast(fr.special > 0 ? '🎉 오늘의 공부를 다 했어요! 🌟 스페셜 과일 +1' : '🎉 오늘의 공부를 다 했어요!'); }, 200);
-      }
+    const name = txt.trim();
+    /* 이 과목의 타이머가 돌고 있거나(끝났거나) 시간 입력 바가 열려 있는가 — 이름으로 찾는다 */
+    const live = stTimer.name === name && stTimer.total > 0;
+    const open = !live && stTimer.open === name;
+    const row = document.createElement('div');
+    row.className = 'srow' + (done[i] ? ' done' : '')
+      + (live && stTimer.running ? ' run' : '')
+      + (live && stTimer.done ? ' ring' : '');
+    row.dataset.i = i;
+    row.dataset.name = name;
+    row.innerHTML = `<div class="shead">
+        <button class="smain" type="button" aria-pressed="${done[i] ? 'true' : 'false'}" title="${done[i] ? '완료를 풀어요' : '다 했으면 눌러서 완료!'}"><span class="sbox">✓</span><span class="stxt">${escapeHtml(txt)}</span></button>
+        ${live ? '' : `<button class="tbtn2${open ? ' on' : ''}" type="button" data-st-act="open" aria-expanded="${open ? 'true' : 'false'}" title="${escapeHtml(name)} 타이머"><i class="em">⏱️</i><span class="tbtx">타이머</span></button>`}
+      </div>`
+      + (live ? stRunHtml() : (open ? stPanelHtml(name) : ''));
+    /* 체크 영역 — 과일·XP·전체 완료 축하 규칙은 예전 그대로 */
+    row.querySelector('.smain').addEventListener('click', ()=> stToggleDone(i));
+    row.querySelector('[data-st-act="open"]')?.addEventListener('click', ()=> stTogglePanel(name));
+    const inp = row.querySelector('[data-st-in]');
+    if(inp){
+      inp.addEventListener('input', ()=>{ stTimer.draft = inp.value.replace(/[^\d]/g, '').slice(0,3); });
+      /* 칸에서 나올 때 1~180 으로 정리해 두고, 그 분을 기억한다 */
+      inp.addEventListener('change', ()=>{
+        const v = stSaveMins(name, inp.value);
+        inp.value = String(v);
+        stTimer.draft = String(v);
+        row.querySelectorAll('[data-q]').forEach(b=> b.classList.toggle('on', Number(b.dataset.q) === v));
+      });
+      inp.addEventListener('keydown', e=>{
+        if(e.key === 'Enter'){ e.preventDefault(); stStart(name, inp.value); }
+      });
+    }
+    row.querySelector('[data-st-act="start"]')?.addEventListener('click', ()=>{
+      stStart(name, inp ? inp.value : stMinsOf(name));
     });
+    /* 빠른 선택 — 누른 분을 칸에 채우고 기억한다 (시작은 ▶ 로 한 번 더) */
+    row.querySelectorAll('[data-q]').forEach(b=> b.addEventListener('click', ()=>{
+      const v = stSaveMins(name, Number(b.dataset.q));
+      stTimer.draft = String(v);
+      if(inp) inp.value = String(v);
+      row.querySelectorAll('[data-q]').forEach(x=> x.classList.toggle('on', Number(x.dataset.q) === v));
+      blip();
+    }));
+    row.querySelector('[data-st-act="pause"]')?.addEventListener('click', stPauseResume);
+    row.querySelector('[data-st-act="reset"]')?.addEventListener('click', stReset);
     grid.appendChild(row);
   });
   if(!shown){
