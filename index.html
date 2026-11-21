@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v60 — 사용자가 지정한 웹폰트(하하타입 LevelUp). 이 CSS 가 @font-face(font-family:"LevelUp",
+     weight 400/600/700 + italic)를 선언하고, 아래 <style> 의 font-family 스택이 그 이름을 쓴다.
+     build-pages.py 는 <head> 안의 아이콘·매니페스트 링크만 바꿔 달고 이 링크는 그대로 넘긴다. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/hada0127/hada-type-levelup/css/levelup.css">
 <style>
   :root{
     --bg1:#aee3ff; --bg2:#d8f3e6; --card:#fffdf7;
@@ -17,15 +21,17 @@
   html,body{height:100%;}
   body{
     margin:0; overflow:hidden; color:var(--ink);
-    /* 기기(갤럭시 탭 등)에 설정된 사용자 지정 폰트를 그대로 쓴다 — 외부 폰트를 불러오지 않는다.
-       브라우저의 ‘시스템 UI’ 폰트 별칭은 안드로이드 Chromium·삼성 인터넷에서 기기 설정 폰트가
-       아니라 Roboto 로 고정되는 경우가 많아 쓰지 않고, 일반 sans-serif 로 두어 기기 글꼴 설정을 따른다. */
-    font-family:sans-serif;
+    /* v60 — 사용자가 지정한 웹폰트 'LevelUp'(하하타입 레벨업)을 전체 UI 최우선 글꼴로 쓴다.
+       위 <link> 가 jsDelivr CSS 를 받아 @font-face(font-family:"LevelUp")를 선언하고,
+       폰트 파일이 늦게 와도 font-display:swap 이라 sans-serif 로 먼저 그린 뒤 바뀐다.
+       (v59 까지는 기기 설정 폰트를 따르려고 sans-serif 단독이었다. 폰트에 없는 이모지·기호는
+       브라우저가 알아서 시스템 폰트로 넘긴다. 한글 11,172자·영문·숫자는 폰트 안에 있다.) */
+    font-family:'LevelUp', sans-serif;
     background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 60%,#f7f7e8 100%);
     user-select:none; -webkit-user-select:none; touch-action:manipulation;
   }
-  /* 폼 컨트롤은 브라우저 기본 UI 폰트로 바뀌지 않게 body 글꼴을 물려받는다 */
-  button,input,textarea,select{font-family:inherit;}
+  /* 폼 컨트롤도 브라우저 기본 UI 폰트로 바뀌지 않게 같은 웹폰트를 쓴다 */
+  button,input,textarea,select{font-family:'LevelUp', sans-serif;}
   #app{height:100vh; height:100dvh; display:flex; flex-direction:column; padding:10px 14px 12px; gap:10px;}
 
   /* ===== Header — Pokémon sky banner =====
