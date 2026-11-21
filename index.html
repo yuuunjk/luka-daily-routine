@@ -4,6 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v69 — ✨ 마지막 하나를 체크하면 '다 끝냈어?' 확인 팝업 + 취침 연장 도전(21:41~21:59).
+     ① 확인 팝업(askDone) — 아침·오후·취침 어느 루틴이든 **마지막 남은 항목**을 체크해 전체 완료가
+        되려는 순간, 바로 완료·보상을 주지 않고 파트너가 한 번 더 묻는다.
+        [↩ 아니, 실수로 눌렀어] → 방금 누른 그 항목만 체크 해제(완료·보상 없음)
+        [✨ 응, 다 끝냈어!] (취침은 [🌙 응, 다 끝냈어!]) → 그때 비로소 완료 확정
+        팝업이 떠 있는 동안은 syncRoutine 이 루틴 화면을 붙잡아(카드가 사라지지 않게) 둔다.
+     ② 완료 축하 카드(doneCard) — 확정 뒤 한 장.
+        · 아침: 포켓몬볼 컨페티 + 경험치 +50(공휴일 +100 → 포획 모달) 안내
+        · 오후: 포켓몬볼 컨페티 + 도감 등록 안내
+        · 취침: **컨페티 없이** 조용한 밤 톤 카드 — 🌟 스페셜 과일 +1 · ⚡ 강화 XP +2칸
+          (21:41 이후 연장 도전 완료는 +1칸)
+        카드나 포획 모달이 떠 있는 동안 화면을 붙잡고, 닫히면 자연스럽게 휴식 화면으로 넘어간다.
+     ③ 취침 시간표 — 21:00~21:40 제시간 완료(+2칸) · 21:41~21:59 **연장 도전 구간**(시간 바
+        '연장 도전 중 · 밤 10시까지', 완료 시 +1칸) · 22:00 부터 취침 후 밤 휴식 화면(NIGHT_END).
+        '잘자요~ 안녕주💜' 는 밤 10시 이후에 마저 체크할 때만 남는다.
+     ④ routineKeyAt — 아침·오후·취침을 다 끝냈으면 같은 시간대 안이라도 'rest'(자유 시간·취침 뒤)
+        를 돌려주고, restPlan 이 **진짜 다음 모험**(아침 끝→오후, 오후 끝→취침, 취침 끝→내일 아침)을
+        가리키게 맞췄다. 이미 확정된 루틴은 다시 열리지 않아 보상이 두 번 나가지 않는다.
+     ⑤ 부모 설정 🧪 탭에 '☀️ 지금부터 아침 루틴 시작' — state.earlyMorningDay(=todayKey()) 플래그로
+        기상 시각 전에도 아침 루틴 화면을 연다(자정이 지나면 자동 만료). 시간 바는 '아침 루틴 진행 중 ·
+        출발까지 N시간 N분'. 이미 열렸거나 오늘 다 마쳤으면 안내 토스트만 띄운다.
+     v68(휴식 화면 과일 주기)·v67(밤 9시 팝업·잘 준비 보상) 코드는 그대로 살렸다. -->
 <!-- v68 — 🍎 휴식 화면에서 바로 과일 주기 (사용자가 고른 2안 · 말풍선 아래 액션 칩 통합).
      휴식 화면(새벽·낮·취침 뒤)의 칩 줄 오른쪽에 얇은 점선 구분선을 두고
      [🍎 과일 주기 (N)] [🌟 스페셜 (N)] 을 나란히 붙였다(buildRestPanel · restGiveHTML).
@@ -893,6 +915,53 @@
   .nqbtn.later{background:rgba(255,255,255,.10);color:#dfe3ff;
     border:1.5px solid rgba(186,194,255,.5);}
   .nqbtn.later:active{transform:scale(.97);}
+
+  /* ===== v69 — ✨ 루틴 완료 확인 팝업 · 완료 축하 카드 =====
+     어시 같은 파트너 카드 하나로 두 가지를 한다.
+     · #askDone  — 마지막 하나를 체크한 순간 '다 끝냈어?' 두 버튼(아니/응)
+     · #doneCard — 확정 뒤 축하 한 장. 취침은 .night 톤(컴컴한 남보라)으로 조용하게, 컨페티 없음 */
+  .kov.show{display:flex;align-items:center;justify-content:center;padding:14px;
+    background:rgba(44,58,46,.5);}
+  .kov.quiet.show{background:rgba(10,14,34,.72);}
+  .kcard{position:relative;display:flex;flex-direction:column;gap:8px;
+    width:min(500px, calc(100vw - 28px)); max-height:calc(100vh - 28px); overflow:auto;
+    padding:14px 20px 18px; border:2.5px solid #ffd98a; border-radius:26px;
+    background:linear-gradient(180deg,#fffdf4 0%,#fff5dc 100%);
+    box-shadow:0 16px 44px rgba(50,70,50,.34), inset 0 0 0 3px rgba(255,255,255,.72);
+    animation:pop .38s cubic-bezier(.3,1.4,.6,1);}
+  .kstage{position:relative;display:flex;align-items:flex-end;justify-content:center;height:136px;}
+  .kglow{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:190px;height:124px;
+    border-radius:50%;background:radial-gradient(circle,rgba(255,226,140,.8) 0%,rgba(255,240,190,0) 70%);}
+  .kart{position:relative;z-index:2;height:128px;width:auto;max-width:78%;object-fit:contain;
+    filter:drop-shadow(0 6px 10px rgba(90,80,50,.26));}
+  .kname{display:flex;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:900;color:#8a7a66;}
+  .kname b{font-size:15px;color:#4a3b2a;}
+  .kname i{font-style:normal;font-size:10.5px;font-weight:800;color:#a08a6c;
+    border:1.5px solid rgba(160,138,108,.45);border-radius:999px;padding:1px 6px;}
+  .ktx{margin:0;font-size:20px;font-weight:900;line-height:1.35;color:#3f3222;text-align:center;word-break:keep-all;}
+  .ksub{margin:0;font-size:13.5px;font-weight:800;line-height:1.45;color:#8a7a66;text-align:center;word-break:keep-all;}
+  .kb{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:3px;}
+  .kb.one{grid-template-columns:1fr;}
+  .kbtn{border:none;border-radius:16px;font-family:inherit;font-weight:900;font-size:15.5px;
+    line-height:1.25;padding:13px 8px;cursor:pointer;word-break:keep-all;}
+  .kbtn.no{background:#f4ecdf;color:#7b6a54;border:2px solid #e3d5c0;box-shadow:0 4px 0 #ddcdb4;}
+  .kbtn.no:active{transform:translateY(3px);box-shadow:0 1px 0 #ddcdb4;}
+  .kbtn.yes{background:linear-gradient(180deg,#ffe98a 0%,#ffd23f 100%);color:#6b4d00;
+    box-shadow:0 4px 0 #d8a800, 0 10px 20px rgba(180,140,0,.22);}
+  .kbtn.yes:active{transform:translateY(3px);box-shadow:0 1px 0 #d8a800;}
+  /* 취침 완료 카드 — 자기 전 분위기, 컨페티 없이 */
+  .kcard.night{border-color:#4a4f8f;
+    background:linear-gradient(180deg,#2c3060 0%,#1b1f42 100%);
+    box-shadow:0 16px 44px rgba(3,6,20,.62), inset 0 0 26px rgba(120,140,255,.10);}
+  .kcard.night .kglow{background:radial-gradient(circle,rgba(150,168,255,.42) 0%,rgba(150,168,255,0) 70%);}
+  .kcard.night .kname{color:#b9c0f0;}
+  .kcard.night .kname b{color:#ffffff;}
+  .kcard.night .kname i{color:#a9b0e6;border-color:rgba(169,176,230,.5);}
+  .kcard.night .ktx{color:#f3f5ff;}
+  .kcard.night .ksub{color:#cdd3f7;}
+  .kcard.night .kbtn.yes{background:linear-gradient(180deg,#eef1ff 0%,#c8d2ff 100%);color:#232a5e;
+    box-shadow:0 4px 0 #8f9bd8, 0 10px 20px rgba(0,0,0,.3);}
+  .kcard.night .kbtn.yes:active{box-shadow:0 1px 0 #8f9bd8;}
 
   /* ===== Progress strip ===== */
   .strip{
@@ -2903,6 +2972,33 @@
 </div>
 
 
+<!-- v69 — ✨ 루틴 '마지막 하나' 확인 팝업 (실수로 누른 것을 그 자리에서 되돌린다) -->
+<div class="overlay kov" id="askDone" aria-hidden="true">
+  <div class="kcard" role="dialog" aria-modal="true" aria-labelledby="adTitle">
+    <div class="kstage"><span class="kglow" aria-hidden="true"></span>
+      <img class="kart" id="adArt" alt="파트너 포켓몬"></div>
+    <div class="kname"><span id="adIcon" aria-hidden="true">⚡</span><b id="adName">피카추</b><i>파트너</i></div>
+    <p class="ktx" id="adTitle">아침 루틴 모두 다 끝냈어?</p>
+    <p class="ksub" id="adSub">다 끝냈으면 경험치 +50 을 받아요!</p>
+    <div class="kb">
+      <button class="kbtn no" id="adNo" type="button">↩ 아니, 실수로 눌렀어</button>
+      <button class="kbtn yes" id="adYes" type="button">✨ 응, 다 끝냈어!</button>
+    </div>
+  </div>
+</div>
+
+<!-- v69 — 루틴 완료 축하 카드 (아침·오후 = 컨페티와 함께 / 취침 = 컨페티 없이 조용히) -->
+<div class="overlay kov" id="doneCard" aria-hidden="true">
+  <div class="kcard" id="dnCard" role="dialog" aria-modal="true" aria-labelledby="dnTitle">
+    <div class="kstage"><span class="kglow" aria-hidden="true"></span>
+      <img class="kart" id="dnArt" alt="파트너 포켓몬"></div>
+    <div class="kname"><span id="dnIcon" aria-hidden="true">⚡</span><b id="dnName">피카추</b><i>파트너</i></div>
+    <p class="ktx" id="dnTitle">아침 루틴 완료!</p>
+    <p class="ksub" id="dnSub">경험치 +50 챙겼어요!</p>
+    <div class="kb one"><button class="kbtn yes" id="dnOk" type="button">좋아!</button></div>
+  </div>
+</div>
+
 <!-- catch modal -->
 <div class="overlay" id="catchOverlay">
   <div class="modal">
@@ -3152,6 +3248,14 @@
       </div>
       <span class="phint">테스트 시간은 화면을 미리 보는 값이에요. 아이가 한 기록·보상은 그대로 남습니다.</span>
 
+      <!-- v69 — ☀️ 아침 루틴 조기 시작 (기상 시각 전에도 지금 바로 아침 루틴을 연다) -->
+      <div class="psec">☀️ 아침 루틴 조기 시작</div>
+      <div class="pgrid">
+        <button class="pbtn wide" id="earlyStart" type="button">☀️ 지금부터 아침 루틴 시작</button>
+        <button class="pbtn" id="earlyReset" type="button">↩ 조기 시작 해제</button>
+      </div>
+      <span class="phint" id="earlyState">오늘 하루만 적용되고, 날짜가 바뀌면 저절로 풀려요.</span>
+
       <!-- v45 — 루틴별 파트너 대화 횟수 초기화 -->
       <div class="psec">💬 파트너 대화</div>
       <div class="pgrid">
@@ -3386,32 +3490,40 @@ function buildRoutineTable(){
   };
 }
 buildRoutineTable();
-/* v66 — 루틴이 없는 시간도 모두 휴식 화면(2안)으로 넘긴다.
-   · 기상 전(그 모드의 아침 시작 전 — 등교·공휴일 07:00 전, 방과후·방학 08:00 전)
-   · 낮 대기(공휴일 12:00~20:59, 방과후 8:45~10:20, 방학 9:00~15:59)
-   · 취침 완료 뒤(21:40 이후) — 단, 잘 준비를 아직 다 못 했으면 카드를 그대로 남겨
-     마저 체크할 수 있게 한다(그때는 지금처럼 '잘자요~ 안녕주💜'). */
-function nightAllDone(){
-  const R = ROUTINES.night;
-  if(!R || !R.tasks || !R.tasks.length) return true;
-  const rd = rday('night');
+/* v69 — 루틴 완료 여부를 루틴별로 본다 (아침·오후·취침 모두 같은 규칙) */
+function routineAllDone(key){
+  const R = ROUTINES[key];
+  if(!R || !R.tasks || !R.tasks.length) return false;
+  const rd = rday(key);
   return rd.tasks.length === R.tasks.length && rd.tasks.every(Boolean);
 }
+function nightAllDone(){ return routineAllDone('night'); }
+function morningAllDone(){ return routineAllDone('morning'); }
+function afterAllDone(){ return routineAllDone('after'); }
+/* v69 — 부모가 '지금부터 아침 루틴 시작'을 누른 날인지 (자정이 지나면 저절로 만료) */
+function earlyMorningOn(){ return state.earlyMorningDay === todayKey(); }
+
+/* v66 → v69 — 루틴이 없는 시간은 모두 휴식 화면(2안).
+   · 기상 전(조기 시작을 켜지 않은 날은 새벽 휴식 화면)
+   · 아침·오후·취침을 **다 끝낸 뒤** — 같은 시간대 안이라도 'rest' 로 넘겨
+     이미 확정된 보상을 다시 받을 수 없게 한다(자유 시간 / 취침 후 휴식 화면).
+   · 낮 대기 · 오후 루틴이 끝난 뒤 · 밤 10시(NIGHT_END) 이후 */
 function routineKeyAt(min){
   const m = (min == null) ? nowMinutes() : min;
   const M = MODE_DEFS[modeId] || MODE_DEFS.school;
-  if(m < M.wake) return 'rest';                                      // v66 — 기상 전
+  if(m < M.wake && !earlyMorningOn()) return 'rest';                 // v66 — 기상 전(새벽 휴식)
   const morningEnd = (M.morningEnd != null) ? M.morningEnd : 16*60;
-  if(m < morningEnd) return 'morning';
-  if(m >= NIGHT_BED) return nightAllDone() ? 'rest' : 'night';       // v66 — 취침 완료 뒤
+  if(m < morningEnd) return morningAllDone() ? 'rest' : 'morning';   // v69 — 아침을 다 끝냈으면 자유 시간
+  if(m >= NIGHT_END) return 'rest';                                  // v69 — 밤 10시부터 취침 후 휴식 화면
+  if(m >= NIGHT_START) return nightAllDone() ? 'rest' : 'night';     // 취침 완료 뒤·연장 도전(21:41~21:59)
   if(M.afterTasks){
     const from = M.afterFrom || 16*60;
     const to = M.afterTo || 21*60;                  // v66-3 — 오후 루틴이 끝나는 시각
     if(m < from) return 'rest';                     // 오후 루틴 시작 전 — 자유 시간
-    if(m < to) return 'after';                      // 오후 루틴(하교 16~18시 · 방과후 정리 10:20~14시)
-    return m < 21*60 ? 'rest' : 'night';            // 오후 루틴이 끝나면 취침 전까지 자유 시간
+    if(m < to) return afterAllDone() ? 'rest' : 'after';              // v69 — 오후를 끝냈으면 자유 시간
+    return 'rest';                                  // 오후 루틴이 끝나면 취침 전까지 자유 시간
   }
-  return m < 21*60 ? 'rest' : 'night';             // 공휴일: 아침이 끝나면 저녁까지 휴식 화면
+  return 'rest';                                   // 공휴일: 아침이 끝나면 저녁까지 휴식 화면
 }
 
 const DEX_DATA = [
@@ -3966,6 +4078,8 @@ function migrate(s){
   if(!Number.isInteger(s.partnerPrev) || !DEX_BY_ID[s.partnerPrev] || s.partnerPrev === s.partnerId) s.partnerPrev = null;
   /* 오늘 루틴 경험치로 잡은 포켓몬 기록 — 체크를 풀면 반납할 때 쓴다 */
   if(!s.routineCatch || typeof s.routineCatch !== 'object') s.routineCatch = null;
+  /* v69 — 부모가 켠 '오늘 아침 루틴 조기 시작' 날짜. 오늘(todayKey)과 다르면 무시되어 저절로 만료된다 */
+  if(typeof s.earlyMorningDay !== 'string') s.earlyMorningDay = null;
   return s;
 }
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
@@ -4164,9 +4278,15 @@ function toast(msg){
    헤더 하늘·잔디·구름·별·별똥별을 바꿀다. 구조는 그대로다.
    05:00~16:59 는 아침·오후 구분 없이 같은 맑은 파란 하늘(v38). */
 const SKY_HDR = document.querySelector('header.sky');
+/* v69 — 기상 전(그 모드의 아침 시작 M.wake 전)에는 해 뜨는 아침 하늘 대신 **밤하늘(별빛)** 을 유지한다.
+   아침 루틴이 시작되는 시각이 되거나, 부모가 '☀️ 지금부터 아침 루틴 시작'을 누른 날에는 아침 하늘. */
 function skyPhaseNow(){
-  const h = getNow().getHours();
-  if(h >= 5  && h < 11) return 'morning';   // 05:00 ~ 10:59  (아침 — 해가 떠오르는 하늘)
+  const n = getNow();
+  const h = n.getHours();
+  const m = h*60 + n.getMinutes() + n.getSeconds()/60;
+  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  const beforeWake = m < M.wake && !earlyMorningOn();
+  if(h >= 5  && h < 11) return beforeWake ? 'night' : 'morning';   // 05:00 ~ 10:59 (기상 전은 밤하늘)
   if(h >= 11 && h < 17) return 'day';       // 11:00 ~ 16:59  (맑은 낮 하늘)
   if(h >= 17 && h < 20) return 'dusk';      // 17:00 ~ 19:59  (저녁 노을)
   return 'night';                            // 20:00 ~ 04:59  (밤하늘)
@@ -4238,7 +4358,9 @@ function renderClock(){
 /* ---------- progress bar (per routine) ---------- */
 let curRKey = null;
 const NIGHT_START = 21*60;         // 취침 준비 시작 21:00 — 이때 시작음과 안내가 울린다
-const NIGHT_BED = 21*60 + 40;      // 취침 목표 21:40 — 취침 루틴은 여기까지 남은 시간을 보여 준다
+const NIGHT_BED = 21*60 + 40;      // 제시간 완료 마감 21:40 — 이때까지 끝내면 강화 XP +2칸
+/* v69 — 21:41~21:59 는 '연장 도전' 구간(완료하면 강화 XP +1칸), 밤 10시부터 취침 후 휴식 화면 */
+const NIGHT_END = 22*60;
 function routineNow(){ return curRKey || routineKeyAt(); }
 function renderProgress(){
   const now = nowMinutes();
@@ -4254,13 +4376,19 @@ function renderProgress(){
   let pct = 0, label = '', text = '', alert = false, toneFix = null, depFix = null;
   if(key === 'morning'){
     label = R.countdown || '등교까지';
-    if(now < WAKE){ pct = 0; label = '기상 전이에요'; text = '곧 시작해요!'; }   // v66 — 기상 전은 여기까지 오지 않고 휴식 화면이다
+    if(now < WAKE && !earlyMorningOn()){ pct = 0; label = '기상 전이에요'; text = '곧 시작해요!'; }   // v66 — 기상 전은 여기까지 오지 않고 휴식 화면이다
     else if(now >= DEPART){
       pct = 100; alert = true; label = '';        // 시간이 되면 위 작은 글씨는 지우고 큰 글씨만 남긴다
       text = modeId === 'afterschool' ? '방과후 갈 시간!'
            : modeId === 'vacation'     ? '아침 루틴 끝!'
            : modeId === 'holiday'      ? '아침 루틴 끝!'
            :                            '등교할 시간!';
+    }
+    else if(now < WAKE){
+      /* v69 — 부모가 '지금부터 아침 루틴 시작'으로 기상 전에 열어 준 경우 */
+      pct = 0;
+      label = '아침 루틴 진행 중';
+      text = `출발까지 ${restSpanText(DEPART - now)}`;
     }
     else{ pct = (now - WAKE) / TOTAL_MIN * 100; text = `${Math.ceil(DEPART - now)}분 남았어요!`; }
   }else if(key === 'after'){
@@ -4278,6 +4406,11 @@ function renderProgress(){
     pct = total ? done / total * 100 : 0;
     const left = NIGHT_BED - now;
     if(left > 0) text = `${Math.ceil(left)}분 남았어요!`;
+    else if(now < NIGHT_END){
+      /* v69 — 21:41~21:59 연장 도전 구간: 밤 10시까지 마저 채우면 강화 XP +1칸 */
+      label = '연장 도전 중 · 밤 10시까지';
+      text = `${Math.ceil(NIGHT_END - now)}분 남았어요!`;
+    }
     else{ text = '잘자요~ 안녕주💜'; alert = true; label = ''; }
   }else{                              // v66 — 비루틴 시간대(기상 전 · 낮 대기 · 취침 완료 뒤) — 파트너 휴식 화면
     const plan = restPlan();
@@ -4319,7 +4452,7 @@ function renderProgress(){
   const dl = document.getElementById('departLabel');
   const dep = depFix != null ? depFix
             : key === 'after' ? (R.depart || '')     // 하교 루틴은 제한시간 없음 · 방과후 정리는 10:20~14:00
-            : key === 'night' ? '취침 목표 오후 9:40'
+            : key === 'night' ? (now >= NIGHT_BED && now < NIGHT_END ? '연장 도전 · 밤 10시까지' : '취침 목표 오후 9:40')
             : R.depart;
   if(dl && dl.textContent !== dep) dl.textContent = dep;
   return now;
@@ -4376,7 +4509,7 @@ function nqShown(){ const ov = nqEl('nightAsk'); return !!(ov && ov.classList.co
 function nqWindow(now){ return now >= NIGHT_START && now < NIGHT_BED; }
 /* 다른 창(파트너·도감·포켓몬·배틀·비밀번호)이 떠 있으면 양보한다 */
 function nqOverlayBusy(){
-  return ['partnerOverlay','pokeOverlay','catchOverlay','btOverlay','pinOverlay'].some(id=>{
+  return ['partnerOverlay','pokeOverlay','catchOverlay','btOverlay','pinOverlay','askDone','doneCard'].some(id=>{
     const el = nqEl(id); return !!(el && el.classList.contains('show'));
   });
 }
@@ -4510,7 +4643,9 @@ function josaGa(name){
   if(c >= 0xAC00 && c <= 0xD7A3) return ((c - 0xAC00) % 28) ? '이' : '가';
   return '가';
 }
-/* 지금이 어느 휴식 시간대이고, 다음 모험이 언제인지 */
+/* 지금이 어느 휴식 시간대이고, 다음 모험이 언제인지
+   v69 — 어느 루틴을 끝내서 휴식 화면으로 왔든 **진짜 다음 모험**을 가리킨다
+          (아침 끝 → 오후 루틴 · 오후 끝 → 취침 루틴 · 취침 끝(또는 밤 10시 이후) → 내일 아침 루틴). */
 function restPlan(partnerName){
   const M = MODE_DEFS[modeId] || MODE_DEFS.school;
   const now = nowMinutes();
@@ -4518,9 +4653,22 @@ function restPlan(partnerName){
   const wakeTxt = restClockText(wake);
   let nm = partnerName;
   if(!nm){ try{ const p = partnerPk(); nm = (p && p.name) || '파트너'; }catch(e){ nm = '파트너'; } }
-  const NIGHT_AT = 21*60;                    // 취침 루틴 시작 21:00
+  const NIGHT_AT = NIGHT_START;              // 취침 루틴 시작 21:00
   let band, nextMin, nextEmoji, nextName, nextTime, say, chipLead, barLabel, depart, pct;
-  if(now < wake){                            // ── 기상 전 (새벽) — 파트너도 자고 있다 ──
+  if(now >= NIGHT_START && (nightAllDone() || now >= NIGHT_END)){   // ── 취침 완료 뒤 / 밤 10시 이후 ──
+    band = 'night';
+    nextMin = wake + 1440;
+    nextEmoji = '☀️'; nextName = '내일 아침 루틴'; nextTime = wakeTxt;
+    const wakeShort = wakeTxt.replace(/^오전\s*/, '').replace(/^오후\s*/, '');   // '7시'
+    say = nightAllDone()
+      ? `루카야, 오늘 잘 준비까지 다 했어! 정말 멋진 하루였어.<br>이제 <em>푹 자고</em> 내일 아침 ${wakeShort}에 또 만나자! 🌙`
+      : `루카야, 오늘 하루 정말 멋졌어!<br>이제 <em>푹 자고</em> 내일 아침 ${wakeShort}에 또 만나자! 🌙`;
+    chipLead = '⏳ 내일 모험까지 ';
+    depart = `내일 아침 루틴 ${wakeTxt}`;
+    const R = ROUTINES.night, rd = rday('night');
+    const n = (R && R.tasks.length) || 1;
+    pct = rd.tasks.filter(Boolean).length / n * 100;
+  } else if(now < wake && !morningAllDone()){  // ── 기상 전 (새벽) — 파트너도 자고 있다 ──
     band = 'prewake';
     nextMin = wake;
     nextEmoji = '☀️'; nextName = '아침 루틴'; nextTime = wakeTxt;
@@ -4529,21 +4677,10 @@ function restPlan(partnerName){
     chipLead = '⏳ 아침 모험까지 ';
     depart = `아침 루틴 ${wakeTxt}`;
     pct = 0;
-  } else if(now >= NIGHT_BED){                // ── 취침 완료 뒤 ──
-    band = 'night';
-    nextMin = wake + 1440;
-    nextEmoji = '☀️'; nextName = '내일 아침 루틴'; nextTime = wakeTxt;
-    const wakeShort = wakeTxt.replace(/^오전\s*/, '').replace(/^오후\s*/, '');   // '7시'
-    say = `루카야, 오늘 하루 정말 멋졌어!<br>이제 <em>푹 자고</em> 내일 아침 ${wakeShort}에 또 만나자!`;
-    chipLead = '⏳ 내일 모험까지 ';
-    depart = `내일 아침 루틴 ${wakeTxt}`;
-    const R = ROUTINES.night, rd = rday('night');
-    const n = (R && R.tasks.length) || 1;
-    pct = rd.tasks.filter(Boolean).length / n * 100;
-  } else {                                   // ── 낮 대기 ──
+  } else {                                   // ── 낮 대기(자유 시간) ──
     band = 'day';
     const afterFrom = (M.afterTasks && M.afterFrom) ? M.afterFrom : 0;
-    if(afterFrom && now < afterFrom){
+    if(afterFrom && now < afterFrom && !afterAllDone()){
       nextMin = afterFrom; nextEmoji = '🎒';
       nextName = (modeId === 'afterschool') ? '방과후 정리' : '오후 루틴';
       nextTime = restClockText(afterFrom);
@@ -4551,27 +4688,37 @@ function restPlan(partnerName){
       nextMin = NIGHT_AT; nextEmoji = '🌙'; nextName = '취침 루틴'; nextTime = restClockText(NIGHT_AT);
     }
     /* v66-1 — 낮에는 '푹 쉬고'만이 아니라 **놀 수도, 오늘의 공부를 할 수도 있는 자유 시간**임을 알린다 */
-    say = `루카야, 오늘 아침도 정말 잘했어!<br>지금은 자유 시간이야 — 신나게 놀거나 <em>오늘의 공부</em>도 해 보고, 이따 ${nextTime}에 다시 모험하자!`;
+    const head = afterAllDone() ? '루카야, 오늘 오후 루틴도 정말 잘했어!'
+               : morningAllDone() ? '루카야, 오늘 아침도 정말 잘했어!'
+               : '루카야, 오늘도 수고했어!';
+    say = `${head}<br>지금은 자유 시간이야 — 신나게 놀거나 <em>오늘의 공부</em>도 해 보고, 이따 ${nextTime}에 다시 모험하자!`;
     chipLead = '⏳ 다음 모험까지 ';
     depart = `${nextName} ${nextTime}`;
-    const mr = rday('morning'), mt = (M.tasks || []).length || 1;
-    pct = mr.tasks.filter(Boolean).length / mt * 100;    // 아침 루틴을 채운 만큼 시간 바가 찬다
+    /* v69 — 시간 바는 끝낸 루틴 다음의 진행률을 보여 준다 (아침을 끝냈으면 오후 루틴 진행률) */
+    const mt = (M.tasks || []).length || 1, mr = rday('morning');
+    if(!morningAllDone()){
+      pct = mr.tasks.filter(Boolean).length / mt * 100;
+    } else if(M.afterTasks){
+      const ar = rday('after');
+      pct = ar.tasks.filter(Boolean).length / (M.afterTasks.length || 1) * 100;
+    } else {
+      pct = 100;
+    }
   }
   barLabel = `${nextEmoji} ${nextName}까지`;
   return { band, nextMin, nextEmoji, nextName, nextTime, say, chipLead, barLabel, depart, pct,
            left: restSpanText(nextMin - now) };
 }
 /* v68 — 휴식 화면 칩 줄 오른쪽의 [🍎 과일 주기 (N)] [🌟 스페셜 (N)] 묶음.
-   · 보유 0개 → .empty (흐리게) · 새벽(prewake) → 💤 잠금 톤(.sleeping)
-   · 두 버튼은 한 묶음(.rf-givebox)이라 세로 화면에서는 점선과 함께 아래 줄로 내려간다 */
+   v69 — **밤 휴식 화면(band-night)에서만** 보여 준다. 낮·새벽에는 점선 구분선까지 통째로 빠지고
+          '⏳ 다음 모험까지 · 다음: …' 칩 두 개만 남는다(사용자 지시). */
 function restGiveHTML(band){
-  const asleep = band === 'prewake';
+  if(band !== 'night') return '';
   const one = (kind, emoji, label, n) => {
     const cls = 'rfgive' + (kind === 'special' ? ' sp' : '')
-      + (asleep ? ' sleeping' : (n <= 0 ? ' empty' : ''));
-    const cnt = asleep ? '💤' : `(${n})`;
-    const aria = asleep ? `${label} — 파트너가 자는 중이라 지금은 줄 수 없어요`
-                        : `${label} — ${n}개 남음`;
+      + (n <= 0 ? ' empty' : '');
+    const cnt = `(${n})`;
+    const aria = `${label} — ${n}개 남음`;
     return `<button class="${cls}" type="button" data-give="${kind}" aria-label="${aria}">`
       + `<span class="e">${emoji}</span>${label} <b class="n">${cnt}</b></button>`;
   };
@@ -4809,54 +4956,206 @@ function toggleTask(i, forceOn){
   if(!rd.tasks.length) return;
   const was = rd.tasks[i];
   rd.tasks[i] = forceOn === true ? true : !was;
-  if(rd.tasks[i] && !was){ blip(); }
+  const nowOn = !!rd.tasks[i];
+  if(nowOn && !was){ blip(); }
   /* 완료해 둔 루틴의 체크를 하나라도 풀면, 그 루틴이 준 경험치와 오늘 잡은 포켓몬을 함께 되돌린다 */
-  const returned = (!rd.tasks[i] && was) ? revokeRoutineReward(key) : null;
+  const returned = (!nowOn && was) ? revokeRoutineReward(key) : null;
   save(); renderTasks(); renderProgress();
-  if(rd.tasks[i] && !was) checkAllComplete();
-  if(key === 'night') syncNightReward();   // 9:40 전 취침 완료 → 강화권 5번 세기
+  if(nowOn && !was){
+    const all = rd.tasks.every(Boolean);
+    /* v69 — 마지막 남은 항목을 체크해 전체 완료가 되려는 순간: 바로 완료·보상하지 않고 확인 팝업 */
+    if(all && !rd.claimed){ askForDone(key, i); return; }
+    finishRoutine(key);            /* 이미 확정된 루틴을 다시 채운 경우(재지급은 각 보상의 중복 방지가 막는다) */
+  } else if(key === 'night'){
+    syncNightReward();             /* 체크를 풀면 잘 준비 보상도 함께 회수 */
+  }
   if(returned){
     sad();
     toast(`체크가 해제되어 오늘 받은 ${btJosa(returned.name, '이', '가')} 반납되었어요!`);
   }
 }
-function checkAllComplete(){
-  const key = routineNow();
+
+/* =========================================================
+   v69 — ✨ 루틴 완료 확인 팝업 · 완료 축하 카드
+   · 마지막 하나를 체크한 순간 파트너가 한 번 더 묻는다 (아침·오후·취침 공통)
+     [↩ 아니, 실수로 눌렀어] → 방금 누른 그 항목만 체크 해제 (완료·보상 없음)
+     [✨ 응, 다 끝냈어!] / 취침은 [🌙 응, 다 끝냈어!] → 그때 확정
+   · 확정되면 축하 카드 한 장 — 아침·오후는 몬스터볼 컨페티와 함께, 취침은 컨페티 없이 밤 톤
+   · 카드가 떠 있는 동안 syncRoutine 이 화면을 붙잡아 두고, 닫히면 자연스럽게 휴식 화면으로 넘어간다
+   ========================================================= */
+let pendingDone = null;          /* { key, i } — 확인 팝업이 물어보는 중인 루틴과 항목 */
+let dnTimer = 0;
+function askTitle(key){
+  return key === 'morning' ? '아침 루틴 모두 다 끝냈어?'
+       : key === 'after'   ? '오후 루틴 모두 다 끝냈어?'
+       :                     '잘 준비 6가지 모두 다 끝냈어?';
+}
+function askSub(key){
+  if(key === 'morning'){
+    return (modeId === 'holiday') ? '다 끝냈으면 경험치 +100 · 포켓몬 포획!'
+                                  : '다 끝냈으면 경험치 +50 을 받아요!';
+  }
+  if(key === 'after') return '다 끝냈으면 경험치 +50 · 도감 등록!';
+  return nowMinutes() < NIGHT_BED ? '다 끝냈으면 🌟 스페셜 과일 +1 · ⚡ 강화 XP +2칸!'
+                                  : '다 끝냈으면 🌟 스페셜 과일 +1 · ⚡ 강화 XP +1칸!';
+}
+function askYesText(key){ return key === 'night' ? '🌙 응, 다 끝냈어!' : '✨ 응, 다 끝냈어!'; }
+/* 밤 10시 전(21:41 연장 도전 포함)에 잘 준비를 마쳤을 때의 보상 한 줄 */
+function nightRewardLine(){
+  return nowMinutes() < NIGHT_BED
+    ? '🌟 스페셜 과일 +1 · ⚡ 강화 XP +2칸 챙겼어요!'
+    : '연장 도전 성공! 🌟 스페셜 과일 +1 · ⚡ 강화 XP +1칸 챙겼어요!';
+}
+function kFill(prefix, pk){
+  if(!pk) return;
+  const art = document.getElementById(prefix + 'Art');
+  if(art){ pkImg(art, pk.id, 'art'); art.alt = pk.name; }
+  const nm = document.getElementById(prefix + 'Name'); if(nm) nm.textContent = pk.name;
+  const ic = document.getElementById(prefix + 'Icon'); if(ic) ic.textContent = cheerTypeIcon(pk);
+}
+function adShown(){ const ov = document.getElementById('askDone'); return !!(ov && ov.classList.contains('show')); }
+function dnShown(){ const ov = document.getElementById('doneCard'); return !!(ov && ov.classList.contains('show')); }
+function catchShown(){ const ov = document.getElementById('catchOverlay'); return !!(ov && ov.classList.contains('show')); }
+/* 팝업·축하 카드·포획 모달이 떠 있는 동안은 루틴 화면을 그대로 붙잡아 둔다 */
+function routineHoldOn(){ return adShown() || dnShown() || catchShown(); }
+
+function askForDone(key, i){
+  const ov = document.getElementById('askDone');
+  if(!ov){ checkAllComplete(key); return; }
+  pendingDone = { key, i };
+  kFill('ad', partnerPk() || DEX_BY_ID[PARTNER_DEFAULT]);
+  const t = document.getElementById('adTitle'); if(t) t.textContent = askTitle(key);
+  const s = document.getElementById('adSub');   if(s) s.textContent = askSub(key);
+  const y = document.getElementById('adYes');   if(y) y.textContent = askYesText(key);
+  ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
+  blip();
+}
+function adClose(){
+  const ov = document.getElementById('askDone');
+  if(!ov) return;
+  ov.classList.remove('show'); ov.setAttribute('aria-hidden', 'true');
+}
+function adNoTap(){
+  const pd = pendingDone; pendingDone = null;
+  adClose();
+  if(!pd) return;
+  const rd = rday(pd.key);
+  if(rd && rd.tasks[pd.i]) rd.tasks[pd.i] = false;    /* 방금 누른 그 마지막 항목만 되돌린다 */
+  save(); renderTasks(); renderProgress();
+  sad();
+  toast('괜찮아! 남은 하나만 다시 확인해 보자 😊');
+}
+function adYesTap(){
+  const pd = pendingDone; pendingDone = null;
+  adClose();
+  if(!pd) return;
+  const rd = rday(pd.key);
+  if(!rd.tasks.length || !rd.tasks.every(Boolean)) return;   /* 그 사이 풀렸으면 아무 것도 하지 않는다 */
+  finishRoutine(pd.key);
+}
+function dnClose(){
+  const ov = document.getElementById('doneCard');
+  if(!ov) return;
+  clearTimeout(dnTimer); dnTimer = 0;
+  ov.classList.remove('show'); ov.setAttribute('aria-hidden', 'true');
+}
+function doneSubHTML(key, res){
+  res = res || {};
+  if(key === 'night') return nightRewardLine();
+  if(res.late) return '시간이 늦어서 경험치는 다음에! 내일 다시 해 보자 😢';
+  if(res.already) return '오늘 경험치는 이미 받았어요! 완료 확인만 챙겼어 🎉';
+  if(res.xp){
+    return `경험치 +${res.xp} 챙겼어요!`
+      + (state.xp >= 100 ? ' 포켓몬도 만나러 가자! 🎉' : ' 이제 자유 시간! 🎉');
+  }
+  return '완료 확인! 이제 자유 시간이야 🎉';
+}
+function raiseDoneCard(key, res){
+  const ov = document.getElementById('doneCard');
+  const card = document.getElementById('dnCard');
+  if(!ov || !card) return;
+  kFill('dn', partnerPk() || DEX_BY_ID[PARTNER_DEFAULT]);
+  card.classList.toggle('night', key === 'night');
+  ov.classList.toggle('quiet', key === 'night');
+  const t = document.getElementById('dnTitle');
+  if(t) t.textContent = key === 'night' ? '🌙 잘 준비 완료!'
+                      : key === 'morning' ? '☀️ 아침 루틴 완료!'
+                      : '🎒 오후 루틴 완료!';
+  const s = document.getElementById('dnSub');
+  if(s) s.innerHTML = doneSubHTML(key, res);
+  const ok = document.getElementById('dnOk');
+  if(ok) ok.textContent = key === 'night' ? '🌙 잘 자러 갈게' : '🎉 좋아, 자유 시간!';
+  ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
+  clearTimeout(dnTimer);
+  dnTimer = setTimeout(dnClose, key === 'night' ? 4600 : 3800);   /* 가만히 있어도 저절로 닫힌다 */
+}
+/* 확정 한 곳 — 팝업의 '응' · 다시 채운 경우 · 새로고침 복구가 모두 여기를 지난다 */
+function finishRoutine(key, opts){
+  const res = checkAllComplete(key);
+  const silent = !!(opts && opts.silent);
+  if(key === 'night'){
+    syncNightReward();
+    if(!silent) raiseDoneCard('night', { night:true });
+    return res;
+  }
+  if(!silent) raiseDoneCard(key, res);
+  return res;
+}
+function checkAllComplete(keyArg){
+  const key = keyArg || routineNow();
   const R = ROUTINES[key];
-  if(!R) return;
+  if(!R) return { xp:0 };
   const rd = rday(key);
-  if(!rd.tasks.length || !rd.tasks.every(Boolean) || rd.claimed) return;
+  if(!rd.tasks.length || !rd.tasks.every(Boolean) || rd.claimed) return { xp:0, skip:true };
   const now = nowMinutes();
   rd.claimed = true;
-  if(key === 'night'){                 // 취침 루틴 — 축하·강화권은 syncNightReward 가 맡는다
+  if(key === 'night'){                 /* 취침 루틴 — 보상·축하는 syncNightReward·raiseDoneCard 가 맡는다 */
     save(); renderProgress();
-    return;
+    return { night:true };
   }
-  const slot = key === 'morning' ? 'morning' : 'after';   // 아침 50 + 오후 50 = 100 → 포켓몬 1마리
+  const slot = key === 'morning' ? 'morning' : 'after';   /* 아침 50 + 오후 50 = 100 → 포켓몬 1마리 */
   const xp = R.xp || 0;
-  if(key === 'morning' && now > DEPART){       // 마감 시간을 넘기면 경험치는 없다
+  if(key === 'morning' && now > DEPART){       /* 마감 시간을 넘기면 경험치는 없다 */
     save(); renderProgress();
     toast('시간이 지나서 경험치는 아쉬워요 😢 내일 다시!');
     sad();
-    return;
+    return { late:true };
   }
   const d = day();
   d.rewarded = d.rewarded || { morning:false, after:false };
-  if(d.rewarded[slot]){                        // 모드를 바꿔도 같은 보상을 두 번 받지 않는다
+  if(d.rewarded[slot]){                        /* 모드를 바꿔도 같은 보상을 두 번 받지 않는다 */
     save(); renderProgress(); renderTasks();
     toast(`🎉 ${R.stripLabel} 완료! 오늘 경험치는 이미 받았어요`);
     confetti();
-    return;
+    return { already:true };
   }
   d.rewarded[slot] = true;
-  rollXpDay();                                 // 날짜가 바뀌었으면 어제 경험치는 버린다
+  rollXpDay();                                 /* 날짜가 바뀌었으면 어제 경험치는 버린다 */
   state.xp += xp;
-  routineCatchToday().slots[slot] = true;      // 오늘 이 루틴의 경험치를 받았다 (체크를 풀면 되돌린다)
+  routineCatchToday().slots[slot] = true;      /* 오늘 이 루틴의 경험치를 받았다 (체크를 풀면 되돌린다) */
   save(); renderWild(); renderProgress(); renderTasks();
   toast(`🎉 ${R.stripLabel} 완료! 경험치 +${xp}!`);
   playMissionSfx(chime); confetti();
   setTimeout(maybeCatch, 900);
+  return { xp };
 }
+
+(function bindDonePopups(){
+  const yes = document.getElementById('adYes'), no = document.getElementById('adNo');
+  const ask = document.getElementById('askDone'), card = document.getElementById('doneCard');
+  const ok = document.getElementById('dnOk');
+  if(yes) yes.addEventListener('click', adYesTap);
+  if(no)  no.addEventListener('click', adNoTap);
+  /* 바깥을 누르거나 Esc — 실수로 누른 것으로 보고 그 항목만 되돌린다(보상 없음) */
+  if(ask)  ask.addEventListener('click', e=>{ if(e.target === ask) adNoTap(); });
+  if(card) card.addEventListener('click', e=>{ if(e.target === card) dnClose(); });
+  if(ok)   ok.addEventListener('click', dnClose);
+  document.addEventListener('keydown', e=>{
+    if(e.key !== 'Escape') return;
+    if(adShown()) adNoTap();
+    else if(dnShown()) dnClose();
+  });
+})();
 
 /* ---------- XP / catch ---------- */
 /* 다음 목표 고르기 — 10마리 잡는 블록마다 희귀 2번 + 전설·환상 1번 (딱 3번).
@@ -6922,7 +7221,7 @@ function syncNightFruit(){
     fruitBumpBadge();
     incrementSelfProgress('night', { silent:true });  // ⚡ 강화 XP +1 (8개가 차면 강화권 1장)
     nightSoftSound();
-    toast('🌙 잘 준비 완료! 🌟 스페셜 과일 +1 · ⚡ 강화 XP +1 챙겼어요');
+    toast('🌙 잘 준비 완료! ' + nightRewardLine());   // v69 — 제시간이면 +2칸, 연장 도전이면 +1칸
     save();
     return;
   }
@@ -6940,12 +7239,7 @@ function syncNightFruit(){
 }
 
 /* ---------- 취침 루틴 완료 → 강화권 세기 (9:40 전에 6개 다 했을 때만) ---------- */
-function nightAllDone(){
-  const R = ROUTINES.night;
-  if(!R || !R.tasks || !R.tasks.length) return false;
-  const rd = rday('night');
-  return rd.tasks.length === R.tasks.length && rd.tasks.every(Boolean);
-}
+/* nightAllDone() 은 위쪽(v69 routineAllDone) 하나만 쓴다 */
 function isNightCounted(){
   return (state.study.nightDates || []).includes(todayKey());
 }
@@ -6958,10 +7252,10 @@ function syncNightReward(){
     if(nowMinutes() < NIGHT_BED){          // 9:40 전 완료 → 강화권 5번 세기에 +1
       state.study.nightDates.push(k);
       incrementSelfProgress('night');
-    }else if(!d.nightLateDone){             // 9:40 을 넘겼다 → 축하만, 별은 없다
+    }else if(!d.nightLateDone){             // v69 — 21:41~21:59 '연장 도전' 구간 완료: 컨페티 없이 조용히
       d.nightLateDone = true;
-      playMissionSfx(chime); confetti();
-      toast('🌙 오늘 하루도 잘 마무리했어요! 9시 40분이 지나서 강화권 별은 아쉬워요 😢');
+      playMissionSfx(chime);
+      toast('⏰ 연장 도전 성공! 밤 10시 전에 잘 준비를 마쳤어요 🌙');
     }
   }else if(!all && counted){                // 하나라도 풀리면 오늘 취침 별을 되돌린다
     revertNightCount();
@@ -7919,7 +8213,7 @@ function switchPanelTab(name, opts){
   });
   panel.querySelectorAll('.ppane').forEach(p=> p.classList.toggle('show', p.dataset.ppane === name));
   if(name === 'say'){ renderAffirmSettings(); renderMissionSettings(); }
-  if(name === 'time'){ renderPanelStatus(); renderPanelMode(); }
+  if(name === 'time'){ renderPanelStatus(); renderPanelMode(); renderEarlyState(); }
   if(name === 'reward'){ renderFruitSettings(); }        // 🍎 v48 — 열 때마다 지금 보유량으로 맞춘다
   const body = document.getElementById('setBody');
   if(body && !(opts && opts.silent)) body.scrollTop = 0;
@@ -7946,6 +8240,60 @@ function renderPanelMode(){
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
 }
+
+/* ---------- v69 — ☀️ 아침 루틴 조기 시작 ----------
+   state.earlyMorningDay === todayKey() 인 날에만, 기상 시각(M.wake) 전에도 아침 루틴 화면을 연다.
+   날짜가 바뀌면 todayKey 가 달라져 저절로 만료되므로 다음 날은 정상 기상 시각을 따른다. */
+function earlyStartWhy(){
+  if(morningAllDone()) return '오늘 아침 루틴을 이미 마쳤어요';
+  if(earlyMorningOn()) return '이미 아침 루틴이 열려 있어요';
+  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  if(nowMinutes() >= M.wake) return '이미 아침 루틴이 열려 있어요';
+  return '';
+}
+function renderEarlyState(){
+  const el = document.getElementById('earlyState');
+  if(!el) return;
+  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  const p = n => (n < 10 ? '0' : '') + n;
+  const m = nowMinutes();
+  const hh = `${p(Math.floor(m / 60))}:${p(Math.floor(m % 60))}`;
+  if(morningAllDone()){
+    el.textContent = '오늘 아침 루틴을 이미 다 마쳤어요 — 내일 아침에 다시 열려요.';
+  }else if(earlyMorningOn()){
+    el.textContent = `☀️ 오늘 조기 시작 켜짐 (${hh} 기준) — ${restClockText(M.wake)} 전에도 아침 루틴이 열려 있어요. 자정이 지나면 저절로 풀려요.`;
+  }else if(m >= M.wake){
+    el.textContent = `지금은 아침 루틴 시간대예요 (${restClockText(M.wake)}부터). 이 버튼은 기상 전에만 필요해요.`;
+  }else{
+    el.textContent = `지금은 새벽 휴식 화면이에요 — 누르면 ${restClockText(M.wake)}를 기다리지 않고 바로 아침 루틴이 열려요.`;
+  }
+}
+function earlyStartNow(){
+  const why = earlyStartWhy();
+  if(why){ sad(); toast(why); renderEarlyState(); return false; }
+  state.earlyMorningDay = todayKey();
+  save();
+  pendingDone = null; adClose(); dnClose();
+  curRKey = null;
+  syncRoutine();                 /* 기상 전이라도 routineKeyAt 이 'morning' 을 돌려준다 */
+  renderProgress(); renderTasks();
+  renderSky();                   /* v69 — 누른 즉시 해 뜨는 아침 하늘로 */
+  blip();
+  toast('☀️ 지금부터 아침 루틴을 시작해요!');
+  closePanel();                  /* 설정을 닫고 바로 아이 화면으로 */
+  return true;
+}
+function earlyStartReset(){
+  if(!earlyMorningOn()){ blip(); toast('오늘은 조기 시작이 꺼져 있어요'); return; }
+  state.earlyMorningDay = null;
+  save();
+  curRKey = null; syncRoutine(); renderProgress();
+  renderSky();                   /* v69 — 기상 전이면 다시 밤하늘로 */
+  toast('⏰ 조기 시작을 껐어요 — 기상 시각을 따라요');
+  renderEarlyState();
+}
+document.getElementById('earlyStart').addEventListener('click', parentOnly(earlyStartNow));
+document.getElementById('earlyReset').addEventListener('click', parentOnly(earlyStartReset));
 
 /* ---------- 📅 v41 — 내일 문구 미리보기 · 내일 하루만 직접 지정 ----------
    우선순위: 그 날짜 지정(state.affirmByDate[key]) > 전체 수동 고정(state.customAffirmation) > 날짜 해시 자동.
@@ -8448,7 +8796,9 @@ document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   state.routineCatch = null;           // 오늘 잡은 포켓몬 기록도 비운다 (도감은 그대로 둔다)
   revertNightCount({ silent:true });   // 오늘 취침 완료로 올린 별 하나도 함께 되돌린다
   save();
-  buildTasks(); renderProgress();
+  /* v69 — 리셋하면 끝냈던 루틴도 그 시간대에 다시 열린다(팝업·축하 카드는 닫는다) */
+  pendingDone = null; adClose(); dnClose();
+  curRKey = null; syncRoutine(); renderProgress();
   renderStudy(); renderDex();
   toast('오늘 할 일과 경험치를 리셋했어요');
 }));
@@ -8810,7 +9160,10 @@ function renderAffirm(){
 
 /* ---------- main tick ---------- */
 function syncRoutine(){
-  const k = routineKeyAt();
+  let k = routineKeyAt();
+  /* v69 — 확인 팝업·축하 카드·포획 모달이 떠 있는 동안에는 완료된 루틴 화면을 그대로 붙잡아 둔다
+     (팝업이 떠 있는데 뒤에서 카드가 사라지고 휴식 화면으로 바뀌는 일이 없다). */
+  if(curRKey && routineHoldOn()) k = curRKey;
   if(k === curRKey) return false;
   curRKey = k;
   if(k !== 'morning') timerStop();   // the meal timer belongs to the morning routine
@@ -8846,6 +9199,18 @@ function tick(){
 setInterval(tick, 250);
 
 /* ---------- init ---------- */
+/* v69 — 확인 팝업이 떠 있는 사이 앱이 다시 열리면, 마지막 하나까지 채운 루틴은
+   팝업 없이 그대로 확정해 보상을 잃지 않게 한다. */
+function repairPendingClaim(){
+  ['morning','after','night'].forEach(k=>{
+    const R = ROUTINES[k];
+    if(!R || !R.tasks || !R.tasks.length) return;
+    const rd = rday(k);
+    if(rd.tasks.length !== R.tasks.length || !rd.tasks.every(Boolean) || rd.claimed) return;
+    finishRoutine(k, { silent:true });
+  });
+}
+repairPendingClaim();
 curRKey = routineKeyAt();
 buildTasks();
 renderAffirm();
