@@ -2,7 +2,7 @@
    - 앱 껍데기(index.html, 아이콘, 매니페스트): 캐시 먼저 (빠른 실행)
    - data/*.json: 네트워크 먼저 (늘 새 데이터), 실패할 때만 캐시
 */
-const VERSION = "sports-v19";
+const VERSION = "sports-v20";
 const SHELL = [
   "./",
   "./index.html",
@@ -16,7 +16,11 @@ const SHELL = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(VERSION).then((cache) => cache.addAll(SHELL).catch(() => undefined))
+    caches.open(VERSION).then((cache) =>
+      /* 한 항목(예: 2MB 글꼴)이 느리거나 실패해도 나머지 껍데기는 그대로 캐시한다.
+         cache.addAll 은 하나만 실패해도 전부 버리기 때문이다. */
+      Promise.allSettled(SHELL.map((u) => cache.add(u)))
+    ).catch(() => undefined)
   );
   self.skipWaiting();
 });
