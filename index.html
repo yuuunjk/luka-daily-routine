@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v64 — ① 과일을 줄 때 나던 PokeAPI .ogg 울음소리를 걷어내고, 그 자리에서 합성하는 WebAudio
+     효과음으로 바꿨다(일반 과일 = 통통 튀는 상승 아르페지오, 스페셜 과일 = 반짝이는 팡파르).
+     네트워크 요청도 로딩 지연도 없다. ② 파트너 대화 시간대를 루틴(아침·오후·밤)이 아니라
+     실제/테스트 시계로 나눈다 — 아침 08:00~11:59 / 낮 12:00~17:59 / 저녁 18:00~20:50,
+     20:51~07:59 는 쉬는 시간('💬 이야기하기'만 잠김, 과일 주기는 그대로). -->
 <!-- v63 — 태블릿 화면이 꺼지지 않게 잡아 두던 기능을 코드·화면·부모 설정에서 전부 걷어냈다.
      (상단 칩, 부모 설정의 상태 안내 섹션, 관련 자바스크립트 변수·함수·이벤트 리스너,
       파일로 열었을 때 쓰던 무음 반복 동영상까지 삭제. 사용자가 기능 자체를 빼 달라고 했다.
@@ -2676,7 +2681,7 @@
 <div id="toast"></div>
 
 <!-- v47 — 🍎 파트너 전용 팝업: 상단 파트너 카드를 누르면 열린다.
-     그림 · 이름 · 말풍선(대화) · 과일 주기(일반/스페셜) · 기쁨 모션 · 실제 포켓몬 울음소리 -->
+     그림 · 이름 · 말풍선(대화) · 과일 주기(일반/스페셜) · 기쁨 모션 · 합성 효과음 -->
 <div class="overlay ppov" id="partnerOverlay" aria-hidden="true">
   <div class="ppcard" id="partnerModal" role="dialog" aria-modal="true" aria-labelledby="ppName">
     <button class="ppclose" id="ppClose" type="button" aria-label="닫기">✕</button>
@@ -2787,7 +2792,7 @@
       <div class="pgrid">
         <button class="pbtn wide" id="testCheerReset" type="button">💬 파트너 대화 초기화</button>
       </div>
-      <span class="phint">아침·오후·밤 루틴마다 3번씩 새 대화가 나가고, 다음 루틴에 또 열려요. 이 버튼은 지금 바로 처음으로 되돌리고 설정창은 그대로 열어 둡니다.</span>
+      <span class="phint">아침 08:00~11:59 · 낮 12:00~17:59 · 저녁 18:00~20:50, 시간대마다 3번씩 주고받기 대화가 나가고 3회째에 다음 시간대를 알려 줘요. 20:51~07:59는 파트너 쉬는 시간이고, 이 버튼은 지금 바로 처음으로 되돌리고 설정창은 그대로 열어 둡니다.</span>
     </div>
 
     <!-- 탭 2: 확언 · 미션 -->
@@ -4307,7 +4312,6 @@ function renderPartner(){
   }
   const card = document.getElementById('hxpPartner');
   if(card) card.setAttribute('aria-label', `파트너 ${pk.name} — 눌러서 오늘의 응원 보기`);
-  ppCryWarm(pk.id);                    // 파트너가 바뀌면 그 울음소리도 미리 받아 둔다
 }
 /* 파트너 바꾸기 — 지금 파트너와 같으면 아무 것도 하지 않는다 */
 function setPartner(id){
@@ -4420,38 +4424,58 @@ const PARTNER_GREET = {
     '양치하고 이불 덮으면 오늘의 너는 완벽한 하루야!'
   ]
 };
-/* v45 — 대화를 세는 단위는 시간대가 아니라 **루틴**이다.
-   아침 루틴 / 오후(하교·방과후·방학 낮) 루틴 / 밤(취침) 루틴마다 새 대사 3번 + 마무리 1번. */
-function cheerRoutine(){                     // 지금 화면의 루틴 키 — morning / after / rest / night
+/* ===== v64 — 파트너 대화 시간대: 루틴이 아니라 **화면 시계**로 나눈다 =====
+   v45~v63 은 아침·오후·밤 '루틴'마다 대화권을 셌다. 등교·방학 모드처럼 아침 루틴이 한낮까지
+   이어지는 날에는 아침 대화권이 오후까지 남아 있어서 아이가 헷갈렸다. 이제 실제/테스트 시계
+   (getNow — 부모의 테스트 시간도 그대로 따른다)로 세 시간대를 나눈다.
+     · 아침 08:00~11:59 — 주고받기 3회, 3회째 마무리는 '이따 12시 넘어서 다시 대화하자!'
+     · 낮   12:00~17:59 — 주고받기 3회, 3회째 마무리는 '저녁 6시에 이야기 나눌까?'
+     · 저녁 18:00~20:50 — 주고받기 3회, 3회째 마무리는 '내일 다시 만나! 잘 자!'
+     · 20:51~07:59 는 파트너가 쉬는 시간 — '💬 이야기하기'만 잠기고 🍎 과일 주기는 그대로. */
+const PP_SLOTS = [
+  { key:'am', label:'아침', from: 8 * 60,  to: 11 * 60 + 59, phase:'morning',   range:'08:00~11:59',
+    next:'이따 12시 넘어서 다시 대화하자!' },
+  { key:'pm', label:'낮',   from: 12 * 60, to: 17 * 60 + 59, phase:'afternoon', range:'12:00~17:59',
+    next:'저녁 6시에 이야기 나눌까?' },
+  { key:'ev', label:'저녁', from: 18 * 60, to: 20 * 60 + 50, phase:'night',     range:'18:00~20:50',
+    next:'내일 다시 만나! 잘 자!' }
+];
+const PP_TALK_TAPS = 3;                // 시간대마다 주고받기 3회 — 3회째 끝에 마무리 멘트
+const PP_SLOT_GUIDE = '대화 가능 시간: 08:00~11:59 · 12:00~17:59 · 18:00~20:50';
+function ppSlotClose(s){ return '대화 즐거웠어! ' + (s ? s.next : '다음에 또 만나!'); }
+function ppSlotDoneLine(s){
+  return s ? `${s.label} 대화는 여기까지야! ${s.next}` : '지금은 내가 쉬는 시간이야!';
+}
+/* 지금 시각(분)이 어느 시간대인가 — 없으면 null(20:51~07:59 쉬는 시간) */
+function ppSlotOf(d){
+  const n = d || getNow();
+  const m = n.getHours() * 60 + n.getMinutes();     // 초는 버린다 — 20:50:59 도 저녁 대화
+  for(let i = 0; i < PP_SLOTS.length; i++){
+    const s = PP_SLOTS[i];
+    if(m >= s.from && m <= s.to) return s;
+  }
+  return null;
+}
+function cheerRoutine(){                     // v64 — 화면의 루틴 키(참고용) — 대화 시간대는 더 이상 루틴을 따르지 않는다
   try{ return routineNow() || routineKeyAt(); }catch(e){ return 'morning'; }
 }
-function cheerPhase(){                       // 세 루틴으로 묶는다 — 방과후·방학의 낮 구간은 '오후'
-  const k = cheerRoutine();
-  if(k === 'night') return 'night';
-  if(k === 'morning') return 'morning';
-  return 'afternoon';
+function cheerPhase(){                       // 화면 라벨·말투용 세 구분
+  const s = ppSlotOf();
+  if(s) return s.phase;
+  const h = getNow().getHours();
+  return (h >= 5 && h < 12) ? 'morning' : 'night';
 }
-/* 말투 — 루틴을 따르되, 아침 루틴이 한낮·저녁까지 이어지는 날(등교·방학 모드)은
-   시계도 함께 봐서 '좋은 아침'이 엉뚱한 시각에 나오지 않게 한다. */
+/* 말투 — 대화 시간대를 따르고, 시간대가 비는 때(05:00~07:59)는 시계만 보고 고른다. */
 function cheerSlot(d){
   const h = (d || getNow()).getHours();
-  const ph = cheerPhase();
-  if(ph === 'night') return 'evening';
-  if(ph === 'morning') return h >= 18 ? 'evening' : (h >= 12 ? 'afternoon' : 'morning');
-  return h >= 18 ? 'evening' : 'afternoon';
+  const s = ppSlotOf(d);
+  if(s) return s.phase === 'night' ? 'evening' : s.phase;
+  if(h >= 5 && h < 12) return 'morning';
+  return (h >= 18 || h < 5) ? 'evening' : 'afternoon';
 }
-/* v45 — 한 **루틴**에 새 대사는 3번까지. 그 뒤로는 마무리 인사 한 번만.
-   날짜+루틴 키(예: 2026-11-20|morning)로 localStorage 에 세어 두어 새로고침해도 유지되고,
-   루틴이 바뀌거나(아침 → 오후 → 밤) 날짜가 바뀌면 그 키가 새로 시작되어 저절로 0이 된다.
-   v46 — 마무리 인사는 루틴을 따른다. 아침·오후는 '이따가 또', 밤(취침)은 '내일 또 … 잘 자'.
-   v47 — 문구를 '대화 즐거웠어. 다음에 다시 만나!' / '대화 즐거웠어. 내일 다시 만나! 잘 자!' 로. */
-const CHEER_LIMIT = 3;                 // 한 루틴에 새 대사는 3번까지
-const CHEER_TAPS = 4;                  // 4번째는 마무리 인사 1회, 5번째부터는 새 대화가 열리지 않는다
-const CHEER_CLOSING_DAY = '대화 즐거웠어. 다음에 다시 만나!';
-const CHEER_CLOSING_NIGHT = '대화 즐거웠어. 내일 다시 만나! 잘 자!';
-function cheerClosing(){               // v46 — 취침 루틴은 내일을 기약하고 잘 자 인사
-  return cheerPhase() === 'night' ? CHEER_CLOSING_NIGHT : CHEER_CLOSING_DAY;
-}
+/* v64 — 한 **시간대**에 주고받기 3회. 3회째가 끝나면 마무리 멘트로 다음 시간대를 알려 주고 잠긴다.
+   날짜+시간대 키(예: 2026-11-21|am · |pm · |ev)로 localStorage 에 세어 두어 새로고침해도 유지되고,
+   시간대가 바뀌거나 날짜가 바뀌면 그 키가 새로 시작되어 저절로 0이 된다. */
 const CHEER_STORE = 'lukaPokemonDashboard.cheer.v1';
 function cheerStoreLoad(){
   try{
@@ -4459,16 +4483,20 @@ function cheerStoreLoad(){
     return (o && typeof o === 'object') ? o : {};
   }catch(e){ return {}; }
 }
-function cheerCountKey(){ return affirmKeyOf(getNow()) + '|' + cheerPhase(); }   // 2026-11-20|morning · |afternoon · |night
+function cheerCountKey(){                     // 2026-11-21|am · |pm · |ev
+  const s = ppSlotOf();
+  return affirmKeyOf(getNow()) + '|' + (s ? s.key : 'rest');
+}
 function cheerCountGet(){
+  if(!ppSlotOf()) return 0;                   // 쉬는 시간 — 대화권이 없다
   const n = Number(cheerStoreLoad()[cheerCountKey()]) || 0;
-  return Math.max(0, Math.min(CHEER_TAPS, n));
+  return Math.max(0, Math.min(PP_TALK_TAPS, n));
 }
 function cheerCountSet(n){
   const all = cheerStoreLoad(), today = affirmKeyOf(getNow()), key = cheerCountKey();
   const out = {};
   Object.keys(all).forEach(k => { if(k.slice(0, 10) === today) out[k] = all[k]; });  // 오늘 것만 남긴다
-  out[key] = Math.max(0, Math.min(CHEER_TAPS, n));
+  out[key] = Math.max(0, Math.min(PP_TALK_TAPS, n));
   try{ localStorage.setItem(CHEER_STORE, JSON.stringify(out)); }catch(e){}
 }
 function cheerTypeIcon(pk){
@@ -4574,10 +4602,11 @@ function studyFruitSync(on, idx){
      v50 — 4회째 마무리 인사가 나온 즉시 이 버튼은 잠긴다(회색 + '오늘은 이야기를 다 나눴어요').
      v51 — 1·2·3회 모두 '파트너 질문 → 루카 답(선택지/직접 입력) → 파트너 리액션'으로 통일.
      (2·3회차에 끼어들던 단독 응원 멘트를 빼서 리액션과 다음 질문 사이가 매끄러워졌다)
-   · 🍎 과일 주기 / 🌟 스페셜 과일 주기 — 하나 줄이고 기쁨 모션 + 실제 포켓몬 울음소리. */
+   · 🍎 과일 주기 / 🌟 스페셜 과일 주기 — 하나 줄이고 기쁨 모션 + 포켓몬 스타일 합성 효과음(v64). */
 const PP_HELLO = '안녕 LUKA! 나랑 이야기하거나 과일을 줄래?';
 const PP_HELLO2 = '이야기하고 싶으면 💬, 과일을 주고 싶으면 🍎 를 눌러 줘!';
 const PP_DONE = '오늘은 이야기를 다 나눴어! 다음에 또 이야기하자 😊';
+const PP_REST_LINE = '지금은 내가 쉬는 시간이야! 🍎 과일은 언제든 줄 수 있어!';   // v64 — 20:51~07:59
 const PP_NEED_FRUIT = '오늘의 공부를 끝내면 과일을 얻을 수 있어요!';
 const PP_NEED_SPECIAL = '공부를 모두 끝내면 스페셜 과일을 받을 수 있어요!';
 const PARTNER_FRUIT_LINES = [
@@ -4861,6 +4890,8 @@ function ppClearChat(){
 }
 /* 루카의 답을 기다리는 중인가 — 선택지·입력칸이 열려 있으면 새 대화를 열지 않는다 */
 let ppTurnOpen = false, ppBusy = false, ppReplyTimer = 0;
+let ppTurnLast = false;              // v64 — 지금 열린 턴이 그 시간대의 3회째(마지막)인가
+let ppTurnSlot = null;               // v64 — 그 턴을 연 시간대(마무리 멘트를 그 시간대 기준으로 고른다)
 function ppOpenTurn(opts){
   const box = ppEl('ppChoices'), inp = ppEl('ppInput');
   ppTurnOpen = true;
@@ -4882,6 +4913,8 @@ function ppOpenTurn(opts){
 }
 function ppCloseTurn(){
   ppTurnOpen = false;
+  ppTurnLast = false;
+  ppTurnSlot = null;
   const box = ppEl('ppChoices');
   if(box){ box.hidden = true; box.innerHTML = ''; }
   const inp = ppEl('ppInput'); if(inp) inp.hidden = true;
@@ -4889,18 +4922,27 @@ function ppCloseTurn(){
   if(f){ f.value = ''; if(document.activeElement === f) f.blur(); }   // 태블릿 키보드 내리기
   const tb = ppEl('ppTalk'); if(tb) tb.classList.remove('wait');
 }
-/* 루카의 답 — 말풍선을 띄우고, 같은 턴의 파트너 대답은 잠깐 뒤에 (횟수 추가 차감 없음) */
+/* 루카의 답 — 말풍선을 띄우고, 같은 턴의 파트너 대답은 잠깐 뒤에 (횟수 추가 차감 없음)
+   v64 — 이번 턴이 그 시간대의 3회째(마지막)라면, 리액션 뒤에 한 박자 쉬고 마무리 멘트로
+   다음 시간대를 알려 준다(마무리 동안에는 '이야기하기'가 다시 눌리지 않는다). */
 function ppAnswer(text, reply){
   if(!ppTurnOpen) return;
   text = String(text || '').trim().slice(0, 30);
   if(!text) return;
+  const last = ppTurnLast, lastSlot = ppTurnSlot;  // v64 — 이번 턴이 마지막인가 (닫기 전에 기억)
   ppCloseTurn();
   ppSay('me', text);
   ppBusy = true;
   clearTimeout(ppReplyTimer);
   ppReplyTimer = setTimeout(()=>{
-    ppBusy = false;
     ppSay('partner', reply || ppKeywordReply(text));
+    if(!last){ ppBusy = false; return; }
+    ppTurnLast = false;
+    ppSyncTalkBtn();                             // 3회째 — 그 자리에서 버튼을 잠근다
+    ppReplyTimer = setTimeout(()=>{              // 한 박자 쉬고 마무리 멘트
+      ppBusy = false;
+      ppSay('partner', ppSlotClose(lastSlot));
+    }, 700);
   }, 420);
 }
 function ppSendTap(){
@@ -4919,34 +4961,42 @@ function updatePartnerPopup(){
   const sn = ppEl('ppSpN'); if(sn) sn.textContent = `(${sp}개)`;
   const fb = ppEl('ppFeed'); if(fb) fb.disabled = f <= 0;
   const sb = ppEl('ppFeedSp'); if(sb) sb.disabled = sp <= 0;
-  const hint = ppEl('ppHint');
+  const hint = ppEl('ppHint'), slot = ppSlotOf();
   if(hint){
-    if(f <= 0){ hint.textContent = PP_NEED_FRUIT; hint.hidden = false; }
+    /* v64 — 쉬는 시간에는 무엇보다 대화 가능 시간을 먼저 알려 준다 */
+    if(!slot){ hint.textContent = '지금은 파트너가 쉬는 시간이에요. ' + PP_SLOT_GUIDE; hint.hidden = false; }
+    else if(f <= 0){ hint.textContent = PP_NEED_FRUIT; hint.hidden = false; }
     else if(sp <= 0){ hint.textContent = '공부를 모두 끝내면 🌟 스페셜 과일도 받을 수 있어요!'; hint.hidden = false; }
     else hint.hidden = true;
   }
   ppSyncTalkBtn();
 }
-/* v50 — 그 루틴의 대화권(1~3회)과 마지막 인사(4회)를 모두 나누면 '💬 이야기하기'는 잠긴다.
-   · 잠기는 순간: 4회째를 눌러 마무리 인사가 나온 그 즉시 (버튼이 회색이 되고 문구가 바뀐다)
-   · 닫았다 다시 열어도 그대로 — 횟수는 날짜+루틴 키로 localStorage 에 남아 있기 때문
-   · 풀리는 때: 루틴이 바뀌거나(아침 → 오후 → 밤) 날짜가 바뀌면 키가 새로 시작되고,
-     🧪 테스트의 '💬 파트너 대화 초기화' 뒤에도 다시 활성화된다.
-   ※ 🍎 과일 주기 / 🌟 스페셜 과일 주기는 대화권과 무관하게 그대로 동작한다. */
+/* v64 — '💬 이야기하기' 버튼은 두 가지 때 잠긴다.
+   · 그 시간대의 주고받기 3회를 다 나눴을 때 — 3회째 마무리 멘트가 나온 그 즉시
+   · 쉬는 시간(20:51~07:59) — 시계가 그 구간에 들어오면 바로 회색이 되고 안내 문구가 바뀐다
+   닫았다 다시 열어도 그대로 — 횟수는 날짜+시간대 키로 localStorage 에 남아 있고,
+   시간대가 바뀌거나(아침 → 낮 → 저녁) 날짜가 바뀌면 키가 새로 시작되어 다시 열린다.
+   🧪 테스트의 '💬 파트너 대화 초기화' 뒤에도 바로 다시 눌린다.
+   ※ 🍎 과일 주기 / 🌟 스페셜 과일 주기는 대화권·시간대와 무관하게 언제든 동작한다. */
 const PP_TALK_LABEL = '💬 이야기하기';
-const PP_TALK_DONE_LABEL = '💬 오늘은 이야기를 다 나눴어요';
-function ppTalkDone(){ return cheerCountGet() >= CHEER_TAPS; }
+const PP_TALK_DONE_LABEL = '💬 대화는 다 나눴어요';
+const PP_TALK_REST_LABEL = '💬 지금은 쉬는 시간이에요';
+function ppTalkDone(){ return !!ppSlotOf() && cheerCountGet() >= PP_TALK_TAPS; }
 function ppSyncTalkBtn(){
   const tb = ppEl('ppTalk');
   if(!tb) return;
-  const done = ppTalkDone();
-  const mark = done ? '1' : '0';
-  if(tb.dataset.done === mark) return;        // 이미 맞춰져 있으면 DOM 을 건드리지 않는다
-  tb.dataset.done = mark;
-  tb.disabled = done;
-  tb.textContent = done ? PP_TALK_DONE_LABEL : PP_TALK_LABEL;
-  tb.setAttribute('aria-label', done ? '오늘은 이야기를 다 나눴어요' : '이야기하기');
-  if(done){ tb.classList.remove('wait'); tb.classList.remove('shake'); }
+  const slot = ppSlotOf();
+  const state = !slot ? 'rest' : (cheerCountGet() >= PP_TALK_TAPS ? 'done' : 'ok');
+  if(tb.dataset.state === state) return;      // 이미 맞춰져 있으면 DOM 을 건드리지 않는다
+  tb.dataset.state = state;
+  tb.disabled = state !== 'ok';
+  tb.textContent = state === 'rest' ? PP_TALK_REST_LABEL
+                 : state === 'done' ? PP_TALK_DONE_LABEL : PP_TALK_LABEL;
+  tb.setAttribute('aria-label', state === 'rest' ? '지금은 파트너가 쉬는 시간이에요'
+                             : state === 'done' ? '이 시간대 대화를 다 나눴어요' : '이야기하기');
+  tb.title = state === 'rest' ? PP_SLOT_GUIDE
+           : state === 'done' ? '다음 시간대에 다시 열려요' : '';
+  if(state !== 'ok'){ tb.classList.remove('wait'); tb.classList.remove('shake'); }
 }
 function ppClearFx(){
   const fx = ppEl('ppFx');
@@ -4998,7 +5048,7 @@ function partnerHappy(kind){
       stage.appendChild(ring);
       setTimeout(()=>{ try{ stage.removeChild(ring); }catch(e){} }, 900);
     }
-    try{ chime(); }catch(e){}          // 팡파레 (소리 켜짐일 때만)
+    /* v64 — 팡파르는 과일 버튼을 누른 그 자리에서 specialFruitSfx() 가 한 번만 울린다 */
   }
 }
 function openPartnerPopup(){
@@ -5019,48 +5069,51 @@ function openPartnerPopup(){
   ppCloseTurn();
   ppClearChat();
   ppSay('partner', PP_HELLO);          // 여는 것만으로 대화 횟수를 쓰지 않는다
-  ppSay('partner', ppTalkDone() ? PP_DONE : PP_HELLO2);   // v50 — 다 나눈 루틴이면 그렇다고 알려 준다
+  const slotNow = ppSlotOf();
+  if(!slotNow) ppSay('partner', PP_REST_LINE, { hint: true });          // v64 — 쉬는 시간 안내
+  else if(ppTalkDone()) ppSay('partner', ppSlotDoneLine(slotNow), { hint: true });
+  else ppSay('partner', PP_HELLO2);
   updatePartnerPopup();
   renderFruitBadge();
   ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
   partnerBounce();
-  ppCryWarm(partnerIdNow());           // 🍎 과일을 줄 때 바로 울리도록 미리 받아 둔다
 }
 function closePartnerPopup(){
   const ov = ppEl('partnerOverlay');
   if(!ov || !ov.classList.contains('show')) return;
   ov.classList.remove('show'); ov.setAttribute('aria-hidden', 'true');
-  stopPartnerCry();
   ppClearFx();
   ppCloseTurn();
   clearTimeout(ppReplyTimer); ppBusy = false;
 }
-/* 💬 이야기하기 — 한 번 누를 때마다 루틴별 1~3회째는 **모두** 주고받기 대화다:
-   파트너 질문 → 루카 답(선택지/직접 입력) → 파트너 리액션. 4회째는 마무리 인사만,
-   5회째부터는 새 대화가 열리지 않는다.
-   v51 — 2·3회차에 끼어들던 단독 응원 멘트를 없앴다(리액션과 다음 질문 사이가 쌩뚱맞았던 원인).
+/* 💬 이야기하기 — v64: 한 번 누를 때마다 **시간대(아침·낮·저녁)마다 3회** 주고받기 대화다:
+   파트너 질문 → 루카 답(선택지/직접 입력) → 파트너 리액션. 3회째 리액션 뒤에 마무리 멘트가
+   다음 시간대를 알리고, 그 즉시 버튼이 잠긴다. 쉬는 시간(20:51~07:59)에는 애초에 눌리지 않는다.
+   v51 — 2·3회차에 끼어들던 단독 응원 멘트는 없다(리액션과 다음 질문 사이가 쌩뚱맞았던 원인).
    1회차만 질문 앞에 지금 시간대의 가벼운 인사 한 마디를 붙인다. */
 function partnerTalkTap(){
   if(ppTurnOpen || ppBusy){ ppShake(ppEl('ppTalk')); return; }     // 답을 먼저 기다린다
-  const seen = cheerCountGet();
-  if(seen >= CHEER_TAPS){                                          // 5회째부터
-    ppSay('partner', PP_DONE, { hint: true });
+  const slot = ppSlotOf();
+  if(!slot){                                                       // 쉬는 시간 — 버튼도 잠겨 있지만 한 번 더 막는다
+    ppSay('partner', PP_REST_LINE, { hint: true });
     ppShake(ppEl('ppTalk'));
+    ppSyncTalkBtn();
     return;
   }
-  if(seen === CHEER_LIMIT){                                        // 4회째 = 마무리 인사 한 번
-    cheerCountSet(seen + 1);
-    ppSay('partner', cheerClosing());
-    ppCloseTurn();
-    ppSyncTalkBtn();                                               // v50 — 인사가 나온 즉시 잠근다
-    try{ if(soundOn) blip(); }catch(e){}
+  const seen = cheerCountGet();
+  if(seen >= PP_TALK_TAPS){                                        // 이 시간대 대화를 다 나눈 뒤
+    ppSay('partner', ppSlotDoneLine(slot), { hint: true });
+    ppShake(ppEl('ppTalk'));
+    ppSyncTalkBtn();
     return;
   }
   cheerCountSet(seen + 1);
-  const slot = cheerSlot();
-  ppAskedSync();                                                   // v51 — 이 루틴에서 물어본 질문 목록
-  if(seen === 0) ppSay('partner', ppGreetLine(slot));              // 1회차만 — 이 루틴 첫 대화라 가벼운 인사 한 마디
-  const topic = (seen === 0) ? ppOpenerFor(slot) : ppNextTopic();
+  ppTurnLast = (seen + 1 >= PP_TALK_TAPS);                         // 3회째 — 이 턴 끝에 마무리 멘트
+  ppTurnSlot = slot;
+  const tone_ = cheerSlot();                                       // 말투 — 시간대를 따른다
+  ppAskedSync();                                                   // v51 — 이 시간대에서 물어본 질문 목록
+  if(seen === 0) ppSay('partner', ppGreetLine(tone_));             // 1회차만 — 이 시간대 첫 대화라 가벼운 인사 한 마디
+  const topic = (seen === 0) ? ppOpenerFor(tone_) : ppNextTopic();
   ppAskedAdd(topic.q);                                             // v51 — 다음 질문에서 겹치지 않게
   ppSay('partner', topic.q);                                       // 1·2·3회 모두 질문 → 답 → 리액션
   ppOpenTurn(topic.opts);
@@ -5080,123 +5133,46 @@ function partnerFeedTap(kind){
   fruitBumpBadge();
   ppSay('partner', ppPick(special ? PARTNER_SPECIAL_LINES : PARTNER_FRUIT_LINES), { special: special });
   partnerHappy(special ? 'special' : 'fruit');
-  playPartnerCry(partnerIdNow());
+  if(special) specialFruitSfx(); else fruitSfx();   // v64 — 그 자리에서 합성하는 포켓몬 스타일 효과음
   updatePartnerPopup();
 }
-/* ---------- 🔊 실제 포켓몬 울음소리 ----------
-   PokeAPI cries(main) 의 {도감번호}.ogg — 1~200+ 전 포켓몬. 소리 버튼이 꺼져 있으면
-   오디오 요소는 아무 것도 재생하지 않고(절대 소리 없음), 재생이 실패(파일 없음·차단·오프라인)할 때만
-   짧은 WebAudio 효과음으로 대신한다.
-
-   v48 — 실기기(삼성 인터넷)에서 과일을 줄 때 울음소리가 안 나던 것 보완:
-   · 팝업을 열 때(그리고 파트너가 바뀔 때) 그 파트너의 .ogg 를 미리 받아 둔다 — 요소에 preload='auto' 로
-     걸고, blob 으로도 한 번 받아 둔다(cryBlob). 그러면 버튼을 누른 순간 네트워크를 기다리지 않는다.
-   · 과일 버튼을 누른 그 제스처 안에서 바로 currentTime=0 · play() — 늦은 콜백에서 부르지 않는다.
-   · 0.6초 안에 소리가 시작되지 않으면(차단·코덱·오프라인) 즉시 WebAudio 효과음으로 대신한다.
-     폴백도 같은 제스처 안에서 AudioContext 를 resume() 하고 운다 — 조용히 끝나지 않는다. */
-const CRY_BASE = 'https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/';
-let cryToken = 0;
-const cryBlob = {};                      // 도감번호 → blob URL (한 번 받아 두면 다시 안 받는다)
-function cryUrlOf(id){ return CRY_BASE + id + '.ogg'; }
-/* 화면 밖에 숨긴 오디오 요소 하나를 계속 쓴다 — 매번 새로 만들면 모바일에서 첫 재생이 늦거나 막힌다 */
-function cryElm(){
-  let a = document.getElementById('ppCryAudio');
-  if(!a){
-    a = document.createElement('audio');
-    a.id = 'ppCryAudio';
-    a.preload = 'auto';
-    a.volume = 0.85;
-    a.setAttribute('playsinline', '');
-    a.setAttribute('aria-hidden', 'true');
-    a.style.cssText = 'position:fixed;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
-    document.body.appendChild(a);
-  }
-  return a;
-}
-/* 팝업을 여는 제스처 안에서 미리 받아 둔다 — 실제로 재생하지는 않는다 */
-function ppCryWarm(id){
-  if(!soundOn) return;                   // 꺼져 있으면 미리 받지도 않는다
-  const n = Number(id) || 0;
-  if(!n) return;
-  const a = cryElm();
-  if(a.dataset.pid !== String(n)){
-    a.dataset.pid = String(n);
-    a.dataset.cry = cryUrlOf(n);
-    a.dataset.srcKey = cryUrlOf(n);
-    try{ a.src = cryUrlOf(n); a.preload = 'auto'; a.load(); }catch(e){}
-  }
-  if(cryBlob[n]) return;
-  try{
-    fetch(cryUrlOf(n), { mode:'cors', cache:'force-cache' })
-      .then(r => { if(!r.ok) throw new Error('http ' + r.status); return r.blob(); })
-      .then(bl => {
-        if(!bl || !bl.size) return;
-        cryBlob[n] = URL.createObjectURL(bl);
-        const el = document.getElementById('ppCryAudio');
-        if(el && el.dataset.pid === String(n) && el.paused){    // 재생 중이면 건드리지 않는다
-          el.dataset.srcKey = cryBlob[n];
-          el.src = cryBlob[n];
-          try{ el.load(); }catch(e){}
-        }
-      })
-      .catch(()=>{});                    // 못 받아 와도 재생할 때 원래 주소로 다시 시도한다
-  }catch(e){}
-}
-function stopPartnerCry(){
-  cryToken++;
-  const a = document.getElementById('ppCryAudio');
-  if(a){ try{ a.pause(); a.currentTime = 0; }catch(e){} }
-}
-function cryFallback(){
+/* ---------- 🔊 v64 — 과일 효과음 (WebAudio 합성, 외부 파일 없음) ----------
+   v63까지는 PokeAPI 의 {도감번호}.ogg 울음소리를 받아 왔다. 게임보이 도트 전자음이라 아이가
+   기대하는 '포켓몬 회복·레벨업' 느낌과 달랐고, 처음 누를 때는 네트워크를 기다려 늦게 울렸다.
+   이제 과일은 누른 그 자리에서 합성한다 — 소리 버튼(soundOn)이 켜져 있을 때만, 지연 없이.
+     · 일반 과일 — 톡톡 튀는 앞소리 + 맑고 통통 튀는 상승 아르페지오 (회복 아이템을 먹은 느낌)
+     · 스페셜 과일 — 반짝이는 도입 + 팡파르 (레벨업·진화 느낌) */
+function fruitSfx(){
   if(!soundOn) return;
-  unlockAudio();                         // 제스처 안 — 폴백이 조용히 끝나지 않게 컨텍스트를 깨운다
+  unlockAudio();                         // 버튼 제스처 안 — 첫 재생이 막히지 않게
   try{
-    beep(1046, .12, 0, 'triangle', .16);
-    beep(1318, .14, .10, 'triangle', .16);
-    beep(1568, .20, .22, 'triangle', .14);
+    tone(392, 0.055, 0.00, {type:'square',   vol:0.07});   // 톡
+    tone(523, 0.055, 0.07, {type:'square',   vol:0.07});   // 톡
+    tone(659, 0.090, 0.14, {type:'triangle', vol:0.13});   // 통통 튀는 상승 아르페지오
+    tone(784, 0.090, 0.22, {type:'triangle', vol:0.13});
+    tone(988, 0.090, 0.30, {type:'triangle', vol:0.13});
+    tone(1319,0.120, 0.38, {type:'triangle', vol:0.14});
+    tone(1568,0.100, 0.52, {type:'square',   vol:0.05});   // 반짝 마무리
+    tone(2093,0.160, 0.58, {type:'triangle', vol:0.05});
   }catch(e){}
 }
-function playPartnerCry(id){
-  if(!soundOn) return null;                     // 꺼짐 — 아무 것도 재생하지 않는다
-  unlockAudio();                                // 버튼 제스처 안에서 WebAudio 도 함께 깨워 둔다
-  stopPartnerCry();
-  const token = ++cryToken;
-  const n = Number(id) || 0;
-  const a = cryElm();
-  const src = cryBlob[n] || cryUrlOf(n);        // 미리 받아 둔 blob 이 있으면 그것부터 (즉시 시작)
-  let settled = false;
-  const alt = (cut)=>{
-    if(settled || token !== cryToken) return;
-    settled = true;
-    if(cut){ try{ a.pause(); }catch(e){} }      // 버퍼링만 하다 늦게 울려 두 번 들리는 일을 막는다
-    a.dataset.state = 'fallback';
-    cryFallback();
-  };
+function specialFruitSfx(){
+  if(!soundOn) return;
+  unlockAudio();
   try{
-    a.dataset.pid = String(n);
-    a.dataset.cry = cryUrlOf(n);                // 확인용 — 실제 재생원은 blob 일 수 있다
-    if(a.dataset.srcKey !== src){
-      a.dataset.srcKey = src;
-      a.src = src;
-      try{ a.load(); }catch(e){}
-    }
-    a.onerror = ()=> alt(true);                 // 요소를 계속 쓰므로 매번 새로 건다
-    a.dataset.state = 'playing';
-    try{ a.currentTime = 0; }catch(e){}
-    const p = a.play();
-    if(p && typeof p.then === 'function'){
-      p.then(()=>{ if(token === cryToken && a.dataset.state === 'playing') a.dataset.state = 'ok'; })
-       .catch(()=> alt(false));                 // 재생 거부 → 즉시 효과음
-    }
-    clearTimeout(a._wd);
-    a._wd = setTimeout(()=>{                    // 0.6초 안에 소리가 시작되지 않으면 폴백
-      if(token !== cryToken || settled) return;
-      let t = 0; try{ t = a.currentTime; }catch(e){}
-      if(a.paused || t <= 0) alt(true);
-      else a.dataset.state = 'ok';
-    }, 600);
-    return a;
-  }catch(e){ alt(true); return null; }
+    /* 반짝반짝 올라가는 도입 */
+    [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, 0.065, i * 0.055, {type:'square', vol:0.055}));
+    /* 팡파르 (C장조) */
+    const mel = [
+      [523, 0.10, 0.24], [659, 0.10, 0.34], [784, 0.10, 0.44], [1046, 0.20, 0.54],
+      [784, 0.08, 0.78], [1046, 0.08, 0.86], [1318, 0.08, 0.94], [1568, 0.30, 1.02]
+    ];
+    mel.forEach(([f, d, t]) => tone(f, d, t, {type:'square', vol:0.11}));
+    [[262, 0.28, 0.24], [392, 0.22, 0.54], [330, 0.14, 0.78], [392, 0.38, 0.94]].forEach(([f, d, t]) =>
+      tone(f, d, t, {type:'triangle', vol:0.08}));
+    tone(2637, 0.26, 1.30, {type:'triangle', vol:0.05});   // 반짝임
+    tone(3136, 0.22, 1.44, {type:'triangle', vol:0.04});
+  }catch(e){}
 }
 (function bindPartnerPopup(){
   const card = document.getElementById('hxpPartner');
@@ -5231,11 +5207,13 @@ function resetPartnerCheer(){
   try{ localStorage.removeItem(CHEER_STORE); }catch(e){}
   ppTopicQ = []; ppLastTopic = null; ppLastOpener = null; ppGreetQ = {}; ppCheerQ = []; ppLastLine = '';
   ppAskedQ = []; ppAskedKey = '';         // v51 — 물어본 질문 목록도 비운다(같은 질문이 다시 나올 수 있게)
-  ppSyncTalkBtn();                       // v50 — 잠겼던 '💬 이야기하기'도 다시 눌린다
+  ppTurnLast = false;
+  ppSyncTalkBtn();                       // v64 — 잠겼던 '💬 이야기하기'도 다시 눌린다(쉬는 시간이면 그대로 잠김)
   if(document.getElementById('partnerOverlay').classList.contains('show')){
     ppCloseTurn(); ppClearChat(); clearTimeout(ppReplyTimer); ppBusy = false;
+    const slot = ppSlotOf();
     ppSay('partner', PP_HELLO);
-    ppSay('partner', PP_HELLO2);
+    ppSay('partner', slot ? PP_HELLO2 : PP_REST_LINE, slot ? undefined : { hint: true });
   }
   try{ if(typeof renderPanelStatus === 'function') renderPanelStatus(); }catch(e){}
   toast('💬 파트너 대화 횟수를 초기화했어요');
@@ -6906,10 +6884,13 @@ function renderPanelStatus(){
   const p = n => (n < 10 ? '0' : '') + n;
   const d = getNow();
   const md = MODE_DEFS[modeId];
-  const ph = cheerPhase(), seen = cheerCountGet();
-  const phLabel = ph === 'morning' ? '아침' : ph === 'night' ? '밤' : '오후';
+  const slot = ppSlotOf(), seen = cheerCountGet();          // v64 — 대화는 시간대(시계)로 센다
+  const talkLine = slot
+    ? `${slot.label} 대화 <b>${seen}/${PP_TALK_TAPS}</b>`
+      + (seen >= PP_TALK_TAPS ? ` — ${slot.next} (다음 시간대에 다시 열려요)` : ` — ${slot.range}`)
+    : `지금은 파트너 쉬는 시간 — ${PP_SLOT_GUIDE}`;
   el.innerHTML = `지금 모드 <b>${md ? md.label : '등교'}</b> · 화면 시각 <b>${p(d.getHours())}:${p(d.getMinutes())}</b> (${simOffsetMs ? '미리보기' : '실제 시간'})`
-    + `<br>${phLabel} 루틴 파트너 대화 <b>${seen}/${CHEER_TAPS}</b>${seen >= CHEER_TAPS ? ' — 다음 루틴에 다시 열려요' : ''}`;
+    + `<br>${talkLine}`;
 }
 function renderPanelMode(){
   panel.querySelectorAll('[data-set-mode]').forEach(b=>{
@@ -7783,6 +7764,11 @@ let curMissionDay = todayKey();
 function tick(){
   renderClock();
   syncRoutine();
+  /* v64 — 파트너 팝업이 떠 있는 사이 시계가 시간대 경계(08:00·12:00·18:00·20:51)를 넘으면
+     '💬 이야기하기' 버튼도 그 자리에서 열리거나 잠긴다. */
+  try{
+    if(document.getElementById('partnerOverlay').classList.contains('show')) ppSyncTalkBtn();
+  }catch(e){}
   if(rollXpDay()) renderWild();      // 자정을 넘기면 경험치가 0으로
   if(curMissionDay !== todayKey()){  // 자정을 넘기면 오늘의 미션 체크도 새로 시작
     curMissionDay = todayKey();
