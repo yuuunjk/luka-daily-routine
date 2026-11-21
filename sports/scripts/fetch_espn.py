@@ -887,7 +887,7 @@ def build_standings(now: datetime) -> None:
 # ══ 선수 개인 순위 (leaders) ═════════════════════════════════
 # 리그별 개인 기록 순위를 모아 data/leaders.json 으로 저장한다.
 #  · ESPN (MLB·NBA·NFL)       — statistics/byathlete
-#  · ESPN (해외축구 6개 리그) — core /leaders + 선수·팀 참조
+#  · ESPN (해외축구 7개 리그) — core /leaders + 선수·팀 참조
 #  · K리그1·2                 — kleague.com /record/rankSort.do
 #  · KBL                      — api.kbl.or.kr /league/season-leader
 # 자료가 없는 리그(KBO·V리그 등)는 아무 것도 만들지 않는다. 앱이 안내 문구를 보여 준다.
@@ -908,7 +908,8 @@ BYATHLETE_CFG = [
 
 SOCCER_CFG = [
     ("eng.1", "프리미어리그"), ("esp.1", "라리가"), ("ger.1", "분데스리가"),
-    ("ita.1", "세리에A"), ("fra.1", "리그1"), ("uefa.champions", "챔피언스리그"),
+    ("ita.1", "세리에A"), ("fra.1", "리그1"), ("tur.1", "튀르키예 쉬페르리그"),
+    ("uefa.champions", "챔피언스리그"),
 ]
 SOCCER_CATS = [("goals", "득점"), ("assists", "도움")]
 
