@@ -2796,6 +2796,11 @@
       </div>
       <span class="phint">테스트 시간은 화면을 미리 보는 값이에요. 아이가 한 기록·보상은 그대로 남습니다.</span>
 
+      <!-- v62 — 🔆 화면 켜짐 유지: 진행 중인 루틴 시간에만 켜지고 끝나면 저절로 꺼진다 -->
+      <div class="psec">🔆 화면 켜짐 유지</div>
+      <div class="pnow" id="wakeNow">확인하는 중…</div>
+      <span class="phint">진행 중인 루틴 시간에 할 일이 남아 있을 때만 켜지고, 루틴을 다 끝내거나 시간이 지나면 배터리 보호를 위해 자동으로 꺼져요. 완료 체크를 풀거나 다음 루틴 시간이 되면 다시 켜져요.</span>
+
       <!-- v45 — 루틴별 파트너 대화 횟수 초기화 -->
       <div class="psec">💬 파트너 대화</div>
       <div class="pgrid">
@@ -4070,6 +4075,7 @@ function toggleTask(i, forceOn){
   /* 완료해 둔 루틴의 체크를 하나라도 풀면, 그 루틴이 준 경험치와 오늘 잡은 포켓몬을 함께 되돌린다 */
   const returned = (!rd.tasks[i] && was) ? revokeRoutineReward(key) : null;
   save(); renderTasks(); renderProgress();
+  syncWake();                              // v62 — 루틴을 다 끝내면 바로 끄고, 체크를 풀면 바로 다시 켠다
   if(rd.tasks[i] && !was) checkAllComplete();
   if(key === 'night') syncNightReward();   // 9:40 전 취침 완료 → 강화권 5번 세기
   if(returned){
@@ -5342,16 +5348,32 @@ document.getElementById('modes').addEventListener('click', e=>{
 let wakeLockObj = null, wakePending = false, wakeNativeBlocked = false, wakeRetryAt = 0;
 let keepVideo = null, keepVideoPlaying = false, keepVideoArmed = false;
 
-function wakeWanted(){        // 아침 루틴 시간대 / 취침 루틴(21:00~21:40) 시간대 + 아직 안 끝난 할 일이 있을 때
-  const now = nowMinutes();
-  if(now >= NIGHT_START - 10 && now <= NIGHT_BED){
-    const rn = rday('night');
-    return rn.tasks.length > 0 && rn.tasks.some(v => !v);
-  }
-  if(now < WAKE - 10 || now > DEPART + 30) return false;
-  const rd = rday('morning');
-  return rd.tasks.length > 0 && rd.tasks.some(v => !v);
+/* v62 — 화면 켜짐 유지는 '지금 진행 중인 루틴 시간'에만 켠다.
+     · 아침: 시작 10분 전 ~ 출발(마감) 30분 뒤
+     · 오후(하교·방과후 정리): 시작 10분 전 ~ 끝(없으면 취침 시작 21:00)
+     · 취침: 21:00 10분 전 ~ 21:40
+     그 밖(휴식 화면·루틴과 루틴 사이)은 null → 절대 켜지 않는다.
+     루틴이 끝나면 배터리를 아끼도록 스스로 꺼지고, 다시 진행 중인 루틴 시간이
+     되면(다음 루틴 시작·완료 체크 해제) syncWake 가 다시 잡는다. */
+function wakeWindow(){
+  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  const key = routineKeyAt();
+  if(key === 'morning') return { key, start: WAKE - 10, end: DEPART + 30 };
+  if(key === 'after')   return { key, start: (M.afterFrom || 16*60) - 10, end: (M.afterTo || NIGHT_START) };
+  if(key === 'night')   return { key, start: NIGHT_START - 10, end: NIGHT_BED };
+  return null;
 }
+function wakeWanted(){        // 진행 중인 루틴 시간대 + 아직 안 끝난 할 일이 있을 때만
+  if(!appOn()) return false;                        // 🔴 OFF(잠금) 상태에서는 배터리를 쓰지 않는다
+  const w = wakeWindow();
+  if(!w) return false;                              // 휴식 화면 — 켜지 않는다
+  const now = nowMinutes();
+  if(now < w.start || now > w.end) return false;    // 루틴 시간대가 끝났다
+  const rd = rday(w.key);
+  return rd.tasks.length > 0 && rd.tasks.some(v => !v);   // 할 일을 다 끝냈으면 끈다
+}
+/* 루틴 이름 — 설정 화면 안내 문구용 */
+const WAKE_KEY_LABEL = { morning:'아침', after:'오후', night:'취침' };
 function updateWakeChip(){
   const chip = document.getElementById('wakeChip');
   if(!chip) return;
@@ -5360,9 +5382,32 @@ function updateWakeChip(){
   if(on){
     chip.textContent = '🔆 화면 켜짐 유지';
     chip.title = wakeLockObj
-      ? '루틴이 끝날 때까지 화면이 꺼지지 않아요'
-      : '루틴이 끝날 때까지 화면이 꺼지지 않아요 (동영상 방식)';
+      ? '진행 중인 루틴 시간에만 켜져요 — 루틴을 다 끝내거나 시간이 지나면 배터리 보호를 위해 저절로 꺼져요'
+      : '진행 중인 루틴 시간에만 켜져요 — 루틴을 다 끝내거나 시간이 지나면 배터리 보호를 위해 저절로 꺼져요 (동영상 방식)';
   }
+  renderWakeStatus();          // 부모 설정을 열어 두었으면 상태 안내도 같이 맞춘다
+}
+/* 부모 설정 > 🧪 테스트 탭의 '🔆 화면 켜짐 유지' 상태 안내 */
+function renderWakeStatus(){
+  const el = document.getElementById('wakeNow');
+  if(!el) return;
+  if(!panel.classList.contains('show') || panelTab !== 'time') return;   // 안 보이면 글자만 만들지 않는다
+  const on = !!wakeLockObj || keepVideoPlaying;
+  const w = wakeWindow();
+  const left = w ? rday(w.key).tasks.filter(v => !v).length : 0;
+  let html;
+  if(on){
+    html = `지금 <b>켜짐</b> — ${WAKE_KEY_LABEL[w ? w.key : routineKeyAt()] || ''} 루틴 ${left}개 남았어요`;
+  }else if(!appOn()){
+    html = '지금 <b>꺼짐</b> — 앱이 OFF(잠금) 상태예요';
+  }else if(!w){
+    html = '지금 <b>꺼짐</b> — 진행 중인 루틴 시간이 아니에요 (휴식)';
+  }else if(left === 0){
+    html = '지금 <b>꺼짐</b> — 루틴을 다 끝내서 배터리 보호로 저절로 꺼졌어요';
+  }else{
+    html = '지금 <b>꺼짐</b> — 이 환경에서는 화면 잠금을 잡지 못했어요';
+  }
+  el.innerHTML = html;
 }
 async function acquireWakeLock(){
   if(!wakeWanted() || wakePending || wakeLockObj) return;
@@ -5431,10 +5476,11 @@ function syncWake(){
   if(!wakeWanted()){
     if(wakeLockObj) releaseWakeLock();
     if(keepVideoPlaying) stopKeepVideo();
-    return;
+  }else{
+    if(document.visibilityState === 'visible' && !wakeLockObj) acquireWakeLock();
+    if(!wakeLockObj && (wakeNativeBlocked || !('wakeLock' in navigator)) && keepVideoArmed && !keepVideoPlaying) startKeepVideo();
   }
-  if(document.visibilityState === 'visible' && !wakeLockObj) acquireWakeLock();
-  if(!wakeLockObj && (wakeNativeBlocked || !('wakeLock' in navigator)) && keepVideoArmed && !keepVideoPlaying) startKeepVideo();
+  renderWakeStatus();
 }
 function initWake(){
   wakeNativeBlocked = !('wakeLock' in navigator);
@@ -7022,7 +7068,7 @@ function switchPanelTab(name, opts){
   });
   panel.querySelectorAll('.ppane').forEach(p=> p.classList.toggle('show', p.dataset.ppane === name));
   if(name === 'say'){ renderAffirmSettings(); renderMissionSettings(); }
-  if(name === 'time'){ renderPanelStatus(); renderPanelMode(); }
+  if(name === 'time'){ renderPanelStatus(); renderPanelMode(); renderWakeStatus(); }
   if(name === 'reward'){ renderFruitSettings(); }        // 🍎 v48 — 열 때마다 지금 보유량으로 맞춘다
   const body = document.getElementById('setBody');
   if(body && !(opts && opts.silent)) body.scrollTop = 0;
@@ -7368,6 +7414,7 @@ function renderPower(){
 function setAppEnabled(on, src){
   state.appEnabled = !!on;
   save(); renderPower();
+  syncWake();                               // v62 — OFF 로 잠그면 화면 켜짐 유지도 바로 끓다
   const remote = src === 'sheet';           // 시트 원격 제어로 바뀐 경우
   if(on){ blip(); toast(remote ? '🟢 사용 ON — 부모님이 시트에서 켰어요!' : '🟢 사용 ON — 이제 루틴을 할 수 있어요!'); }
   else { toast(remote ? '🔴 사용 OFF — 부모님이 시트에서 껐어요' : '🔴 사용 OFF — 지금은 잠금 화면이에요'); }
