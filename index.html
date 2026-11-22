@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v75 — ☀️ 아침 날씨 브리핑 팝업 (사용자가 고른 1안 · 파트너 일기예보 카드형).
+     ① 아침 루틴 시간(기상 WAKE 또는 '지금부터 아침 루틴 시작' ~ 출발 DEPART 전)에 루틴 화면을 보고 있으면
+        오늘 하루 한 번 파트너가 날씨를 들고 먼저 인사한다. [☀️ 확인! 출발하자!] 를 누르면
+        day().weatherBriefDone = true 로 오늘은 다시 뜨지 않는다(🔄 오늘 할 일·경험치 리셋에서 함께 풀린다).
+     ② 내용은 대시보드가 이미 받아 온 잠원동 실시간 날씨 그대로 — 현재·최저·최고 기온, 9·2·4·6시
+        시간대별 비·눈과 강수확률, 미세먼지 PM10·PM2.5 등급, 옷차림·우산·마스크 조언, 지금 파트너
+        포켓몬 그림·이름, 오늘 모드와 출발 시각 배지.
+     ③ 말풍선은 날씨에 따라 달라진다 — 하교(오후) 비·눈 > 미세먼지 나쁨 > 아침 쌀쌀 > 더움 > 맑음 순.
+        날씨가 아직 안 왔으면 기본 안내를 보여 주고, 값이 도착하면 그 자리에서 다시 채운다
+        (빈 값·undefined 는 어떤 경우에도 화면에 나오지 않는다).
+     ④ 부모 설정 🧪 테스트 탭에 '☀️ 아침 날씨 팝업 띄우기'를 넣었다 — 설정창 위(z-index 58)에 뜨고
+        [✕ 테스트 닫기] 로 닫는다(9시 팝업 테스트와 같은 방식, 오늘 기록은 건드리지 않는다).
+     ⑤ 1280×800 · 1024×600 · 800×1280 모두에서 카드가 화면 밖으로 잘리지 않고 가로로 넘치지 않는다.
+     v74(아침 마감=출발 시각 · 식사 30분 타이머 · 방법 A 경계) 코드는 그대로 살렸다. -->
 <!-- v74 — 아침 루틴 마감 시각 통일 · 아침 식사 30분 타이머 개편 · v73 점검 버그 3건.
      ① 아침 루틴 마감 = 출발 시각 — 등교 08:35(morningEnd 09:00 → 08:35) · 방과후 08:45(09:00 → 08:45).
         마감 시각이 되면 화면이 곧바로 휴식 화면으로 넘어간다(공휴일 12:00 · 방학 09:00 은 이미 일치).
@@ -996,6 +1010,110 @@
   .nqbtn.later{background:rgba(255,255,255,.10);color:#dfe3ff;
     border:1.5px solid rgba(186,194,255,.5);}
   .nqbtn.later:active{transform:scale(.97);}
+
+  /* ===== v75 — ☀️ 아침 날씨 브리핑 팝업 (1안 · 파트너 일기예보 카드형) =====
+     완료/확인 카드와 같은 크림 카드 + 금색 테두리. 뒤 화면은 살짝 어둡게·흐리게.
+     좁은 화면(<=900px)은 파트너를 위로 올린 한 줄, 낮은 화면(<=680px)은 여백·그림·글자를 줄인다. */
+  .wbov.show{display:flex;align-items:center;justify-content:center;padding:16px;
+    background:radial-gradient(120% 90% at 50% 46%, rgba(14,32,48,.34) 0%, rgba(10,24,38,.56) 68%, rgba(8,18,30,.68) 100%);
+    backdrop-filter:blur(2.2px) saturate(.94);}
+  .wbov.test{z-index:58;}                     /* 부모 테스트 — 설정창(55)보다 위 */
+  .wbcard{position:relative;width:min(900px, calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;
+    padding:20px 26px 22px;border:3px solid #ffd98a;border-radius:30px;
+    background:linear-gradient(180deg,#fffef9 0%,#fff8e6 55%,#fff4d9 100%);
+    box-shadow:0 26px 60px rgba(10,24,38,.46), 0 0 0 6px rgba(255,255,255,.22), inset 0 0 0 3px rgba(255,255,255,.85);
+    animation:wbpop .38s cubic-bezier(.3,1.4,.6,1);}
+  @keyframes wbpop{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+  .wbcard::after{content:'';position:absolute;inset:0;border-radius:27px;pointer-events:none;
+    background:radial-gradient(90% 60% at 50% -10%, rgba(255,255,255,.75), rgba(255,255,255,0) 60%);}
+  .wbtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;z-index:2;}
+  .wbtop .ttl{font-size:clamp(17px,2.9vh,23px);font-weight:900;color:#3b2f20;letter-spacing:-.5px;}
+  .wbtop .date{font-size:clamp(12px,1.9vh,15.5px);font-weight:900;color:var(--ink2);}
+  .wbtop .right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .wbmode,.wbdep{font-size:clamp(11px,1.7vh,14px);font-weight:900;border-radius:999px;padding:4px 11px;white-space:nowrap;}
+  .wbmode{color:#3f7a2a;background:#eaf6df;border:2px solid #cfe8bd;}
+  .wbdep{color:#2f7fd4;background:#e8f3ff;border:2px solid #c9e2ff;}
+  .wbmain{display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;margin-top:10px;position:relative;z-index:2;}
+  .wbpp{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-top:2px;min-width:0;}
+  .wbartwrap{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;}
+  .wbartwrap .glow{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:min(92%,210px);aspect-ratio:1;
+    border-radius:50%;background:radial-gradient(circle,rgba(255,226,140,.85) 0%,rgba(255,240,190,0) 70%);pointer-events:none;}
+  .wbart{position:relative;z-index:1;height:clamp(104px,24vh,196px);width:auto;max-width:100%;object-fit:contain;
+    filter:drop-shadow(0 10px 14px rgba(90,70,30,.28));}
+  .wbwho{display:flex;align-items:center;gap:7px;margin-top:2px;min-width:0;}
+  .wbwho .ic{font-size:clamp(14px,1.9vh,18px);line-height:1;}
+  .wbwho b{font-size:clamp(14px,1.9vh,19px);font-weight:900;color:var(--ink);white-space:nowrap;}
+  .wbwho i{font-style:normal;font-size:clamp(10px,1.3vh,12.5px);font-weight:900;color:#7a5b00;
+    background:#fff0c2;border:2px solid #ffdf8e;border-radius:999px;padding:1px 8px;white-space:nowrap;}
+  .wbsay{min-width:0;display:flex;flex-direction:column;}
+  .wbbub{position:relative;background:#fff;border:3px solid #f0e2bd;border-radius:22px;padding:13px 18px;
+    box-shadow:0 8px 18px rgba(120,100,60,.10);color:#3b2f20;word-break:keep-all;}
+  .wbbub::before{content:'';position:absolute;left:-16px;top:36px;border-width:12px 16px 12px 0;border-style:solid;
+    border-color:transparent #f0e2bd transparent transparent;}
+  .wbbub::after{content:'';position:absolute;left:-10px;top:39px;border-width:9px 12px 9px 0;border-style:solid;
+    border-color:transparent #fff transparent transparent;}
+  .wbbub .big{display:block;font-size:clamp(16px,2.8vh,24px);font-weight:900;line-height:1.36;letter-spacing:-.4px;}
+  .wbbub .big u{text-decoration:none;background:linear-gradient(transparent 58%, #ffe08e 58%);padding:0 2px;}
+  .wbbub .small{display:block;font-size:clamp(11.5px,1.9vh,15.5px);color:#8a7a66;font-weight:900;margin-top:3px;line-height:1.35;}
+  .wbbub .small:empty{display:none;}
+  .wbtiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:11px;}
+  .wbt{background:#fff;border:2.5px solid #efe3c6;border-radius:18px;padding:8px 7px 7px;text-align:center;
+    box-shadow:0 6px 12px rgba(150,120,60,.07);min-width:0;}
+  .wbt .ico{font-size:clamp(16px,2.6vh,26px);line-height:1;}
+  .wbt .lab{font-size:clamp(10px,1.5vh,13px);font-weight:900;color:#a08a6c;margin-top:2px;}
+  .wbt .val{font-size:clamp(13px,2vh,19px);font-weight:900;color:#3b2f20;margin-top:1px;letter-spacing:-.4px;
+    line-height:1.2;word-break:keep-all;}
+  .wbt .val small{font-size:.8em;}
+  .wbt .sub{font-size:clamp(9.5px,1.4vh,12.5px);font-weight:900;color:#9a8a74;margin-top:2px;line-height:1.25;word-break:keep-all;}
+  .wbt.rain{background:#eef7ff;border-color:#c9e2ff;}
+  .wbt.rain .val{color:#1f6fd4;}
+  .wbt.dust{background:#f2faf0;border-color:#cfe8c6;}
+  .wbt.dust .val{color:#2f8a3a;}
+  .wbt.dust.bad{background:#fff1ef;border-color:#ffd0c7;}
+  .wbt.dust.bad .val{color:#d2482f;}
+  .wbwear{display:flex;align-items:center;gap:7px;margin-top:10px;flex-wrap:wrap;}
+  .wbwear .lb{font-size:clamp(11px,1.6vh,14px);font-weight:900;color:#8a7a66;flex:0 0 auto;}
+  #wbChips{display:flex;flex-wrap:wrap;gap:7px;min-width:0;}
+  .wbchip{display:inline-flex;align-items:center;gap:4px;font-size:clamp(11px,1.7vh,15.5px);font-weight:900;color:#4a3b2a;
+    background:#fff;border:2.5px solid #efe3c6;border-radius:999px;padding:3px 11px;white-space:nowrap;}
+  .wbchip.hot{background:#fff4d9;border-color:#ffd98a;color:#7a5b00;}
+  .wbchip.b{background:#eef7ff;border-color:#c9e2ff;color:#1f6fd4;}
+  .wbchip.g{background:#f2faf0;border-color:#cfe8c6;color:#2f8a3a;}
+  .wbfoot{display:flex;align-items:center;gap:12px;margin-top:14px;position:relative;z-index:2;flex-wrap:wrap;}
+  .wbfoot .note{flex:1 1 220px;font-size:clamp(11px,1.7vh,15px);font-weight:900;color:var(--ink2);word-break:keep-all;line-height:1.35;}
+  .wbbtn{flex:0 0 auto;margin-left:auto;min-width:min(330px,100%);height:clamp(46px,7.4vh,64px);border:none;border-radius:22px;
+    font-family:inherit;font-weight:900;font-size:clamp(16px,2.6vh,25px);letter-spacing:-.3px;cursor:pointer;
+    color:#5c4100;background:linear-gradient(180deg,#ffe98a 0%,#ffd23f 100%);
+    box-shadow:0 6px 0 #d8a800, 0 14px 26px rgba(180,140,0,.28);}
+  .wbbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #d8a800;}
+  .wbtestclose{flex:0 0 auto;border:none;border-radius:14px;font-family:inherit;font-weight:900;cursor:pointer;
+    font-size:clamp(11px,1.6vh,14px);padding:8px 12px;color:#7a6a55;background:#efe9da;border:2px solid #e2d8c0;}
+  .wbtestclose[hidden]{display:none;}
+  /* 좁은 화면 — 파트너를 말풍선 위 한 줄로, 꼬리는 위를 향한다 */
+  @media (max-width:900px){
+    .wbcard{padding:16px 16px 18px;border-radius:26px;}
+    .wbmain{grid-template-columns:minmax(0,1fr);gap:8px;}
+    .wbpp{flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+    .wbartwrap{width:auto;flex:0 0 auto;}
+    .wbartwrap .glow{width:100%;aspect-ratio:1;}
+    .wbart{height:clamp(92px,15vh,142px);}
+    .wbwho{margin-top:2px;flex-wrap:wrap;justify-content:center;}
+    .wbbub::before{left:50%;top:-14px;margin-left:-12px;border-width:0 12px 14px 12px;
+      border-color:transparent transparent #f0e2bd transparent;}
+    .wbbub::after{left:50%;top:-8px;margin-left:-9px;border-width:0 9px 11px 9px;
+      border-color:transparent transparent #fff transparent;}
+    .wbfoot .note{flex:1 1 100%;}
+    .wbbtn{min-width:100%;margin-left:0;}
+  }
+  /* 낮은 화면(1024×600 등) — 세로 여백·그림·글자를 줄여 스크롤 없이 들어가게 */
+  @media (max-height:700px) and (min-width:901px){
+    .wbcard{padding:14px 20px 16px;}
+    .wbart{height:clamp(96px,22vh,132px);}
+    .wbmain{gap:14px;margin-top:6px;}
+    .wbtiles{margin-top:8px;}
+    .wbwear{margin-top:7px;}
+    .wbfoot{margin-top:9px;}
+  }
 
   /* ===== v69 — ✨ 루틴 완료 확인 팝업 · 완료 축하 카드 =====
      어시 같은 파트너 카드 하나로 두 가지를 한다.
@@ -3304,6 +3422,56 @@
   </div>
 </div>
 
+<!-- v75 — ☀️ 아침 날씨 브리핑 팝업 (1안 · 파트너 일기예보 카드형).
+     아침 시간대에 오늘 하루 한 번 자동으로 뜨고, [☀️ 확인! 출발하자!] 로 오늘 기록을 남긴다. -->
+<div class="overlay wbov" id="wxBrief" aria-hidden="true" data-keep-panel="1">
+  <div class="wbcard" role="dialog" aria-modal="true" aria-label="아침 날씨 브리핑">
+    <div class="wbtop">
+      <span class="ttl">☀️ 아침 날씨 브리핑</span>
+      <span class="date" id="wbDate"></span>
+      <div class="right">
+        <span class="wbmode" id="wbMode">🏫 등교 모드</span>
+        <span class="wbdep" id="wbDep">🚀 출발 08:35</span>
+      </div>
+    </div>
+    <div class="wbmain">
+      <div class="wbpp">
+        <div class="wbartwrap">
+          <span class="glow" aria-hidden="true"></span>
+          <img class="wbart" id="wbArt" data-pk="art" alt="파트너 포켓몬">
+        </div>
+        <div class="wbwho"><span class="ic" id="wbIcon" aria-hidden="true">⚡</span><b id="wbName">피카츄</b><i>내 파트너</i></div>
+      </div>
+      <div class="wbsay">
+        <div class="wbbub">
+          <span class="big" id="wbBig">루카야! 오늘도 좋은 하루 보내자! ☀️</span>
+          <span class="small" id="wbSub"></span>
+        </div>
+        <div class="wbtiles">
+          <div class="wbt" id="wbTileTemp">
+            <div class="ico">🌡️</div><div class="lab">기온</div>
+            <div class="val" id="wbTempVal">확인 중</div><div class="sub" id="wbTempSub"></div>
+          </div>
+          <div class="wbt rain" id="wbTileRain">
+            <div class="ico" id="wbRainIco">☔</div><div class="lab" id="wbRainLab">비 · 하교 시간</div>
+            <div class="val" id="wbRainVal">확인 중</div><div class="sub" id="wbRainSub"></div>
+          </div>
+          <div class="wbt dust" id="wbTileDust">
+            <div class="ico">😷</div><div class="lab">미세먼지</div>
+            <div class="val" id="wbDustVal">확인 중</div><div class="sub" id="wbDustSub"></div>
+          </div>
+        </div>
+        <div class="wbwear"><span class="lb">오늘 챙길 것</span><span id="wbChips"></span></div>
+      </div>
+    </div>
+    <div class="wbfoot">
+      <span class="note" id="wbNote">날씨를 불러오는 중이야 — 잠깐만 기다려 줘!</span>
+      <button class="wbtestclose" id="wbTestClose" type="button" hidden>✕ 테스트 닫기</button>
+      <button class="wbbtn" id="wbConfirm" type="button">☀️ 확인! 출발하자!</button>
+    </div>
+  </div>
+</div>
+
 <!-- 부모 확인 (PIN) -->
 <div class="overlay pinoverlay" id="pinOverlay">
   <div class="modal pinmodal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
@@ -3404,6 +3572,14 @@
         <button class="pbtn" id="testNightAskReset" type="button">↩ 팝업 초기화</button>
       </div>
       <span class="phint">밤 9시~9시 39분에 루틴 화면을 보고 있고 잘 준비를 아직 하나도 체크하지 않았을 때 파트너가 조용히 말을 걸어요. '띄우기'는 지금 한 번 보여 주고, '초기화'는 오늘 팝업 기록(미룸 포함)을 지워 다시 뜰 수 있게 해요.</span>
+
+      <!-- v75 — ☀️ 아침 날씨 브리핑 팝업 테스트 -->
+      <div class="psec">☀️ 아침 날씨 브리핑 팝업</div>
+      <div class="pgrid">
+        <button class="pbtn" id="testWxBrief" type="button">☀️ 아침 날씨 팝업 띄우기</button>
+        <button class="pbtn" id="testWxBriefReset" type="button">↩ 오늘 팝업 초기화</button>
+      </div>
+      <span class="phint">기상(또는 '아침 루틴 시작')부터 출발 시각 전까지 루틴 화면을 보고 있으면 하루 한 번 자동으로 떠요. '띄우기'는 지금 한 번 보여 주고(오늘 기록은 건드리지 않음), '초기화'는 오늘 봤던 기록을 지워 다시 뜰 수 있게 해요.</span>
     </div>
 
     <!-- 탭 2: 확언 · 미션 -->
@@ -4302,6 +4478,8 @@ function freshDay(){
               · 'eaten'(스페셜을 먹여서 다시 줄 수 없음) */
     nightAsk:{ done:false, snoozed:0, until:0 },
     nightFruit:'none',
+    /* v75 — ☀️ 오늘 아침 날씨 브리핑 팝업을 이미 보고 [확인! 출발하자!] 를 눌렀는지 */
+    weatherBriefDone:false,
   };
 }
 /* 예전 모양({tasks:[5]} 또는 루틴별 칸) → 모드별 slots */
@@ -4336,6 +4514,7 @@ function migrateDay(d){
                    snoozed:Math.max(0, Math.min(9, Math.floor(Number(na.snoozed) || 0))),
                    until:Math.max(0, Number(na.until) || 0) };
   out.nightFruit = (d.nightFruit === 'held' || d.nightFruit === 'eaten') ? d.nightFruit : 'none';
+  out.weatherBriefDone = !!d.weatherBriefDone;   // v75 — 아침 날씨 브리핑 팝업(하루 한 번)
   return out;
 }
 function day(){
@@ -4847,6 +5026,225 @@ function nqLaterTap(){
   /* 바깥을 눌러도 아이를 가두지 않는다 — '3분만 더' 와 똑같이 조용히 미룬다 */
   if(ov) ov.addEventListener('click', e=>{ if(e.target === ov) nqLaterTap(); });
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && nqShown()) nqLaterTap(); });
+})();
+
+/* =========================================================
+   v75 — ☀️ 아침 날씨 브리핑 팝업 (사용자가 고른 1안 · 파트너 일기예보 카드형)
+   · 아침 루틴 시간(기상 WAKE — 또는 '지금부터 아침 루틴 시작'을 켠 날 — ~ 출발 DEPART 전)에
+     루틴 화면을 보고 있으면 오늘 하루 한 번 파트너가 날씨를 들고 먼저 말을 건다.
+   · [☀️ 확인! 출발하자!] → day().weatherBriefDone = true 로 오늘은 다시 뜨지 않는다.
+     (🔄 오늘 할 일·경험치 리셋을 누르면 이 기록도 같이 풀린다.)
+   · 날씨는 대시보드가 이미 받아 온 잠원동 실시간 값(wxNow) 그대로다. 아직 없다면 기본 안내를
+     보여 주고, 값이 도착하면 fetchWeather 가 이 팝업을 다시 칠한다(빈 값·undefined 가 나가지 않는다).
+   · 테스트로 띄운 팝업(wbTestHold)은 설정창 위에 서고 [✕ 테스트 닫기] 로 닫으며 오늘 기록을 건드리지 않는다.
+   ========================================================= */
+let wbTestHold = false;
+/* v75 — 부모가 테스트로 한 번 보고 닫은 뒤 10분 동안은 자동으로 또 띄우지 않는다
+   (아침 시간대에 테스트하면 닫자마자 진짜 팝업이 또 뜨는 일을 막는다 — 날짜가 바뀌면 저절로 끝난다) */
+let wbTestQuietUntil = 0;
+function wbEl(id){ return document.getElementById(id); }
+function wbShown(){ const ov = wbEl('wxBrief'); return !!(ov && ov.classList.contains('show')); }
+function wbTxt(id, v){ const el = wbEl(id); if(el) el.textContent = (v == null ? '' : String(v)); }
+function wbHHMM(min){
+  const m = ((Math.round(min) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+}
+/* 아침 루틴 시간대 — 기상 전이라도 '지금부터 아침 루틴 시작'을 켠 날은 바로 띄운다 */
+function wbWindow(now){
+  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  if(now == null) now = nowMinutes();
+  if(now >= M.deadline) return false;              // 출발(마감) 시각부터는 띄우지 않는다
+  return now >= M.wake || earlyMorningOn();
+}
+/* 다른 창(파트너·도감·포획·배틀·비밀번호·확인·축하·9시)이 떠 있으면 양보한다 */
+function wbOverlayBusy(){
+  return ['partnerOverlay','pokeOverlay','catchOverlay','btOverlay','pinOverlay','askDone','doneCard','nightAsk']
+    .some(id=>{ const el = wbEl(id); return !!(el && el.classList.contains('show')); });
+}
+function wbCanShow(now){
+  if(day().weatherBriefDone) return false;
+  if(!state.appEnabled) return false;
+  if(curTab !== 'dash') return false;                              // 루틴 화면일 때만
+  if(document.body.classList.contains('app-off')) return false;
+  const p = wbEl('panel'); if(p && p.classList.contains('show')) return false;
+  if(wbOverlayBusy()) return false;
+  return wbWindow(now);
+}
+/* 화면에 그린 실시간 날씨(wxNow) → 팝업이 쓸 값. 없으면 null */
+function wbNowData(){
+  const w = wxNow;
+  if(!w || !w.wx || !isFinite(w.wx.tcur)) return null;
+  const wx = w.wx, air = w.air || null;
+  const rows = (wx.rows || []).filter(r => r && isFinite(r.t));
+  const wets = rows.filter(r => isWetCode(r.code)).sort((a, b)=> a.h - b.h);
+  /* 하교(16시) → 18시 → 14시 → 9시 순서로 가장 먼저 보여 줄 비·눈 한 시간대 */
+  const pick = [16, 18, 14, 9].map(h => wets.find(r => r.h === h)).find(Boolean) || null;
+  const snow = !!pick && ((pick.code >= 71 && pick.code <= 77) || pick.code === 85 || pick.code === 86);
+  const pm10 = (air && air.pm10 != null) ? Math.round(air.pm10) : null;
+  const pm25 = (air && air.pm25 != null) ? Math.round(air.pm25) : null;
+  const ca = dustCls(pm10, 30, 80), cb = dustCls(pm25, 15, 35);
+  const dust = DUST_RANK[ca] >= DUST_RANK[cb] ? ca : cb;           // 둘 중 더 나쁜 쪽
+  const r9 = rows.find(r => r.h === 9);
+  const tcur = Math.round(wx.tcur);
+  const tOut = Math.min(r9 ? Math.round(r9.t) : tcur, tcur);       // 아침에 나갈 때의 기온
+  return { wx, air, rows, wet: pick, wetFirst: wets[0] || null, snow, pm10, pm25, dust, tcur, tOut,
+           tmax: wx.tmax != null ? Math.round(wx.tmax) : null,
+           tmin: wx.tmin != null ? Math.round(wx.tmin) : null,
+           code: wx.code != null ? wx.code : (rows[0] ? rows[0].code : 3) };
+}
+function wbSkyWord(c){
+  return c === 0 ? '맑은' : c <= 2 ? '구름 많은' : c === 3 ? '흐린' : c <= 48 ? '안개 낀'
+       : c <= 57 ? '이슬비 오는' : c <= 67 ? '비 오는' : c <= 77 ? '눈 오는'
+       : c <= 82 ? '비 오는' : c <= 86 ? '눈 오는' : c >= 95 ? '천둥 치는' : '구름 많은';
+}
+/* 말풍선 문구 — 비·눈 > 미세먼지 나쁨 > 쌀쌀 > 더움 > 그 밖 */
+function wbLines(d){
+  if(!d) return { main:'루카야! 오늘도 좋은 하루 보내자! ☀️', sub:'날씨를 불러오는 중이야 — 잠깐만 기다려 줘!' };
+  const temp = `아침 ${d.tOut}°` + (d.tmax != null ? ` · 낮 최고 ${d.tmax}°` : '');
+  const dustTxt = d.dust === 'bad' ? `미세먼지 나쁨${d.pm10 != null ? ` ${d.pm10}` : ''}`
+                 : d.dust === 'mid' ? `미세먼지 보통${d.pm10 != null ? ` ${d.pm10}` : ''}`
+                 : d.dust === 'good' ? '미세먼지 좋음' : '';
+  const join = parts => parts.filter(Boolean).join(' · ');
+  if(d.wet){
+    const what = d.snow ? '눈' : '비';
+    const when = d.wet.h >= 14 ? '하교할 때' : '아침에';
+    const first = d.wetFirst ? `${d.wetFirst.h}시부터 ${what}${what === '눈' ? '이' : '가'} 와요` : '';
+    return {
+      main: `루카야! 오늘 <u>${when} ${what}</u> 온대! ${d.snow ? '미끄러지지 않게 조심하자 ❄️' : '우산 꼭 챙기자 ☔'}`,
+      sub: join([temp, first, d.dust === 'bad' ? dustTxt : ''])
+    };
+  }
+  if(d.dust === 'bad'){
+    return { main:'루카야! 오늘 미세먼지가 나빠서 마스크 챙기자 😷', sub: join([temp, dustTxt]) };
+  }
+  if(d.tOut <= 5){
+    const sky = d.code === 0 ? '맑지만' : d.code <= 2 ? '구름이 많지만' : '흐리지만';
+    return { main:`루카야! 오늘은 ${sky} 아침이 쌀쌀해! 겉옷 챙기자 🧥`, sub: join([temp, dustTxt]) };
+  }
+  if(d.tOut <= 10){
+    const sky = d.code === 0 ? '맑지만' : d.code <= 2 ? '구름이 많지만' : '흐리지만';
+    return { main:`루카야! 오늘은 ${sky} 아침이 선선해! 겉옷 챙기자 🧥`, sub: join([temp, dustTxt]) };
+  }
+  if(d.tmax != null && d.tmax >= 27){
+    return { main:'루카야! 오늘은 꽤 더워! 반팔 입고 물병 챙기자 ☀️', sub: join([temp, dustTxt]) };
+  }
+  return { main:`루카야! 오늘 ${wbSkyWord(d.code)} 하루야! 기분 좋게 출발하자 ${WCODE(d.code)[0]}`,
+           sub: join([temp, dustTxt]) };
+}
+/* 오늘 챙길 것 칩 — 날씨에 따라 달라진다(최대 4개) */
+function wbChips(d){
+  if(!d) return [['🎒 준비물 챙기기', '']];
+  const out = [];
+  if(d.wet){
+    if(d.snow) out.push(d.tOut <= 5 ? ['🧣 목도리·장갑', 'hot'] : ['👟 미끄러지지 않는 신발', '']);
+    else out.push(['☔ 우산', 'b']);
+  }
+  if(d.dust === 'bad') out.push(['😷 마스크', 'g']);
+  if(d.tOut <= 5) out.push(['🧥 두꺼운 겉옷', 'hot']);
+  else if(d.tOut <= 11) out.push(['🧥 겉옷 챙기기', 'hot']);
+  else if(d.tOut <= 16) out.push(['🧥 얇은 겉옷', 'hot']);
+  if(d.tmax != null && d.tmax >= 24) out.push(['💧 물병', 'b']);
+  if(out.length < 2) out.push(['👟 편한 신발', '']);
+  return out.slice(0, 4);
+}
+/* 팝업 내용을 지금 날씨로 다시 칠한다 — 값이 없으면 '확인 중' 으로 두고 빈 칸을 만들지 않는다 */
+function wbPaint(){
+  if(!wbEl('wxBrief')) return;
+  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  const now = getNow();
+  wbTxt('wbDate', `${now.getMonth()+1}월 ${now.getDate()}일 ${DAYS[now.getDay()]}`);
+  wbTxt('wbMode', `${M.emoji} ${M.name} 모드`);
+  wbTxt('wbDep', `${(M.id === 'holiday' || M.id === 'vacation') ? '⏰ 마감' : '🚀 출발'} ${wbHHMM(DEPART)}`);
+  const pk = partnerPk();
+  const art = wbEl('wbArt');
+  if(pk && art){
+    pkImg(art, pk.id, 'art');
+    art.alt = pk.name;
+    wbTxt('wbName', pk.name);
+    wbTxt('wbIcon', cheerTypeIcon(pk) || '⚡');
+  }
+  const d = wbNowData();
+  const L = wbLines(d);
+  const big = wbEl('wbBig'); if(big) big.innerHTML = L.main;
+  wbTxt('wbSub', L.sub || '');
+  /* 기온 */
+  wbTxt('wbTempVal', d ? (d.tmax != null ? `${d.tcur}° → ${d.tmax}°` : `${d.tcur}°`) : '확인 중');
+  const tWord = !d ? '' : d.tOut <= 5 ? '아침 쌀쌀' : d.tOut <= 12 ? '아침 선선'
+              : d.tOut <= 19 ? '아침 포근' : d.tOut <= 26 ? '아침 따뜻' : '아침 더움';
+  wbTxt('wbTempSub', d ? [d.tmin != null ? `최저 ${d.tmin}°` : '', tWord].filter(Boolean).join(' · ') : '');
+  /* 비 · 눈 */
+  const rainTile = wbEl('wbTileRain');
+  if(rainTile) rainTile.classList.toggle('rain', !!(d && d.wet));
+  wbTxt('wbRainIco', d && d.wet ? (d.snow ? '❄️' : '☔') : '☔');
+  if(!d){
+    wbTxt('wbRainVal', '확인 중'); wbTxt('wbRainSub', '');
+  }else if(d.wet){
+    const what = d.snow ? '눈' : '비';
+    wbTxt('wbRainVal', `${d.wet.h}시 ${what}${d.wet.p != null ? ' ' + Math.round(d.wet.p) + '%' : ''}`);
+    wbTxt('wbRainSub', d.wetFirst ? `${d.wetFirst.h}시부터 ${what}${what === '눈' ? '이' : '가'} 와요`
+                                  : (d.snow ? '길이 미끄러워요' : '우산 챙겨요'));
+  }else{
+    wbTxt('wbRainVal', '비 소식 없음'); wbTxt('wbRainSub', '우산은 안 챙겨도 OK');
+  }
+  /* 미세먼지 */
+  const dustTile = wbEl('wbTileDust');
+  if(dustTile){ dustTile.classList.remove('bad'); if(d && d.dust === 'bad') dustTile.classList.add('bad'); }
+  if(!d){
+    wbTxt('wbDustVal', '확인 중'); wbTxt('wbDustSub', '');
+  }else if(d.pm10 == null && d.pm25 == null){
+    wbTxt('wbDustVal', '정보 없음'); wbTxt('wbDustSub', '오늘은 몰라도 괜찮아요');
+  }else{
+    wbTxt('wbDustVal', `${DUST_WORD[d.dust] || '—'}${d.pm10 != null ? ' ' + d.pm10 : ''}`);
+    wbTxt('wbDustSub', d.dust === 'bad' ? '마스크 꼭 챙겨요' : d.dust === 'mid' ? '마스크는 안 챙겨도 OK' : '공기 깨끗해요');
+  }
+  /* 오늘 챙길 것 */
+  const chipBox = wbEl('wbChips');
+  if(chipBox) chipBox.innerHTML = wbChips(d).map(([t, c]) => `<span class="wbchip${c ? ' ' + c : ''}">${t}</span>`).join('');
+  /* 아래 한 줄 — 기온별 옷차림 조언(비·미세먼지 포함) */
+  wbTxt('wbNote', d ? outfitTip(d.tOut, { wet: !!d.wet, dusty: d.dust === 'bad' })
+                    : '날씨를 불러오는 중이야 — 잠깐만 기다려 줘!');
+}
+function wbOpen(test){
+  const ov = wbEl('wxBrief'); if(!ov) return;
+  wbPaint();
+  const tc = wbEl('wbTestClose'); if(tc) tc.hidden = !test;
+  ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
+  if(!test && !wxNow) fetchWeather();      // 아직 날씨가 없으면 한 번 더 청한다(도착하면 wbPaint 가 다시 칠한다)
+}
+function wbClose(){
+  const ov = wbEl('wxBrief');
+  if(wbTestHold) wbTestQuietUntil = Date.now() + 10*60*1000;   // 테스트를 닫으면 잠깐 자동 재표시를 멈춘다
+  wbTestHold = false;
+  if(ov){ ov.classList.remove('show', 'test'); ov.setAttribute('aria-hidden', 'true'); }
+  const tc = wbEl('wbTestClose'); if(tc) tc.hidden = true;
+}
+function wbTestModeSet(on){
+  wbTestHold = !!on;
+  const ov = wbEl('wxBrief'); if(ov) ov.classList.toggle('test', !!on);
+  const tc = wbEl('wbTestClose'); if(tc) tc.hidden = !on;
+}
+function wbConfirmTap(){
+  const test = wbTestHold;
+  if(!test){ const d = day(); d.weatherBriefDone = true; save(); }
+  wbClose(); blip();
+  toast(test ? '☀️ 아침 날씨 팝업 — 테스트를 닫았어요' : '☀️ 좋아, 오늘도 즐겁게 출발하자!');
+}
+/* tick(250ms)마다 — 아침 시간대에 오늘 아직 안 봤으면 한 번 띄운다 */
+function checkWeatherBrief(now){
+  if(!wbTestHold && Date.now() < wbTestQuietUntil) return;   // 테스트를 막 닫은 참 — 자동으로 또 띄우지 않는다
+  if(wbTestHold){ if(!wbShown()) wbTestModeSet(false); return; }
+  if(day().weatherBriefDone){ if(wbShown()) wbClose(); return; }
+  if(wbShown()){ if(!wbCanShow(now)) wbClose(); return; }
+  if(wbCanShow(now)) wbOpen(false);
+}
+(function bindWeatherBrief(){
+  const ok = wbEl('wbConfirm'), tc = wbEl('wbTestClose'), ov = wbEl('wxBrief');
+  if(ok) ok.addEventListener('click', wbConfirmTap);
+  const testClose = ()=>{ wbClose(); blip(); toast('☀️ 테스트 팝업을 닫았어요'); };
+  if(tc) tc.addEventListener('click', testClose);
+  /* 평상시에는 바깥을 눌러도 닫지 않는다 — [☀️ 확인! 출발하자!] 로 오늘 기록을 남긴다 */
+  if(ov) ov.addEventListener('click', e=>{ if(e.target === ov && wbTestHold) testClose(); });
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && wbShown() && wbTestHold) testClose(); });
 })();
 
 /* ---------- tasks ---------- */
@@ -6768,6 +7166,10 @@ function openGoogleWeather(e){
 
 /* 실시간 날씨 표시 (🔄 = 다시 불러오기) */
 let wxLastOk = null, wxSource = '', wxModel = '';
+/* v75 — 화면에 마지막으로 그린 날씨 그대로를 들고 있다가 아침 날씨 브리핑 팝업이 같이 쓴다.
+   { wx, air, at } — wx 는 parseOpenMeteo/wttr/met.no 가 돌려주는 모양(tcur·tmax·tmin·rows…),
+   air 는 미세먼지 {pm10, pm25}, at 은 값이 도착한 시각(ms). 아직 없으면 null. */
+let wxNow = null;
 const hm2 = d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 const WX_SRC_LABEL = { kma:'기상청', 'open-meteo':'전지구', 'wttr.in':'보조', 'met.no':'보조' };
 function setWxStatus(state){
@@ -7090,6 +7492,8 @@ async function fetchWeather(manual){
     if(seq !== wxReqSeq) return;
     paint(wx, air, false);
     cacheWeather(wx, air);
+    wxNow = { wx, air: air || null, at: Date.now() };   // v75 — 아침 날씨 팝업도 같은 값을 쓴다
+    if(typeof wbShown === 'function' && wbShown()) wbPaint();
     wxLastOk = getNow();
     wxSource = wx.srcName;
     wxModel = wx.model || '';
@@ -9177,10 +9581,12 @@ document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   d.nightLateDone = false;
   d.nightAsk = { done:false, snoozed:0, until:0 };   // v67 — 오늘 잘 준비 팝업도 처음으로
   d.nightFruit = 'none';                            // v67 — 잘 준비 과일도 처음으로
+  d.weatherBriefDone = false;                       // v75 — 오늘 아침 날씨 팝업도 처음으로
   revertNightCount({ silent:true });   // 오늘 취침 완료로 올린 별 하나도 함께 되돌린다
   save();
   /* v69 — 리셋하면 끝냈던 루틴도 그 시간대에 다시 열린다(팝업·축하 카드는 닫는다) */
   pendingDone = null; adClose(); dnClose();
+  wbClose(); wbTestQuietUntil = 0;      // v75 — 열려 있던 아침 날씨 팝업도 닫고 다시 뜰 수 있게
   pastKey = null;                      // v72 — 열어 둔 지난 모험도 닫는다
   curRKey = null; syncRoutine(); renderProgress();
   renderStudy(); renderDex(); renderWild();
@@ -9242,6 +9648,16 @@ document.getElementById('nqTestClose').addEventListener('click', ()=>{
 document.getElementById('testNightAskReset').addEventListener('click', parentOnly(()=>{
   const st = nqRec(); st.done = false; st.snoozed = 0; st.until = 0; save();
   nqClose(); nqSyncChip(); toast('↩ 잘 준비 팝업 기록을 지웠어요');
+}));
+/* v75 — ☀️ 아침 날씨 브리핑 팝업 테스트 (설정창 위에 띄우고 [✕ 테스트 닫기] 로 닫는다) */
+document.getElementById('testWxBrief').addEventListener('click', parentOnly(()=>{
+  day().weatherBriefDone = false; save();      // 테스트 중에는 today 기록을 막지 않는다
+  wbTestModeSet(true); wbOpen(true);
+  toast('☀️ 아침 날씨 팝업 — 테스트');
+}));
+document.getElementById('testWxBriefReset').addEventListener('click', parentOnly(()=>{
+  day().weatherBriefDone = false; wbClose(); wbTestQuietUntil = 0; save();
+  toast('↩ 아침 날씨 팝업 기록을 지웠어요');
 }));
 
 /* ---------- 🍎 v48 — 🎁 보상·도감: 파트너 간식(과일) 직접 지급 · 차감 ----------
@@ -9595,6 +10011,7 @@ function tick(){
   if(now < DEPART + 15) checkDepartAlert(now);
   checkNightStart(now);              // 21:00 취침 시작음·안내 (하루 한 번)
   checkNightAsk(now);                // v67 — 21:00~21:39 잘 준비 시작 팝업 (3분 미룸 포함)
+  checkWeatherBrief(now);            // v75 — 아침 날씨 브리핑 팝업 (기상~출발 전, 하루 한 번)
 }
 setInterval(tick, 250);
 
@@ -9659,6 +10076,7 @@ ensureMissionAudio();   // 미션 효과음 미리 준비 (data URI라 즉시)
   document.getElementById('wMinMax').textContent = minmax;
   document.getElementById('wTip').textContent = tip;
   document.getElementById('wHours').innerHTML = hoursHtml(wx.rows);
+  wxNow = { wx, air: air || null, at: c.t };   // v75 — 저장한 날씨도 아침 브리핑이 바로 쓴다
   wxLastOk = new Date(c.t);
   wxSource = wx.srcName || 'open-meteo';
   wxModel = wx.model || '';
