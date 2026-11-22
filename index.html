@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v74 — 아침 루틴 마감 시각 통일 · 아침 식사 30분 타이머 개편 · v73 점검 버그 3건.
+     ① 아침 루틴 마감 = 출발 시각 — 등교 08:35(morningEnd 09:00 → 08:35) · 방과후 08:45(09:00 → 08:45).
+        마감 시각이 되면 화면이 곧바로 휴식 화면으로 넘어간다(공휴일 12:00 · 방학 09:00 은 이미 일치).
+        마감 뒤 미완료 항목은 v73 의 🕘 지난 모험 도전으로 마저 끝내면 경험치가 그대로 나온다.
+     ② 아침 식사 타이머 — '식사 시간을 재는 시계'로 바꿨다.
+        · 공부 타이머처럼 endAt(실제 시각) 기준 → 화면이 꺼지거나 앱이 잠들어도 흐른 시간만큼 줄어 있다.
+        · 버튼은 ▶ 시작 · ⏸ 멈춤(일시정지) · ▶ 재개 · ↺ 초기화 세 가지(좁은 카드에서는 그림만).
+        · 30분이 끝나도 루틴 카드를 저절로 체크하지 않는다(끝 알림만). 완료는 아이가 카드를 직접 누른다.
+        · 식사 카드를 체크/해제해도 타이머는 건드리지 않는다.
+     ③ v73 점검 버그 — 세로 800×1280 에서 식사 카드의 타이머 버튼이 카드 밖으로 11px 잘리던 레이아웃
+        (좁은 화면은 카드 3열×2행), 시트 갱신으로 오늘의 공부 과목이 사라지면 남아 있던 stTimer 정리,
+        resetTasks 의 중복 한 줄 정리.
+     ④ 21:40·아침 마감 경계의 '팝업 약속' 불일치 — 사용자가 고른 방법 A.
+        확인 팝업(askDone)을 **연 시각**을 pendingDone.at 에 남기고, 그 시각으로 보상을 판정한다.
+        · 21:39 에 뜬 팝업을 21:41 에 '응' 해도 약속대로 🌟 스페셜 과일 +1 · ⚡ 강화 XP +2칸.
+        · 등교 08:35(방과후 08:45 · 공휴일 12:00 · 방학 09:00) 마감 전에 뜬 팝업은 조금 늦게 '응' 해도 경험치 지급.
+        판정 한 곳만 시각을 받는다: checkAllComplete(아침 마감) · syncNightReward(9:40) ·
+        nightRewardLine(카드·토스트 문구) · syncNightFruit(완료 토스트). -->
 <!-- v73 — 🕘 지난 모험 도전으로 연 아침 루틴의 경험치 지급 수정.
      v72 에서 '지난 모험 도전'을 넣은 뒤, 부모가 아침 마감(등교 08:35 · 방과후 08:45 · 공휴일 12:00 ·
      방학 09:00)이 지난 뒤 지난 모험으로 아침 루틴을 열어 미완료 항목을 마저 끝내면
@@ -1164,7 +1182,7 @@
     text-align:center;line-height:1.05;letter-spacing:-.01em;}
   .timer .trow{display:flex;gap:6px;width:100%;}
   .tbtn{flex:1 1 0;border:none;border-radius:10px;padding:9px 6px;font-weight:900;font-size:16px;line-height:1.1;
-    min-height:42px;cursor:pointer;white-space:nowrap;}
+    min-height:42px;cursor:pointer;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 
   /* wild target + xp (in progress strip) */
   .wildbox{display:flex;align-items:center;gap:7px;background:#fffbe8;border:2px solid #f2c53d;
@@ -1180,6 +1198,23 @@
   .tbtn.start.paused{background:#f2a33d;}
   .tbtn.end{background:#efece2;color:#7a6a55;}
   .timer.running{background:#eaf9df;border-color:var(--green);}
+  /* v74 — 좁은 세로 화면(800×1280 등) 정리.
+     카드 6장이 한 줄에 눌리면 폭이 122px 까지 줄어 타이머 버튼(▶ 시작 · ↺ 초기화)이
+     카드 밖으로 11px 잘렸다(v73 점검 B5). 좁은 화면에서는 카드를 3열×2행 격자로 접고
+     타이머가 카드 안에 들어오게 글자·여백도 함께 줄인다. */
+  @media (max-width:900px){
+    .tasks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:10px;}
+    .tasks[data-n="4"]{grid-template-columns:repeat(2,minmax(0,1fr));}   /* 네 장은 2×2 로 — 마지막 한 장만 남지 않게 */
+    .tasks .card,.tasks.six .card{padding:24px 8px 8px;}
+    .tasks.has-timer .card{padding-bottom:calc(var(--timer-h,96px) + 12px);}
+    .card img{width:78%;max-width:230px;}
+    .card .emoji-fallback{font-size:clamp(34px,5vh,52px);}
+    .timer{padding:5px 7px;gap:4px;}
+    .timer .tval{font-size:clamp(20px,3.4vh,28px);}
+    .trow{gap:5px;}
+    .tbtn{padding:7px 4px;font-size:clamp(12px,1.8vh,15px);min-height:38px;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  }
+
 
   /* ===== 🔥 트레이너 LUKA의 마음 스킬 (루틴 탭 맨 위, 오늘 모드·남은 시간 바 위 한 줄 배너) =====
      아이가 루틴을 시작하기 전에 제일 먼저 읽는 문장이라 맨 위에 둔다.
@@ -3514,8 +3549,9 @@ const MODE_DEFS = {
     stripLabel:'LUKA의 아침 준비', emoji:'☀️', countdown:'등교까지',
     alertToast:'🏫 가랏, 피카츄!',
     tasks: TASKS, xp: 50,
-    /* v66-3 — 아침 카드는 09:00 까지(출발 안내 08:35 는 그대로). 09:00 부터 낮 자유 시간 화면 */
-    morningEnd: 9*60,
+    /* v74 — 아침 카드는 출발(마감) 시각 08:35 까지. 08:35 가 되면 곧바로 휴식 화면으로 넘어간다
+       (예전에는 09:00 까지 카드가 남아 08:35~09:00 에 끝내도 경험치가 없었다). */
+    morningEnd: 8*60+35,
     /* 하교 루틴 16:00~18:00 — 18:00 이 지나면 취침 루틴(21:00)까지 자유 시간 화면 */
     afterTasks: AFTER_TASKS, afterXp: 50, afterFrom: 16*60, afterTo: 18*60,
   },
@@ -3525,7 +3561,7 @@ const MODE_DEFS = {
     stripLabel:'LUKA의 방과후 아침 준비', emoji:'🎒', countdown:'방과후 수업까지',
     alertToast:'🎒 출발 시간이에요! 가랏 피카츄!',
     tasks: AFTERSCHOOL_TASKS, xp: 50,
-    morningEnd: 8*60+45+15,                    // 8:45 출발 안내를 15분 더 보여 주고 쉬는 화면으로
+    morningEnd: 8*60+45,                       // v74 — 마감(방과후 출발 8:45)과 같은 시각에 쉬는 화면으로
     /* 오후(방과후 정리) 루틴 — 오전 10:20 부터 */
     afterTasks: AFTERSCHOOL_PM_TASKS, afterXp: 50, afterFrom: 10*60+20, afterTo: 14*60,
     afterLabel:'LUKA의 방과후 정리', afterDepart:'오전 10:20 ~ 오후 2:00',
@@ -5138,6 +5174,7 @@ function buildTasks(){
   wrap.classList.remove('has-rest');
   if(!R || !R.tasks.length){ buildRestPanel(wrap); return; }
   wrap.classList.toggle('six', R.tasks.length === 6);
+  wrap.dataset.n = String(R.tasks.length);      // v74 — 좁은 화면에서 4장이면 2×2 로 접는다
   R.tasks.forEach((t,i)=>{
     const withTimer = (key === 'morning' && i === 0);
     const card = document.createElement('div');
@@ -5152,8 +5189,8 @@ function buildTasks(){
       <div class="timer" id="mealTimer">
         <span class="tval" id="tval">30:00</span>
         <div class="trow">
-          <button class="tbtn start" id="tStart" type="button" title="30분 식사 타이머를 시작하거나 잠시 멈춰요">▶ 시작</button>
-          <button class="tbtn end" id="tEnd" type="button" title="타이머를 30:00으로 되돌리고 아침 식사를 마쳐요">✓ 끝</button>
+          <button class="tbtn start" id="tStart" type="button" aria-label="30분 식사 타이머 시작·멈춤" title="30분 식사 타이머를 시작하거나 잠시 멈춰요">▶ 시작</button>
+          <button class="tbtn end" id="tReset" type="button" aria-label="타이머 초기화" title="타이머를 30:00으로 되돌려요">↺ 초기화</button>
         </div>
       </div>` : ''}`;
     card.addEventListener('click', e=>{
@@ -5164,7 +5201,7 @@ function buildTasks(){
   });
   if(key === 'morning'){
     document.getElementById('tStart').addEventListener('click', timerToggle);
-    document.getElementById('tEnd').addEventListener('click', timerFinish);
+    document.getElementById('tReset').addEventListener('click', timerReset);
     renderTimer();
     /* 타이머가 차지하는 만큼 모든 카드의 아래를 비워 둔다 — 그림·제목이 카드마다 같은 높이에 온다 */
     const tm = document.getElementById('mealTimer');
@@ -5224,7 +5261,7 @@ function toggleTask(i, forceOn){
    · 확정되면 축하 카드 한 장 — 아침·오후는 몬스터볼 컨페티와 함께, 취침은 컨페티 없이 밤 톤
    · 카드가 떠 있는 동안 syncRoutine 이 화면을 붙잡아 두고, 닫히면 자연스럽게 휴식 화면으로 넘어간다
    ========================================================= */
-let pendingDone = null;          /* { key, i } — 확인 팝업이 물어보는 중인 루틴과 항목 */
+let pendingDone = null;          /* { key, i, at } — 확인 팝업이 물어보는 중인 루틴·항목과 팝업을 연 시각(v74) */
 let dnTimer = 0;
 function askTitle(key){
   return key === 'morning' ? '아침 루틴 모두 다 끝냈어?'
@@ -5242,8 +5279,9 @@ function askSub(key){
 }
 function askYesText(key){ return key === 'night' ? '🌙 응, 다 끝냈어!' : '✨ 응, 다 끝냈어!'; }
 /* 밤 10시 전(21:41 연장 도전 포함)에 잘 준비를 마쳤을 때의 보상 한 줄 */
-function nightRewardLine(){
-  return nowMinutes() < NIGHT_BED
+function nightRewardLine(at){
+  const m = (typeof at === 'number') ? at : nowMinutes();   /* v74 — 팝업을 연 시각이 오면 그 시각으로 */
+  return m < NIGHT_BED
     ? '🌟 스페셜 과일 +1 · ⚡ 강화 XP +2칸 챙겼어요!'
     : '연장 도전 성공! 🌟 스페셜 과일 +1 · ⚡ 강화 XP +1칸 챙겼어요!';
 }
@@ -5263,7 +5301,10 @@ function routineHoldOn(){ return adShown() || dnShown() || catchShown(); }
 function askForDone(key, i){
   const ov = document.getElementById('askDone');
   if(!ov){ checkAllComplete(key); return; }
-  pendingDone = { key, i };
+  /* v74 — 방법 A: 보상은 '팝업을 연 시각'(아이가 마지막 항목을 체크한 순간)을 기준으로 정한다.
+     21:39 에 뜬 팝업을 21:41 에 '응' 해도 팝업이 약속한 +2칸을 그대로 주고,
+     아침 마감(등교 08:35 등) 전에 뜬 팝업은 조금 늦게 '응' 해도 경험치가 살아 있다. */
+  pendingDone = { key, i, at: nowMinutes() };
   kFill('ad', partnerPk() || DEX_BY_ID[PARTNER_DEFAULT]);
   const t = document.getElementById('adTitle'); if(t) t.textContent = askTitle(key);
   const s = document.getElementById('adSub');   if(s) s.textContent = askSub(key);
@@ -5292,7 +5333,7 @@ function adYesTap(){
   if(!pd) return;
   const rd = rday(pd.key);
   if(!rd.tasks.length || !rd.tasks.every(Boolean)) return;   /* 그 사이 풀렸으면 아무 것도 하지 않는다 */
-  finishRoutine(pd.key);
+  finishRoutine(pd.key, { at: pd.at });                      /* v74 — 팝업을 연 시각 기준 */
 }
 function dnClose(){
   const ov = document.getElementById('doneCard');
@@ -5302,7 +5343,7 @@ function dnClose(){
 }
 function doneSubHTML(key, res){
   res = res || {};
-  if(key === 'night') return nightRewardLine();
+  if(key === 'night') return nightRewardLine(res && res.at);
   if(res.late) return '시간이 늦어서 경험치는 다음에! 내일 다시 해 보자 😢';
   if(res.already) return '오늘 경험치는 이미 받았어요! 완료 확인만 챙겼어 🎉';
   if(res.xp){
@@ -5340,10 +5381,11 @@ function finishRoutine(key, opts){
   /* v71 — D2: 축하 카드가 뜨는 완료에서는 같은 내용의 완료 토스트를 겹쳐 띄우지 않는다.
      카드가 안 뜨는 복구 경로(확인 팝업이 없거나 새로고침 복구)에서만 토스트로 알린다. */
   const card = !silent && doneCardReady();
-  const res = checkAllComplete(key, { card });
+  const at = (opts && typeof opts.at === 'number') ? opts.at : null;   /* v74 — 팝업을 연 시각 */
+  const res = checkAllComplete(key, { card, at });
   if(key === 'night'){
-    syncNightReward({ card });
-    if(!silent) raiseDoneCard('night', { night:true });
+    syncNightReward({ card, at });
+    if(!silent) raiseDoneCard('night', { night:true, at });
     return res;
   }
   if(!silent) raiseDoneCard(key, res);
@@ -5356,7 +5398,8 @@ function checkAllComplete(keyArg, opts){
   if(!R) return { xp:0 };
   const rd = rday(key);
   if(!rd.tasks.length || !rd.tasks.every(Boolean) || rd.claimed) return { xp:0, skip:true };
-  const now = nowMinutes();
+  /* v74 — 확인 팝업을 연 시각이 있으면 그 시각으로 마감을 판정한다(아이가 체크한 순간이 기준) */
+  const now = (opts && typeof opts.at === 'number') ? opts.at : nowMinutes();
   rd.claimed = true;
   if(key === 'night'){                 /* 취침 루틴 — 보상·축하는 syncNightReward·raiseDoneCard 가 맡는다 */
     save(); renderProgress();
@@ -6555,50 +6598,87 @@ function resetPartnerCheer(){
   toast('💬 파트너 대화 횟수를 초기화했어요');
 }
 
-/* ---------- meal timer ---------- */
-let meal = { remain: 30*60, running:false, int:null };
-function fmt(sec){ sec = Math.max(0, Math.round(sec)); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
+/* ---------- meal timer ----------
+   v74 — 아침 식사 30분 타이머는 '식사 시간을 재는 시계'일 뿐이다.
+   · 공부 타이머처럼 endAt(실제 시각) 기반 — 화면이 꺼지거나 앱이 잠들어도 흐른 시간만큼 줄어 있다.
+   · 버튼은 ▶ 시작 · ⏸ 멈춤(일시정지) / ▶ 재개 · ↺ 초기화.
+   · 30분이 끝나도 루틴 카드를 저절로 체크하지 않는다 — 끝 알림만 울리고,
+     '아침 식사 완료'는 아이가 카드를 직접 눌러 정한다. 카드를 눌러도 타이머는 건드리지 않는다. */
+const MEAL_SEC = 30*60;
+let meal = { remain: MEAL_SEC, running:false, endAt:0, int:null };
+function mealLeft(){ return meal.running ? Math.max(0, (meal.endAt - Date.now()) / 1000) : meal.remain; }
+function fmt(sec){ sec = Math.max(0, Math.ceil(sec)); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
 function renderTimer(){
   const v = document.getElementById('tval');
-  if(!v) return;
-  v.textContent = fmt(meal.remain);
   const b = document.getElementById('tStart');
-  b.textContent = meal.running ? '⏸ 일시정지' : '▶ 시작';
-  b.classList.toggle('paused', meal.running);
-  document.getElementById('mealTimer').classList.toggle('running', meal.running);
+  const r = document.getElementById('tReset');
+  const box = document.getElementById('mealTimer');
+  if(v) v.textContent = fmt(mealLeft());
+  /* 카드가 좁으면(세로 6장·작은 화면) 글자가 버튼 밖으로 나가지 않게 그림만 보여 준다 —
+     기능은 같고, 부모가 보는 title·aria-label 에 뜻이 남아 있다. */
+  const short = !!box && box.clientWidth > 0 && box.clientWidth < 150;
+  if(b){
+    b.textContent = meal.running ? (short ? '⏸' : '⏸ 멈춤')
+                  : (meal.remain > 0 && meal.remain < MEAL_SEC) ? (short ? '▶' : '▶ 재개')
+                  : (short ? '▶' : '▶ 시작');
+    b.classList.toggle('paused', meal.running);
+  }
+  if(r) r.textContent = short ? '↺' : '↺ 초기화';
+  if(box) box.classList.toggle('running', meal.running);
+}
+/* 250ms 마다 남은 시간을 다시 계산한다 — 화면이 잠들었다 깨어도 그 사이 흐른 시간이 그대로 반영된다 */
+function mealStartTick(){
+  if(meal.int) clearInterval(meal.int);
+  meal.int = setInterval(()=>mealTick(), 250);
+}
+function mealTick(){
+  if(meal.running){
+    const left = (meal.endAt - Date.now()) / 1000;
+    meal.remain = Math.max(0, left);
+    if(left <= 0) mealDone();
+  }
+  renderTimer();
 }
 function timerToggle(){
   unlockAudio();
-  if(meal.running){ meal.running = false; clearInterval(meal.int); }
-  else{
-    if(meal.remain <= 0) meal.remain = 30*60;
-    meal.running = true;
-    meal.int = setInterval(()=>{
-      meal.remain--;
-      if(meal.remain <= 0){
-        meal.remain = 0; timerStop();
-        blip(); toast('⏰ 30분 식사 시간 끝! 아침 식사 완료!');
-        toggleTask(0, true);
-      }
-      renderTimer();
-    }, 1000);
+  if(meal.running){                      // 일시정지 — 그 순간의 남은 시간을 붙잡아 둔다
+    timerStop();
+    renderTimer();
+    return;
   }
+  if(meal.remain <= 0) meal.remain = MEAL_SEC;
+  meal.running = true;
+  meal.endAt = Date.now() + meal.remain * 1000;
+  mealStartTick();
   renderTimer();
 }
-function timerStop(){ meal.running = false; clearInterval(meal.int); }
-function timerFinish(){
+/* 타이머를 멈추되 흐른 시간은 잃지 않는다 (화면이 루틴 밖으로 넘어갈 때도 남은 시간이 남는다) */
+function timerStop(){
+  if(meal.running) meal.remain = Math.max(0, (meal.endAt - Date.now()) / 1000);
+  meal.running = false;
+  meal.endAt = 0;
+  if(meal.int){ clearInterval(meal.int); meal.int = null; }
+}
+/* ↺ 초기화 — 30:00 으로 되돌린다(루틴 카드는 그대로 둔다) */
+function timerReset(){
   unlockAudio();
   timerStop();
-  const had = meal.remain < 30*60;
-  meal.remain = 30*60;
+  meal.remain = MEAL_SEC; meal.endAt = 0;
   renderTimer();
-  if(had || !rday('morning').tasks[0]){
-    toast('🍚 아침 식사 완료!');
-    toggleTask(0, true);
-  }else{
-    toast('타이머를 초기화했어요.');
-  }
 }
+/* 30분 종료 — 카드는 체크하지 않는다. 끝 알림만 울린다. */
+function mealDone(){
+  timerStop();
+  meal.remain = 0;
+  renderTimer();
+  if(soundOn){ try{ unlockAudio(); studyTimerSfx(); }catch(e){} }
+  const morningKey = routineNow();
+  const rd = (morningKey === 'morning') ? rday('morning') : null;
+  const checked = !!(rd && rd.tasks && rd.tasks[0]);
+  if(!checked) toast('⏰ 30분 식사 시간 끝! 다 먹었으면 아침 식사 카드를 눌러 줘');
+}
+/* 화면이 다시 켜지면 그 사이 흐른 시간을 바로 반영한다 */
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) mealTick(); });
 
 /* ---------- 오늘 모드 (등교 / 방과후 / 공휴일 / 방학) ---------- */
 function renderModePills(){
@@ -7484,6 +7564,7 @@ function nightSoftSound(){ beep(587,.55,0,'sine',.26); beep(494,.6,.42,'sine',.2
 function syncNightFruit(opts){
   /* v71 — D2: 축하 카드가 뜨면 카드 부제(nightRewardLine)와 글자까지 같던 이 토스트는 생략한다 */
   const card = !!(opts && opts.card);
+  const at = (opts && typeof opts.at === 'number') ? opts.at : null;   /* v74 — 팝업을 연 시각 */
   const all = nightAllDone();
   const st = nightFruitState();
   if(all && st === 'none'){
@@ -7492,7 +7573,7 @@ function syncNightFruit(opts){
     fruitBumpBadge();
     incrementSelfProgress('night', { silent:true });  // ⚡ 강화 XP +1 (8개가 차면 강화권 1장)
     nightSoftSound();
-    if(!card) toast('🌙 잘 준비 완료! ' + nightRewardLine());   // 제시간이면 +2칸, 연장 도전이면 +1칸
+    if(!card) toast('🌙 잘 준비 완료! ' + nightRewardLine(at));   // 제시간이면 +2칸, 연장 도전이면 +1칸
     save();
     return;
   }
@@ -7516,12 +7597,13 @@ function isNightCounted(){
 }
 function syncNightReward(opts){
   const card = !!(opts && opts.card);
+  const at = (opts && typeof opts.at === 'number') ? opts.at : null;   /* v74 — 팝업을 연 시각 */
   const k = todayKey();
   const d = day();
   const all = nightAllDone();
   const counted = isNightCounted();
   if(all && !counted){
-    if(nowMinutes() < NIGHT_BED){          // 9:40 전 완료 → 강화권 5번 세기에 +1
+    if(((at == null) ? nowMinutes() : at) < NIGHT_BED){   // 9:40 전 완료 → 강화권 5번 세기에 +1
       state.study.nightDates.push(k);
       incrementSelfProgress('night', { quiet: card });   // v71 — 카드가 뜨면 별 진행 토스트는 양보
     }else if(!d.nightLateDone){             // v69 — 21:41~21:59 '연장 도전' 구간 완료: 컨페티 없이 조용히
@@ -7534,7 +7616,7 @@ function syncNightReward(opts){
   }else if(!all && counted){                // 하나라도 풀리면 오늘 잘 준비 별을 되돌린다
     revertNightCount();
   }
-  syncNightFruit({ card });                 // v67 — 잘 준비 완료 과일 (강화권 안내 뒤에 과일 안내가 보이게)
+  syncNightFruit({ card, at });             // v67 — 잘 준비 완료 과일 (강화권 안내 뒤에 과일 안내가 보이게)
   save();
   renderStudy(); renderDex();
 }
@@ -7675,6 +7757,14 @@ function stReset(){
   stClearTimer();
   blip();
   renderStudy();
+}
+/* v74 — 구글 시트를 다시 받아 오늘 목록에서 그 과목이 사라졌다면, 화면에 없는 타이머가
+   '먼저 진행 중인 타이머를 끝내라'며 다른 과목을 계속 막지 않도록 조용히 정리한다. */
+function stPruneTimer(){
+  if(!stTimer.name) return false;
+  if(stIndex(stTimer.name) >= 0) return false;
+  stClearTimer();
+  return true;
 }
 /* 과목 이름 — 완료 체크한 카드의 타이머를 찾고, 남은 시간을 과일 보너스 판단에 쓴다 */
 function stNameAt(i){
@@ -8248,6 +8338,7 @@ function applySheetPlan(parsed){
   state.study.plan = plan;
   state.study.done[dk] = nd;
   state.study.sheet = { at: Date.now(), items: parsed.count, days: parsed.days };
+  stPruneTimer();          // v74 — 목록에서 사라진 과목의 타이머가 다른 타이머를 막지 않게 정리
   save();
 }
 function sheetCached(){ return !!(state.study.sheet && state.study.sheet.at); }
@@ -9086,7 +9177,6 @@ document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   d.nightLateDone = false;
   d.nightAsk = { done:false, snoozed:0, until:0 };   // v67 — 오늘 잘 준비 팝업도 처음으로
   d.nightFruit = 'none';                            // v67 — 잘 준비 과일도 처음으로
-  state.routineCatch = null;           // 오늘 잡은 포켓몬 기록도 비운다 (도감은 그대로 둔다)
   revertNightCount({ silent:true });   // 오늘 취침 완료로 올린 별 하나도 함께 되돌린다
   save();
   /* v69 — 리셋하면 끝냈던 루틴도 그 시간대에 다시 열린다(팝업·축하 카드는 닫는다) */
