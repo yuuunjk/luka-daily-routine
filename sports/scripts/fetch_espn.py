@@ -672,9 +672,15 @@ def kovo_games(now: datetime) -> list[dict]:
         hscore = int(nums[0]) if len(nums) >= 2 else None
         ascore = int(nums[1]) if len(nums) >= 2 else None
         time_text = str(m.get("gstime") or "")[:5]
-        if m.get("result"):
+        # 배구는 3세트를 먼저 따낸 3:0·3:1·3:2 로만 끝난다. KOVO API는 경기 중에도
+        # result 를 채우고 중간 세트 스코어(0 : 1)를 주기 때문에, 그 값으로 '종료' 처리하면
+        # 앱의 승부예측이 진 팀을 이긴 팀으로 채점해 버린다(11-21 삼성화재 0:1 → 3:1 사고).
+        # 최종 세트 스코어 모양일 때만 종료로 본다.
+        finished = len(nums) >= 2 and max(hscore, ascore) == 3 and min(hscore, ascore) <= 2
+        started = bool(time_text) and f"{date} {time_text}" <= now.strftime("%Y-%m-%d %H:%M")
+        if finished:
             state, status = "done", "종료"
-        elif nums and date == now.strftime("%Y-%m-%d") and time_text and time_text <= now.strftime("%H:%M"):
+        elif started:
             state, status = "live", "진행 중"
         else:
             state, status = "upcoming", ""

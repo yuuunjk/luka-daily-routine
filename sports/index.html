@@ -152,14 +152,8 @@
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
   .team.win .name{color:var(--blue-dark);}
   .team.lose .name{color:#9aa8bf;}
-  /* 이긴 팀 — 왕관을 로고 위에 살짝 얹는다 */
-  .team .logo .crown{position:absolute; left:50%; top:-16px; transform:translateX(-50%); z-index:3;
-    font-size:24px; line-height:1; pointer-events:none; filter:drop-shadow(0 2px 3px rgba(20,40,80,.32));
-    animation:crownPop .38s cubic-bezier(.2,1.5,.5,1) both;}
-  @keyframes crownPop{from{transform:translateX(-50%) translateY(5px) scale(.55); opacity:0}
-    to{transform:translateX(-50%) translateY(0) scale(1); opacity:1}}
   .team .logo img{transition:filter .18s ease;}
-  /* 진 팀 — 로고는 흑백으로 가라앉힌다 */
+  /* 이긴 팀 로고는 컬러 그대로, 진 팀 로고만 흑백으로 가라앉힌다 (무승부면 둘 다 컬러) */
   .team.lose .logo img{filter:grayscale(100%) opacity(.55);}
   .team.lose .logo::before{filter:grayscale(100%); opacity:.55;}
   .score{display:flex; align-items:center; gap:8px; font-size:46px; font-weight:900; letter-spacing:-1px;
@@ -920,8 +914,17 @@ function outcomeOf(g){
   }
   if (g.winner === "HOME") return "home";
   if (g.winner === "AWAY") return "away";
-  if (g.winner === "DRAW") return "draw";
+  /* 스코어도 승자 표시도 없다 = 아직 결과를 모른다(취소·연기 포함) */
   return null;
+}
+/* 결과를 확정할 수 있는 스코어인가 — 배구는 3세트를 먼저 따낸 3:0·3:1·3:2 로만 끝난다.
+   경기 중인 '0 : 1' 같은 중간 세트 스코어가 종료로 올라올 때가 있어,
+   그 값으로 채점하면 이긴 팀이 뒤집히므로 최종 모양일 때만 채점한다. */
+function finalScore(g){
+  const hs = g?.home?.score, as = g?.away?.score;
+  if (typeof hs !== "number" || typeof as !== "number") return false;
+  if (g.sport === "배구") return Math.max(hs, as) === 3 && Math.min(hs, as) <= 2;
+  return true;
 }
 function pickLabel(p){
   if (!p) return "";
@@ -965,16 +968,23 @@ function gradePreds(){
   let changed = false;
   const byId = new Map(gameList().map(g => [String(g.id), g]));
   for (const [id, p] of Object.entries(state.preds)){
-    if (p.res) continue;
     const g = byId.get(id);
-    if (!g || g.state !== "done") continue;
+    if (!g || g.state !== "done") continue;      // 아직 안 끝난 경기
+    if (!finalScore(g)) continue;                  // 최종 스코어가 아니면(중간 스코어) 채점 보류
     const act = outcomeOf(g);
     if (!act) continue;
-    p.res = (p.pick === act) ? "hit" : "miss";
-    p.actual = act;
-    p.hs = g.home?.score ?? null;
-    p.as = g.away?.score ?? null;
-    p.gradedAt = Date.now();
+    const hs = g.home?.score ?? null, as = g.away?.score ?? null;
+    const res = (p.pick === act) ? "hit" : "miss";
+    if (p.res === res && p.actual === act){
+      /* 판정은 그대로인데 스코어만 바뀐 경우 — 기록 줄의 점수만 맞춘다 */
+      if (p.hs !== hs || p.as !== as){ p.hs = hs; p.as = as; changed = true; }
+      continue;
+    }
+    /* 이미 채점된 예측도 실제 결과가 바뀌면 다시 채점한다.
+       경기 직후 잘못 올라온 중간 스코어(0 : 1)로 채점된 기록을 이렇게 스스로 바로잡는다. */
+    if (p.res) p.fixedAt = Date.now();
+    p.res = res; p.actual = act; p.hs = hs; p.as = as;
+    if (!p.gradedAt) p.gradedAt = Date.now();
     changed = true;
   }
   const cut = Date.now() - PRED_KEEP_MS;
@@ -1317,13 +1327,12 @@ function renderSportChips(){
     btn.onclick = () => { state.sport = btn.dataset.sport; renderSportChips(); renderStateChips(); renderToday(); };
   });
 }
-/** 오늘 경기 카드의 팀 한 칸 — 이긴 팀은 로고 위에 왕관, 진 팀 로고는 흑백 */
+/** 오늘 경기 카드의 팀 한 칸 — 이긴 팀 로고는 컬러, 진 팀 로고는 흑백(무승부는 둘 다 컬러) */
 function teamBlock(t, win, lose){
   if (!t || !t.name) return "";
-  const crown = win ? `<span class="crown" aria-label="승리">👑</span>` : "";
   const logo = t.emblem
-    ? `<span class="logo" data-initial="${esc(initial(t.name))}"><img src="${esc(t.emblem)}" alt="" loading="lazy" onerror="this.remove()">${crown}</span>`
-    : `<span class="logo" data-initial="${esc(initial(t.name))}">${crown}</span>`;
+    ? `<span class="logo" data-initial="${esc(initial(t.name))}"><img src="${esc(t.emblem)}" alt="" loading="lazy" onerror="this.remove()"></span>`
+    : `<span class="logo" data-initial="${esc(initial(t.name))}"></span>`;
   const cls = ["team", win ? "win" : "", lose ? "lose" : ""].filter(Boolean).join(" ");
   return `<div class="${cls}">
       ${logo}
@@ -1340,8 +1349,10 @@ function gameCard(g){
     cancel: `<span class="badge cancel">⛔ 취소</span>`,
   }[g.state] || "";
 
-  const homeWin = g.winner === "HOME" && g.state === "done";
-  const awayWin = g.winner === "AWAY" && g.state === "done";
+  /* 카드에 보이는 스코어와 같은 기준(outcomeOf)으로 이긴 팀을 정한다 —
+     데이터의 winner 값이 스코어와 어긋나도 로고 컬러/흑백과 점수가 따로 놀지 않게 */
+  const oc = g.state === "done" ? outcomeOf(g) : null;
+  const homeWin = oc === "home", awayWin = oc === "away";
   /* 진 팀 = 종료된 경기에서 상대가 이긴 쪽 (무승부면 양쪽 다 컬러) */
   const homeLose = awayWin, awayLose = homeWin;
 
