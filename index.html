@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v72 — 🕘 지난 모험 도전(부모 비번) + v71 점검에서 찾은 버그 4가지 수정.
+     ① 휴식 화면 칩 줄 — 순서를 [🕘 지난 모험 도전] → [⏳ 다음 모험까지 …] → [☀️ 다음: …] 로 맞췄다
+        (모든 모드 공통, 밤에는 그 뒤에 🍎 과일 주기·🌟 스페셜). '지난 모험 도전'은 버튼이고
+        누르면 부모 4자리 비번 창('지난 모험을 다시 도전하자!') → 오늘의 직전 루틴을 연다:
+        낮 → 아침 루틴 · 저녁(오후 루틴 시간 뒤) → 오후 루틴 · 밤 10시 이후 → 잘 준비(공휴일은 아침→잘 준비).
+        새벽(기상 전)에는 오늘 지나온 모험이 아직 없어 칩을 두지 않는다.
+     ② 지난 모험을 열면 루틴 위에 띠(🔓 부모 모드로 열린 지난 모험 · [↩ 휴식 화면으로 돌아가기])가 붙고,
+        시간 바는 '🕘 지난 모험 · N개 남았어요!' 로 바뀐다. 여기서 미완료 항목을 마저 체크하면 보상이
+        정상 지급되고, 잘못 체크한 항목을 풀면 revokeRoutineReward 가 경험치·포켓몬을 정확히 되돌린다
+        (오늘 받았던 경험치는 체크를 풀었다 다시 채워도 '마감 시간' 때문에 사라지지 않는다 — d.reclaim).
+     ③ 🔄 오늘 할 일·경험치 리셋 — state.xp(오늘 경험치)와 오늘 잡은 포켓몬·보상 상태까지 0으로 되돌린다
+        (예전에는 XP 가 남아 리셋 후 루틴을 다시 하면 포켓몬을 한 마리 더 잡았다).
+     ④ 완료한 루틴 되돌리기 정합성 — 체크를 풀면 rd.claimed 도 풀려 마지막 항목을 다시 채울 때
+        확인 팝업·보상 지급을 다시 거친다(예전에는 claimed 가 남아 보상이 다시 나가지 않았다).
+     ⑤ 도감 마일리지 문구 — 실제 규칙(10마리 블록마다 랜덤 2자리 희귀 · 블록의 10번째 전설·환상)에 맞춰
+        '🎯 희귀까지 N마리 · 전설까지 M마리'(이번 블록 희귀가 다 지났으면 '이번 블록 희귀는 다 지났어').
+     ⑥ 💾 데이터 백업 — 내려받기용 <a download> 클릭이 '설정 바깥 클릭'으로 처리돼 설정창이 닫히지 않게
+        했다(data-keep-panel). 🌙 9시 팝업 테스트 — 설정창이 열려 있어도 0.25초 만에 닫히지 않고,
+        [✕ 닫기] 로 닫는다(nqTestHold).
+     v71(중복 정리)·v70(새벽 몬스터볼)·v69(확인 팝업·연장 도전) 코드는 그대로 살렸다. -->
 <!-- v71 — 🧹 중복 기능·문구·긍정 확언 정리 (사용자가 승인한 점검 보고서 D1·D2·D3·D5·D6·C2·C6·C7·C8).
      ① D1 — 21:00 정각에 잘 준비 팝업이 뜰 상황이면 checkNightStart 의 차임·토스트를 생략하고
         팝업만 조용히 띄운다(nqCanShow 로 미리 판단). 다른 탭에 있어 팝업이 못 뜰 때만 차임·토스트.
@@ -914,6 +934,10 @@
      닫기(✕)·NO 버튼은 없다 — [🍎 좋아! 출발하자!] 로 시작하거나 [⏰ 3분만 더!] 로 미룰 수만 있다. */
   .nqov.show{display:flex;align-items:center;justify-content:center;padding:14px;
     background:radial-gradient(circle at 50% 38%, rgba(38,42,92,.62) 0%, rgba(8,11,30,.88) 72%);}
+  /* v72 — 부모 테스트로 띄울 때는 열려 있는 설정창(55)보다 위에 서고, 닫기 버튼을 함께 보여 준다 */
+  .nqov.test{z-index:58;}
+  .nqbtn.testclose{grid-column:1 / -1;padding:8px 8px;font-size:13px;}
+  .nqbtn.testclose[hidden]{display:none;}
   .nqcard{position:relative;display:flex;flex-direction:column;gap:9px;
     width:min(430px, calc(100vw - 28px)); max-height:calc(100vh - 28px); overflow:auto;
     padding:16px 18px 18px; border:2px solid #4a4f8f; border-radius:24px;
@@ -1015,6 +1039,7 @@
   .pblock .pmain.t-night{color:#5646a8;}
   .pblock .pmain.t-vacation{color:#0a89a6;}
   .pblock .pmain.t-holiday{color:#b0285c;}
+  .pblock .pmain.t-past{color:#5b47a8;}   /* v72 — 부모 모드로 연 지난 모험 */
   /* 취침 마감 문구 '잘자요~ 안녕주💜' — 밤하늘 인디고·딥퍼플 (t-night 와 같은 톤) */
   .pblock .pmain.sleep{color:#5646a8;}
   .pbar{flex:1 1 auto;display:flex;flex-direction:column;gap:0;min-width:120px;position:relative;}
@@ -1037,6 +1062,31 @@
     color:#54408f;font-size:11.5px;font-weight:800;line-height:1.5;white-space:nowrap;}
   .pblock .nchip b{font-variant-numeric:tabular-nums;font-weight:900;color:#42307a;}
   .pblock .nchip[hidden]{display:none;}
+
+  /* ===== v72 — 🕘 지난 모험 도전 =====
+     휴식 화면 칩 줄의 첫 칩(부모 비번)과, 그렇게 연 루틴 위에 붙는 띠.
+     칩 순서는 어느 모드에서나 [🕘 지난 모험 도전] → [⏳ 다음 모험까지 …] → [☀️ 다음: …]. */
+  .rest2 .rchip2.past{color:#6b3f9e;background:linear-gradient(180deg,#fbf5ff 0%,#ecdcff 100%);
+    border:0;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
+    box-shadow:inset 0 0 0 2px #dcc8f7, 0 2px 0 #d3bcf2;}
+  .rest2 .rchip2.past:active{transform:translateY(1px);box-shadow:inset 0 0 0 2px #dcc8f7;}
+  .rest2 .rchip2.past:focus-visible{outline:3px solid #7fb1ff;outline-offset:2px;}
+  .rest2.band-prewake .rchip2.past{display:none;}   /* 새벽에는 오늘 지나온 모험이 아직 없다 */
+  .pastbar{flex:0 0 auto;display:none;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:7px 14px;border-radius:16px;
+    background:linear-gradient(180deg,#f6f1ff 0%,#e9ddff 100%);
+    box-shadow:inset 0 0 0 2px #d9c9f8, 0 4px 12px rgba(90,70,150,.14);}
+  .pastbar.show{display:flex;}
+  .pastbar .pb-k{font-size:14px;font-weight:900;color:#4a3590;white-space:nowrap;}
+  .pastbar .pb-n{font-size:14px;font-weight:900;color:#2f2350;background:#fff;border-radius:999px;
+    padding:1px 11px;box-shadow:inset 0 0 0 2px #e6ddfb;white-space:nowrap;}
+  .pastbar .pb-s{font-size:12.5px;font-weight:800;color:#7b6aa3;min-width:0;}
+  .pastbar .pb-back{margin-left:auto;border:0;border-radius:999px;cursor:pointer;font-family:inherit;
+    font-size:13.5px;font-weight:900;color:#fff;padding:8px 15px;white-space:nowrap;
+    background:linear-gradient(180deg,#9d8ce6 0%,#6a51c6 100%);
+    box-shadow:0 3px 0 #54409e, 0 7px 14px rgba(80,60,150,.24);}
+  .pastbar .pb-back:active{transform:translateY(2px);box-shadow:0 1px 0 #54409e;}
+  .pastbar .pb-back:focus-visible{outline:3px solid #7fb1ff;outline-offset:2px;}
   /* [🍎 좋아! 출발하자!] — 첫 잘 준비 카드가 조용히 한 번 빛난다 */
   #tasks .card.startpulse{animation:nqPulse 1.6s ease-out 2;}
   @keyframes nqPulse{0%{box-shadow:0 0 0 0 rgba(108,92,196,.5);}100%{box-shadow:0 0 0 15px rgba(108,92,196,0);}}
@@ -2832,6 +2882,14 @@
     </div>
   </div>
 
+  <!-- ======= v72 — 🔓 부모 모드로 연 지난 모험 띠 (그 루틴을 열었을 때만 보인다) ======= -->
+  <div class="pastbar" id="pastBar" role="status" aria-live="polite">
+    <span class="pb-k">🔓 부모 모드로 열린 지난 모험</span>
+    <span class="pb-n" id="pastName">아침 루틴</span>
+    <span class="pb-s" id="pastSub">미완료 항목을 마저 체크하거나, 잘못 체크한 항목을 풀 수 있어요</span>
+    <button class="pb-back" id="pastBack" type="button">↩ 휴식 화면으로 돌아가기</button>
+  </div>
+
   <!-- ======= TASKS ======= -->
   <div class="tasks" id="tasks"></div>
 
@@ -3186,7 +3244,7 @@
 </div>
 
 <!-- v67 — 🌙 밤 9시 잘 준비 시작 팝업. 파트너가 조용히 먼저 말을 건다 (닫기·NO 버튼 없음) -->
-<div class="overlay nqov" id="nightAsk" aria-hidden="true">
+<div class="overlay nqov" id="nightAsk" aria-hidden="true" data-keep-panel="1">
   <div class="nqcard" role="dialog" aria-modal="true" aria-label="잘 준비 시작 안내">
     <div class="nqstage">
       <span class="nqmoon" aria-hidden="true"></span>
@@ -3197,6 +3255,8 @@
     <div class="nqb">
       <button class="nqbtn go" id="nqGo" type="button">🍎 좋아! 출발하자!</button>
       <button class="nqbtn later" id="nqLater" type="button">⏰ 3분만 더!</button>
+      <!-- v72 — 부모 테스트로 띄웠을 때만 보이는 닫기 (아이 화면에는 늘 숨겨 둔다) -->
+      <button class="nqbtn later testclose" id="nqTestClose" type="button" hidden>✕ 테스트 닫기</button>
     </div>
   </div>
 </div>
@@ -3553,6 +3613,73 @@ function routineKeyAt(min){
     return 'rest';                                  // 오후 루틴이 끝나면 취침 전까지 자유 시간
   }
   return 'rest';                                   // 공휴일: 아침이 끝나면 저녁까지 휴식 화면
+}
+
+/* =========================================================
+   v72 — 🕘 지난 모험 도전 (휴식 화면 칩 → 부모 비번 → 오늘의 직전 루틴 다시 열기)
+   · 낮 휴식 → 아침 루틴 · 저녁(오후 루틴 시간 뒤) → 오후 루틴 · 밤 10시 이후 → 잘 준비
+     (공휴일·방과후처럼 오후 루틴이 없는 시간대는 아침 → 잘 준비)
+   · 새벽(기상 전)에는 오늘 지나온 모험이 아직 없어 칩을 두지 않는다(pastRoutineKey → null)
+   · 연 루틴은 pastKey·curRKey 를 같이 그 키로 두어 기존 toggleTask·renderProgress·finishRoutine 이
+     손대지 않고 그대로 동작한다. [↩ 휴식 화면으로 돌아가기] 를 누르면 pastKey 를 비우고 원래 화면으로.
+   ========================================================= */
+let pastKey = null;                 // 부모 모드로 열어 둔 지난 모험의 루틴 키 (null 이면 평상시)
+function pastRoutineKey(){
+  const plan = restPlan();
+  if(plan.band === 'prewake') return null;          // 새벽 — 오늘 지나온 모험이 아직 없다
+  if(plan.band === 'night') return 'night';          // 밤 10시 이후 — 잘 준비(미완료면 마저, 완료면 돌아보기)
+  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  const afterOk = !!(M.afterTasks && ROUTINES.after && ROUTINES.after.tasks.length);
+  if(afterOk && nowMinutes() >= (M.afterFrom || 16*60)) return 'after';   // 저녁 — 오후 루틴
+  return 'morning';                                  // 그 전 낮 — 아침 루틴
+}
+function pastRoutineLabel(key){
+  if(key === 'night') return '잘 준비';
+  if(key === 'after') return modeId === 'afterschool' ? '방과후 정리' : '오후 루틴';
+  return modeId === 'holiday' ? '공휴일 아침 루틴' : '아침 루틴';
+}
+/* 🕘 지난 모험 도전 — 부모 4자리 비번을 먼저 받는다 (아이는 열 수 없다) */
+function askPastAdventure(){
+  const key = pastRoutineKey();
+  if(!key || !ROUTINES[key] || !ROUTINES[key].tasks.length){ sad(); toast('지금은 다시 열 모험이 없어요'); return; }
+  askPin(()=> openPastAdventure(key), 'past');
+}
+function openPastAdventure(key){
+  if(!ROUTINES[key] || !ROUTINES[key].tasks.length) return false;
+  pastKey = key;
+  curRKey = key;                       // syncRoutine 이 시간대 계산으로 덮어쓰지 않게 여기서도 맞춘다
+  pendingDone = null; adClose(); dnClose();
+  timerStop();
+  buildTasks(); renderProgress(); renderTasks(); renderPastBar();
+  blip();
+  toast(`🔓 ${pastRoutineLabel(key)}을 다시 열었어요`);
+  return true;
+}
+function closePastAdventure(){
+  if(!pastKey) return;
+  pastKey = null;
+  curRKey = null;
+  syncRoutine();                       // 지금 시간대 화면(휴식)으로 되돌린다
+  renderProgress(); renderTasks(); renderPastBar();
+  blip();
+  toast('🌤 휴식 화면으로 돌아왔어요');
+}
+function renderPastBar(){
+  const bar = document.getElementById('pastBar');
+  if(!bar) return;
+  const on = !!pastKey;
+  bar.classList.toggle('show', on);
+  if(!on) return;
+  const nm = document.getElementById('pastName');
+  if(nm && nm.textContent !== pastRoutineLabel(pastKey)) nm.textContent = pastRoutineLabel(pastKey);
+  const sub = document.getElementById('pastSub');
+  if(sub){
+    const R = ROUTINES[pastKey], rd = rday(pastKey);
+    const left = Math.max(0, R.tasks.length - rd.tasks.filter(Boolean).length);
+    const t = left > 0 ? `${left}개 남았어요 — 마저 체크하면 보상을 받아요`
+                       : '다 했어요! 잘못 체크한 항목은 눌러서 풀 수 있어요';
+    if(sub.textContent !== t) sub.textContent = t;
+  }
 }
 
 const DEX_DATA = [
@@ -4118,6 +4245,9 @@ function freshDay(){
     slots:{},
     /* 그날 아침·오후 경험치를 이미 받았는지 (모드를 바꿔도 두 번 받지 않게) */
     rewarded:{ morning:false, after:false },
+    /* v72 — 오늘 받았던 경험치를 체크 해제로 되돌려 준 루틴. 다시 채웠을 때 마감 시간이 지났다는
+       이유로 경험치를 또 빼앗지 않도록 checkAllComplete 가 이 표시를 보고 지급한다. */
+    reclaim:{ morning:false, after:false },
     alerted:false, alertDone:false,
     /* 오늘 21:00 취침 시작음/안내를 이미 울렸는지 */
     nightStarted:false,
@@ -4150,6 +4280,8 @@ function migrateDay(d){
     });
   }
   if(d.rewarded) out.rewarded = { morning:!!d.rewarded.morning, after:!!d.rewarded.after };
+  /* v72 — 체크 해제로 되돌린 경험치 표시(하루가 바뀌면 저절로 초기화) */
+  if(d.reclaim) out.reclaim = { morning:!!d.reclaim.morning, after:!!d.reclaim.after };
   out.alerted = !!d.alerted;
   out.alertDone = !!d.alertDone;
   out.nightStarted = !!d.nightStarted;   // 새로 고침해도 21:00 시작음을 다시 울리지 않는다
@@ -4403,7 +4535,13 @@ function renderProgress(){
   const labEl = document.getElementById('stripLabel');
   const mainEl = document.getElementById('leftLabel');
   let pct = 0, label = '', text = '', alert = false, toneFix = null, depFix = null;
-  if(key === 'morning'){
+  if(pastKey){                                  /* v72 — 부모 모드로 연 지난 모험 */
+    pct = total ? done / total * 100 : 0;
+    label = `🕘 지난 모험 · ${pastRoutineLabel(pastKey)}`;
+    text = (total && done >= total) ? '다 했어요! 잘했어요 🎉' : `${Math.max(0, total - done)}개 남았어요!`;
+    depFix = '부모 모드로 연 지난 모험';
+    toneFix = 'past';
+  }else if(key === 'morning'){
     label = R.countdown || '등교까지';
     if(now < WAKE && !earlyMorningOn()){ pct = 0; label = '기상 전이에요'; text = '곧 시작해요!'; }   // v66 — 기상 전은 여기까지 오지 않고 휴식 화면이다
     else if(now >= DEPART){
@@ -4475,7 +4613,7 @@ function renderProgress(){
              : modeId === 'holiday' ? 'holiday'
              : modeId === 'afterschool' ? 'after'
              : 'morning');
-  ['morning','after','night','vacation','holiday'].forEach(t => mainEl.classList.toggle('t-' + t, t === tone));
+  ['morning','after','night','vacation','holiday','past'].forEach(t => mainEl.classList.toggle('t-' + t, t === tone));
   /* 취침 마감 문구는 경고(빨강) 없이 밤하늘 인디고 톤 */
   mainEl.classList.toggle('sleep', key === 'night' && alert);
   const dl = document.getElementById('departLabel');
@@ -4532,6 +4670,8 @@ function checkNightStart(now){
    ========================================================= */
 const NQ_SNOOZE_MS = 3*60*1000;      // '3분만 더'
 const NQ_SNOOZE_MAX = 2;             // 하루 두 번까지 미룰 수 있다
+/* v72 — 부모 테스트로 띄운 팝업인지. 설정창·시간대와 상관없이 [✕ 테스트 닫기] 로 닫을 때까지 그대로 둔다 */
+let nqTestHold = false;
 function nqRec(){
   const d = day();
   if(!d.nightAsk || typeof d.nightAsk !== 'object') d.nightAsk = { done:false, snoozed:0, until:0 };
@@ -4560,8 +4700,19 @@ function nqOpen(){
 }
 function nqClose(){
   const ov = nqEl('nightAsk');
+  nqTestHold = false;                     // v72 — 닫으면 테스트 고정도 풀린다
+  const tb = nqEl('nqTestClose'); if(tb) tb.hidden = true;
+  if(ov) ov.classList.remove('test');
   if(!ov || !ov.classList.contains('show')) return;
   ov.classList.remove('show'); ov.setAttribute('aria-hidden', 'true');
+}
+/* v72 — 부모 테스트용 닫기 버튼·설정창 위 z-index 는 테스트일 때만 */
+function nqTestModeSet(on){
+  nqTestHold = !!on;
+  const ov = nqEl('nightAsk');
+  if(ov) ov.classList.toggle('test', !!on);
+  const tb = nqEl('nqTestClose');
+  if(tb) tb.hidden = !on;
 }
 /* '⏰ 3분 카운트다운' — 남은 시간만 다시 쓴다 */
 function nqSyncChip(){
@@ -4591,6 +4742,12 @@ function nqCanShow(now){
 /* tick(250ms)마다 — 팝업을 띄울 때인지, 미뤄 둔 3분이 지났는지 본다 */
 function checkNightAsk(now){
   const st = nqRec();
+  /* v72 — 부모가 테스트로 띄운 팝업은 탭·설정창·시간대와 상관없이 닫을 때까지 유지한다
+     (예전에는 설정창이 열려 있어 nqCanShow 가 false → 0.25초 만에 닫혔다) */
+  if(nqTestHold){
+    if(nqShown()){ nqSyncChip(); return; }
+    nqTestModeSet(false);
+  }
   if(st.done){ if(nqShown()) nqClose(); nqSyncChip(); return; }
   /* 아이가 잘 준비를 하나라도 체크했으면 오늘은 더 묻지 않는다
      (21시 전에 잠깐 체크했다 풀어 둔 경우까지 팝업을 잃지 않게, 시간대 안에서만 적용한다) */
@@ -4611,8 +4768,9 @@ function checkNightAsk(now){
   if(nqCanShow(now)) nqOpen();
 }
 function nqGoTap(){
+  const test = nqTestHold;                 // v72 — 테스트로 띄운 팝업은 오늘 기록(done)을 바꾸지 않는다
   const st = nqRec();
-  st.done = true; st.until = 0; save();
+  if(!test){ st.done = true; st.until = 0; save(); }
   nqClose(); nqSyncChip();
   blip();
   toast('🌙 좋아, 같이 잘 준비해 보자!');
@@ -4624,6 +4782,7 @@ function nqGoTap(){
   }
 }
 function nqLaterTap(){
+  if(nqTestHold){ nqClose(); blip(); toast('🌙 테스트 팝업을 닫았어요'); return; }   // v72 — 미룸 기록은 건드리지 않는다
   const st = nqRec();
   nqClose();
   if((st.snoozed || 0) >= NQ_SNOOZE_MAX){          // 더는 미루지 않는다 — 조용히 마무리
@@ -4752,6 +4911,17 @@ function restPlan(partnerName){
 /* v68 — 휴식 화면 칩 줄 오른쪽의 [🍎 과일 주기 (N)] [🌟 스페셜 (N)] 묶음.
    v69 — **밤 휴식 화면(band-night)에서만** 보여 준다. 낮·새벽에는 점선 구분선까지 통째로 빠지고
           '⏳ 다음 모험까지 · 다음: …' 칩 두 개만 남는다(사용자 지시). */
+/* v72 — 🕘 지난 모험 도전 칩 (부모 비번). 휴식 화면 칩 줄의 **첫 번째**에 온다.
+   새벽(prewake)에는 오늘 지나온 모험이 아직 없어 두지 않는다(CSS 에서도 함께 감춘다). */
+function pastChipHTML(band){
+  if(band === 'prewake') return '';
+  const key = pastRoutineKey();
+  const R = key ? ROUTINES[key] : null;
+  if(!R || !R.tasks || !R.tasks.length) return '';
+  const nm = pastRoutineLabel(key);
+  return `<button class="rchip2 past" type="button" data-past="1"`
+    + ` aria-label="지난 모험 도전 — 부모님 비밀번호를 누르면 ${nm}을 다시 열어요">🕘 지난 모험 도전</button>`;
+}
 function restGiveHTML(band){
   if(band !== 'night') return '';
   const one = (kind, emoji, label, n) => {
@@ -4876,6 +5046,7 @@ function buildRestPanel(wrap){
   wrap.classList.add('has-rest');
   const pk = partnerPk() || DEX_BY_ID[PARTNER_DEFAULT];
   const plan = restPlan(pk.name);
+  curRestBand = plan.band;              // v72 — 같은 'rest' 라도 시간대(band)가 바뀌면 다시 그린다
   /* v66-2 — 기상 전에는 '말을 걸었어요'가 아니라 '새근새근 자고 있어요' 리본을 단다 */
   const kick = plan.band === 'prewake'
     ? `💤 ${pk.name}${josaGa(pk.name)} 몬스터볼에서 자고 있어요`
@@ -4907,6 +5078,7 @@ function buildRestPanel(wrap){
         <div class="rsay">${plan.say}</div>
       </div>
       <div class="rchips">
+        ${pastChipHTML(plan.band)}
         <span class="rchip2">${plan.chipLead}<b class="cd">${plan.left}</b></span>
         <span class="rchip2 g">${plan.nextEmoji} 다음: ${plan.nextName} · ${plan.nextTime}</span>
         ${restGiveHTML(plan.band)}
@@ -4916,6 +5088,9 @@ function buildRestPanel(wrap){
   /* v68 — 칩 줄의 [🍎 과일 주기] [🌟 스페셜] */
   el.querySelectorAll('[data-give]').forEach(b =>
     b.addEventListener('click', e => { e.stopPropagation(); restGiveTap(b.dataset.give, el); }));
+  /* v72 — [🕘 지난 모험 도전] — 부모 비번을 받은 뒤 오늘의 직전 루틴을 연다 */
+  const pbtn = el.querySelector('[data-past]');
+  if(pbtn) pbtn.addEventListener('click', e => { e.stopPropagation(); askPastAdventure(); });
   const img = el.querySelector('.rart');
   /* v70 — 새벽은 몬스터볼 그림 고정(pkImg 사슬을 태우지 않는다). 낮·밤은 그대로 */
   if(plan.band !== 'prewake') pkImg(img, pk.id, 'art');   // 공식 일러스트 → CDN → 내장 스프라이트 → 몬스터볼
@@ -4937,6 +5112,16 @@ function updateRestLeft(plan){
   restGiveSync(el);          // v68 — 과일 개수·잠금 모양도 tick 마다 맞춰 둔다
 }
 window.addEventListener('resize', ()=> fitRestPanel());
+/* v72 — 휴식 화면은 'rest' 키 하나를 오래 쓰므로, 밤→새벽처럼 시간대(band)만 바뀌면
+   화면을 그대로 두어 새벽에도 낮·밤 말투가 남았다. band 가 달라지면 한 번 다시 그린다. */
+let curRestBand = '';
+function syncRestBand(){
+  if(pastKey) return false;
+  const b = restPlan().band;
+  if(b === curRestBand) return false;
+  buildTasks();                        // buildRestPanel 이 curRestBand 를 새로 적는다
+  return true;
+}
 function buildTasks(){
   const key = routineNow();
   const R = ROUTINES[key];
@@ -4996,6 +5181,7 @@ function renderTasks(){
     const el = document.getElementById('card'+i);
     if(el) el.classList.toggle('done', !!rd.tasks[i]);
   });
+  try{ renderPastBar(); }catch(e){}   /* v72 — 지난 모험 띠의 'N개 남았어요' 도 같이 맞춘다 */
 }
 function toggleTask(i, forceOn){
   const key = routineNow();
@@ -5170,14 +5356,15 @@ function checkAllComplete(keyArg, opts){
   }
   const slot = key === 'morning' ? 'morning' : 'after';   /* 아침 50 + 오후 50 = 100 → 포켓몬 1마리 */
   const xp = R.xp || 0;
-  if(key === 'morning' && now > DEPART){       /* 마감 시간을 넘기면 경험치는 없다 */
+  const d = day();
+  d.rewarded = d.rewarded || { morning:false, after:false };
+  const reclaim = !!(d.reclaim && d.reclaim[slot]);   /* v72 — 오늘 받았던 경험치를 체크 해제로 돌려준 경우 */
+  if(key === 'morning' && now > DEPART && !reclaim){       /* 마감 시간을 넘기면 경험치는 없다 */
     save(); renderProgress();
     if(!card) toast('시간이 지나서 경험치는 아쉬워요 😢 내일 다시!');
     sad();
     return { late:true };
   }
-  const d = day();
-  d.rewarded = d.rewarded || { morning:false, after:false };
   if(d.rewarded[slot]){                        /* 모드를 바꿔도 같은 보상을 두 번 받지 않는다 */
     save(); renderProgress(); renderTasks();
     if(!card) toast(`🎉 ${R.stripLabel} 완료! 오늘 경험치는 이미 받았어요`);
@@ -5185,6 +5372,7 @@ function checkAllComplete(keyArg, opts){
     return { already:true };
   }
   d.rewarded[slot] = true;
+  if(d.reclaim) d.reclaim[slot] = false;       /* v72 — 되돌렸던 경험치를 다시 찾으면 표시를 끈다 */
   rollXpDay();                                 /* 날짜가 바뀌었으면 어제 경험치는 버린다 */
   state.xp += xp;
   routineCatchToday().slots[slot] = true;      /* 오늘 이 루틴의 경험치를 받았다 (체크를 풀면 되돌린다) */
@@ -5339,10 +5527,15 @@ function revokeRoutineReward(key){
   if(!R || !R.xp) return null;                        // 취침 루틴은 경험치·포켓몬 보상이 없다
   const slot = key === 'morning' ? 'morning' : 'after';
   const d = day();
+  const rd = rday(key);
+  /* v72 — 체크를 풀었으니 확정 표시도 풀어 둔다. 마지막 항목을 다시 채우면 확인 팝업과 보상 지급을
+     처음처럼 다시 거친다(예전에는 claimed 가 남아 보상이 다시 나가지 않았다). */
+  if(rd) rd.claimed = false;
   if(!d.rewarded || !d.rewarded[slot]) return null;    // 오늘 이 루틴의 경험치를 받은 적이 없다
   d.rewarded[slot] = false;                            // 다시 체크하면 경험치를 다시 받는다
-  const rd = rday(key);
-  if(rd) rd.claimed = false;
+  /* v72 — 오늘 받았던 경험치를 돌려준 기록. 다시 채웠을 때 마감 시간이 지났어도 이 경험치는 지급한다. */
+  d.reclaim = d.reclaim || { morning:false, after:false };
+  d.reclaim[slot] = true;
   const rc = routineCatchToday();
   rc.slots[slot] = false;
   let returned = null;
@@ -6412,6 +6605,7 @@ function setMode(id, opts){
   buildRoutineTable();
   save();
   curRKey = null;          // 모드가 바뀌면 지금 루틴을 다시 계산한다
+  pastKey = null;          // v72 — 열어 둔 지난 모험도 함께 닫는다(모드가 바뀌면 그 루틴이 달라진다)
   timerStop();
   buildTasks();
   renderModePills();
@@ -6835,6 +7029,19 @@ function nextMilestone(step, skip){
   while(skip && skip(m)) m += step;
   return m;
 }
+/* v72 — 도감 마일리지 안내를 실제 규칙에 맞춘다.
+   실제: 10마리 블록마다 1~9 중 미리 뽑아 둔 2자리 = 희귀, 블록의 10번째 = 전설·환상 (pickTarget 과 같은 값).
+   화면: 다음에 잡을 한 마리를 포함해 며칠 마리 남았는지 — '희귀까지 3마리 · 전설까지 5마리' */
+function dexMilestoneText(){
+  const caught = totalCatches();
+  const pos = (caught % 10) + 1;               // 이번에 잡을 포켓몬이 블록에서 몇 번째인지 (1~10)
+  const legAway = 11 - pos;                    // 블록의 10번째가 전설·환상
+  const slots = rareSlotsFor(caught + 1);      // 이번 블록의 희귀 자리(2개) — pickTarget 이 쓰는 그 자리
+  const nextRare = slots.filter(p => p >= pos && p < 10).sort((a, b) => a - b)[0];
+  const rareTx = nextRare ? `🎯 희귀까지 ${nextRare - pos + 1}마리`
+                          : '🎯 이번 블록 희귀는 다 지났어';
+  return `${rareTx} · 전설까지 ${legAway}마리`;
+}
 function dexList(){
   const q = dexQuery.trim();
   if(q) return DEX.filter(pk => pk.name.includes(q) || String(pk.id) === q);
@@ -6856,12 +7063,9 @@ function renderDex(){
   document.getElementById('pillRare').textContent = `${tt.caught[1]}/${tt.total[1]}`;
   document.getElementById('pillLegend').textContent = `${tt.caught[2]}/${tt.total[2]}`;
 
-  const n = totalCatches();
-  const rareAt = nextMilestone(3, m => m % 5 === 0), legAt = nextMilestone(5);
   document.getElementById('dexCnt').textContent =
     `잡은 포켓몬 ${caughtCount()}/${DEX.length}마리 · 다음 목표: ${DEX[state.wildIndex].name} (경험치 ${state.xp}/100)`;
-  document.getElementById('dexMile').textContent =
-    `🎯 희귀까지 ${rareAt-n}마리 · 전설까지 ${legAt-n}마리`;
+  document.getElementById('dexMile').textContent = dexMilestoneText();   // v72 — 실제 규칙(10마리 블록) 그대로
   updateDexReward();
 }
 /* 도감 카드는 한 번에 60장씩 그린다 — 200장 전부 그리면 태블릿에서 첫 화면이 버벅여요.
@@ -8212,12 +8416,17 @@ function openPinPrompt(target){
   /* 잠금 창 문구는 중립적으로 — 무엇이 열리는지는 비밀번호를 맞힌 뒤에만 보인다.
      v39 — 포켓몬볼로 열리는 잠금창은 🔒 아이콘 + '비밀번호 입력'만 남기고 보조 설명을 모두 뺐다. */
   const mini = pinTarget === 'battle';
+  const past = pinTarget === 'past';                       // v72 — 지난 모험 도전
   const pinModalEl = pinOverlay.querySelector('.pinmodal');
   if(pinModalEl) pinModalEl.classList.toggle('mini', mini);
-  if(titleEl) titleEl.textContent = mini ? '비밀번호 입력' : '부모 확인';
+  const icEl = pinOverlay.querySelector('.pin-ic');
+  if(icEl) icEl.textContent = past ? '🕘' : '🔒';
+  if(titleEl) titleEl.textContent = mini ? '비밀번호 입력' : past ? '지난 모험 도전' : '부모 확인';
   if(subEl){
     subEl.hidden = mini;
-    subEl.innerHTML = mini ? '' : '부모님만 열 수 있어요<br>비밀번호 4자리를 눌러 주세요';
+    subEl.innerHTML = mini ? ''
+      : past ? '지난 모험을 다시 도전하자!<br>부모님 비밀번호 4자리를 눌러 주세요'
+      : '부모님만 열 수 있어요<br>비밀번호 4자리를 눌러 주세요';
   }
   /* 화면 낭독기 이름표도 잠금 대상이 드러나지 않게 */
   if(pinInput) pinInput.setAttribute('aria-label', pinTarget === 'battle' ? '비밀번호 4자리' : '부모 비밀번호 4자리');
@@ -8336,6 +8545,7 @@ function earlyStartNow(){
   save();
   pendingDone = null; adClose(); dnClose();
   curRKey = null;
+  pastKey = null;                // v72 — 지난 모험을 열어 둔 채였면 닫는다
   syncRoutine();                 /* 기상 전이라도 routineKeyAt 이 'morning' 을 돌려준다 */
   renderProgress(); renderTasks();
   renderSky();                   /* v69 — 누른 즉시 해 뜨는 아침 하늘로 */
@@ -8712,6 +8922,7 @@ document.getElementById('gearBtn').addEventListener('click', e=>{
   openPinPrompt();
 });
 document.getElementById('panelClose').addEventListener('click', closePanel);
+document.getElementById('pastBack').addEventListener('click', closePastAdventure);   // v72 — 지난 모험 → 휴식 화면
 document.getElementById('pinCancel').addEventListener('click', closePinPrompt);
 pinOverlay.addEventListener('click', e=>{ if(e.target === pinOverlay) closePinPrompt(); });
 document.addEventListener('click', e=>{
@@ -8719,6 +8930,7 @@ document.addEventListener('click', e=>{
   /* 미션 목록처럼 줄을 다시 그리는 버튼은 누르는 순간 DOM 에서 빠진다 —
      그때 e.target 은 document 밖이라 '바깥클릭'으로 오해되어 설정창이 닫힌다. 그 경우는 건너뛴다. */
   if(!document.contains(e.target)) return;
+  if(e.target.closest && e.target.closest('[data-keep-panel]')) return;   // v72 — 백업 내려받기 링크
   if(panel.classList.contains('show') && !panel.contains(e.target) && e.target.id !== 'gearBtn')
     closePanel();
 });
@@ -8847,8 +9059,19 @@ function setPreview(v){
 }
 document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   const d = day();
+  /* v72 — 오늘 잡은 포켓몬·보상 상태·경험치까지 함께 0으로 되돌린다.
+     (예전에는 state.xp 가 남아, 리셋 뒤 루틴을 다시 하면 포켓몬을 한 마리 더 잡았다) */
+  const rc = state.routineCatch;
+  let returned = 0;
+  if(rc && rc.date === todayKey() && Array.isArray(rc.ids)){
+    while(rc.ids.length){ const pk = returnCaughtPokemon(rc.ids.pop()); if(pk) returned++; }
+  }
+  state.routineCatch = null;           // 오늘 잡은 포켓몬 기록도 비운다
+  state.xp = 0;                        // 오늘 얻은 경험치
+  state.xpDate = todayKey();           // 날짜도 오늘로 맞춰 rollXpDay 가 다시 지우지 않게 한다
   d.slots = {};
   d.rewarded = { morning:false, after:false };
+  d.reclaim = { morning:false, after:false };   // v72 — 체크 해제로 되돌렸던 경험치 표시도 처음으로
   d.alertDone = false;
   d.nightStarted = nowMinutes() < NIGHT_START ? false : d.nightStarted;   // 21:00 전에만 시작음 다시 울리기
   d.nightLateDone = false;
@@ -8859,9 +9082,10 @@ document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   save();
   /* v69 — 리셋하면 끝냈던 루틴도 그 시간대에 다시 열린다(팝업·축하 카드는 닫는다) */
   pendingDone = null; adClose(); dnClose();
+  pastKey = null;                      // v72 — 열어 둔 지난 모험도 닫는다
   curRKey = null; syncRoutine(); renderProgress();
-  renderStudy(); renderDex();
-  toast('오늘 할 일과 경험치를 리셋했어요');
+  renderStudy(); renderDex(); renderWild();
+  toast(returned ? `오늘 할 일·경험치·포켓몬 ${returned}마리를 리셋했어요` : '오늘 할 일과 경험치를 리셋했어요');
 }));
 document.getElementById('testXp').addEventListener('click', parentOnly(()=>{
   rollXpDay();
@@ -8910,8 +9134,12 @@ document.getElementById('testCheerReset').addEventListener('click', parentOnly((
 /* v67 — 🌙 9시 잘 준비 팝업 테스트 (엄마·아빠가 저녁에 미리 보기) */
 document.getElementById('testNightAsk').addEventListener('click', parentOnly(()=>{
   const st = nqRec(); st.done = false; st.until = 0; save();
+  nqTestModeSet(true);                 // v72 — 설정창이 열려 있어도 닫히지 않게 고정하고 닫기 버튼을 보여 준다
   nqOpen(); toast('🌙 9시 잘 준비 팝업 — 테스트');
 }));
+document.getElementById('nqTestClose').addEventListener('click', ()=>{
+  nqClose(); blip(); toast('🌙 테스트 팝업을 닫았어요');
+});
 document.getElementById('testNightAskReset').addEventListener('click', parentOnly(()=>{
   const st = nqRec(); st.done = false; st.snoozed = 0; st.until = 0; save();
   nqClose(); nqSyncChip(); toast('↩ 잘 준비 팝업 기록을 지웠어요');
@@ -8961,6 +9189,7 @@ function backupData(){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `luka-dashboard-${stamp}.json`;
+  a.setAttribute('data-keep-panel', '1');   // v72 — 이 링크 클릭이 '설정 바깥 클릭'으로 잡혀 설정창이 닫히지 않게
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
   toast('💾 백업 파일을 내려받았어요');
@@ -8977,7 +9206,9 @@ function restoreData(file){
       buildRoutineTable();
       renderModePills();
       save();
+      pastKey = null;              // v72 — 백업을 불러오면 열어 둔 지난 모험은 닫는다
       curRKey = null; syncRoutine(); renderTasks(); renderWild(); renderDex(); renderStudy(); renderMission();
+
       /* 백업에 담긴 긍정 확언·미션 목록도 바로 화면에 반영한다 */
       renderAffirm(); renderAffirmSettings(); renderMissionSettings();
       renderPanelMode(); renderPanelStatus();
@@ -9007,6 +9238,7 @@ document.getElementById('resetAll').addEventListener('click', parentOnly(()=>{
     buildRoutineTable();
     renderModePills();
     curRKey = null;
+    pastKey = null;              // v72
     renderTasks(); renderWild(); renderDex(); renderStudy(); renderMission();
     renderFruitBadge(); updatePartnerPopup();       // 🍎 과일도 0으로
     tick();
@@ -9223,14 +9455,18 @@ function renderAffirm(){
 
 /* ---------- main tick ---------- */
 function syncRoutine(){
-  let k = routineKeyAt();
+  let k = pastKey || routineKeyAt();          /* v72 — 부모가 연 지난 모험은 시간대와 상관없이 그대로 둔다 */
   /* v69 — 확인 팝업·축하 카드·포획 모달이 떠 있는 동안에는 완료된 루틴 화면을 그대로 붙잡아 둔다
      (팝업이 떠 있는데 뒤에서 카드가 사라지고 휴식 화면으로 바뀌는 일이 없다). */
-  if(curRKey && routineHoldOn()) k = curRKey;
-  if(k === curRKey) return false;
+  if(!pastKey && curRKey && routineHoldOn()) k = curRKey;
+  if(k === curRKey){
+    if(k === 'rest') syncRestBand();   /* v72 — 같은 휴식 화면이라도 시간대가 바뀌었는지 본다 */
+    return false;
+  }
   curRKey = k;
   if(k !== 'morning') timerStop();   // the meal timer belongs to the morning routine
   buildTasks();
+  renderPastBar();
   try{ ppSyncTalkBtn(); }catch(e){}  // v50 — 루틴이 바뀌면 대화권도 새로 열린다
   return true;
 }
@@ -9246,6 +9482,8 @@ function tick(){
   if(rollXpDay()) renderWild();      // 자정을 넘기면 경험치가 0으로
   if(curMissionDay !== todayKey()){  // 자정을 넘기면 오늘의 미션 체크도 새로 시작
     curMissionDay = todayKey();
+    /* v72 — 지난 모험을 열어 둔 채 날짜가 바뀌면(자정) 어제 루틴 대신 오늘 화면으로 돌린다 */
+    if(pastKey){ pastKey = null; curRKey = null; syncRoutine(); renderPastBar(); renderProgress(); }
     try{ ppSyncTalkBtn(); }catch(e){}   // v50 — 날짜가 바뀌면 대화권도 새로 열린다
     if(curTab === 'center') renderMission();
   }
