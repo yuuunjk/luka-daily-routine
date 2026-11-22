@@ -23,7 +23,9 @@ import json
 import os
 import re
 import sys
+import threading
 import time
+import unicodedata
 import urllib.parse
 import urllib.request
 import hashlib
@@ -897,7 +899,53 @@ def build_standings(now: datetime) -> None:
 #  · K리그1·2                 — kleague.com /record/rankSort.do
 #  · KBL                      — api.kbl.or.kr /league/season-leader
 # 자료가 없는 리그(KBO·V리그 등)는 아무 것도 만들지 않는다. 앱이 안내 문구를 보여 준다.
+# ══ 선수 개인 순위 (leaders) ═════════════════════════════════
+# 리그별 개인 기록 순위를 모아 data/leaders.json 으로 저장한다.
+#  · ESPN (MLB·NBA·NFL)       — statistics/byathlete
+#  · ESPN (해외축구 7개 리그) — core /leaders + 선수·팀 참조
+#  · K리그1·2                 — kleague.com /record/rankSort.do
+#  · KBL                      — api.kbl.or.kr /league/season-leader
+# 자료가 없는 리그(KBO·V리그 등)는 아무 것도 만들지 않는다. 앱이 안내 문구를 보여 준다.
+#
+# 2026-11-21 — 선수 카드 팝업(1안 트레이딩 카드)용 값 추가.
+#   행 하나에 rank/player/team/emblem/value 에 더해
+#   id·photo·jersey·position·posShort·height·weight·age·citizenship·flag·color·stats4 를 넣는다.
+#   카드에 쓰는 신상 정보는 leaders-cache.json(profiles / teams / sstats / photos / kleague)에
+#   남겨 두어 5분마다 도는 수집기가 매번 다시 받지 않게 한다.
 LEADER_CACHE = "leaders-cache.json"
+
+CORE_SEASON = "https://sports.core.api.espn.com/v2/sports"
+CARD_TTL = 14 * 86400          # 등번호·키·몸무게·나이·국적
+STATS_TTL = 24 * 3600          # 시즌 기록(해외축구 선수 상세)
+PHOTO_TTL = 30 * 86400         # 유럽축구 위키백과 사진 매칭 결과 (실패도 30일 기억)
+TEAM_TTL = 30 * 86400          # 팀 이름·엠블럼·팀 색
+KLEAGUE_CDN = "https://d2tfp74nsbbrkr.cloudfront.net"
+KLEAGUE_IMG_DIR = os.path.join(DATA_DIR, "img", "kleague")
+
+WIKI_API = "https://en.wikipedia.org/w/api.php"
+WIKIDATA_API = "https://www.wikidata.org/w/api.php"
+COMMONS_API = "https://commons.wikimedia.org/w/api.php"
+WIKI_UA = ("LUKA-sports-dashboard/1.0 (personal kids sports page; "
+           "https://github.com/yuuunjk/clean-sports) python-urllib")
+WIKI_GAP = 0.7                 # 위키미디어 API 요청 간 최소 간격(초) — 429 예방
+WIKI_MAX_SEARCH = 30           # 한 실행에서 이름 검색으로 넘길 최대 인원(예산 보호)
+FOOTBALLER_QID = "Q937857"     # 위키데이터 P106 = association football player
+HUMAN_QID = "Q5"
+
+_wiki_lock = threading.Lock()
+_wiki_last = [0.0]
+
+# 이름 비교용 — NFKD 로 안 풀리는 글자(ø·æ·그리스 동형 문자)를 라틴 문자로
+_TRANSLIT = str.maketrans({
+    "ø": "o", "Ø": "o", "æ": "ae", "Æ": "ae", "œ": "oe", "Œ": "oe",
+    "å": "a", "Å": "a", "đ": "d", "Đ": "d", "ð": "d", "Ð": "d",
+    "ł": "l", "Ł": "l", "ß": "ss", "þ": "th", "ı": "i", "İ": "i",
+    "α": "a", "Α": "a", "β": "b", "Β": "b", "ε": "e", "Ε": "e",
+    "ζ": "z", "Ζ": "z", "η": "i", "Η": "i", "ι": "i", "Ι": "i",
+    "κ": "k", "Κ": "k", "μ": "m", "Μ": "m", "ν": "n", "Ν": "n",
+    "ο": "o", "Ο": "o", "ρ": "p", "Ρ": "p", "τ": "t", "Τ": "t",
+    "υ": "u", "Υ": "u", "χ": "x", "Χ": "x",
+})
 
 BYATHLETE_CFG = [
     {"id": "mlb", "espn": "baseball/mlb", "sport": "해외야구", "name": "MLB",
@@ -918,6 +966,181 @@ SOCCER_CFG = [
     ("uefa.champions", "챔피언스리그"),
 ]
 SOCCER_CATS = [("goals", "득점"), ("assists", "도움")]
+
+# 카드 하단 스탯 3칸에 쓸 기록 — 리그(그리고 MLB·NFL은 부문)별로 고른다.
+STAT4_CFG = {
+    "mlb": {
+        "batting": [("avg", "타율"), ("homeRuns", "홈런"), ("RBIs", "타점"), ("OPS", "OPS")],
+        "pitching": [("ERA", "평균자책"), ("strikeouts", "탈삼진"), ("wins", "다승"), ("WHIP", "WHIP")],
+    },
+    "nba": {"*": [("avgPoints", "득점"), ("avgRebounds", "리바운드"),
+                  ("avgAssists", "어시스트"), ("avgSteals", "스틸")]},
+    "nfl": {
+        "passing": [("passingYards", "패싱야드"), ("passingTouchdowns", "터치다운"),
+                    ("QBRating", "패서평점"), ("passing.interceptions", "인터셉트")],
+        "rushing": [("rushingYards", "러싱야드"), ("rushingTouchdowns", "터치다운"),
+                    ("rushingAttempts", "시도"), ("yardsPerRushAttempt", "평균야드")],
+        "receiving": [("receivingYards", "리시빙야드"), ("receptions", "리셉션"),
+                      ("receivingTouchdowns", "터치다운"), ("yardsPerReception", "평균야드")],
+    },
+}
+
+# ESPN 포지션 약어 → 한국어 (종목마다 같은 약어가 다른 뜻이라 종목별로 둔다)
+POS_KO = {
+    "baseball": {"SP": "선발투수", "RP": "구원투수", "P": "투수", "CP": "마무리", "C": "포수",
+                 "1B": "1루수", "2B": "2루수", "3B": "3루수", "SS": "유격수", "LF": "좌익수",
+                 "CF": "중견수", "RF": "우익수", "OF": "외야수", "IF": "내야수", "DH": "지명타자",
+                 "EH": "지명타자", "TWP": "투타겸업", "UT": "유틸리티"},
+    "basketball": {"PG": "포인트가드", "SG": "슈팅가드", "SF": "스몰포워드", "PF": "파워포워드",
+                   "C": "센터", "G": "가드", "F": "포워드", "GF": "가드·포워드", "FC": "포워드·센터",
+                   "FD": "포워드", "SG-PG": "가드", "GF-SF": "포워드"},
+    "football": {"QB": "쿼터백", "RB": "러닝백", "FB": "풀백", "WR": "와이드리시버", "TE": "타이트엔드",
+                 "OT": "오펜시브태클", "OG": "오펜시브가드", "C": "센터", "DE": "디펜시브엔드",
+                 "DT": "디펜시브태클", "NT": "노즈태클", "LB": "라인배커", "ILB": "인사이드라인배커",
+                 "OLB": "아웃사이드라인배커", "CB": "코너백", "S": "세이프티", "FS": "프리세이프티",
+                 "SS": "스트롱세이프티", "K": "킥커", "P": "펀터", "LS": "롱스내퍼",
+                 "KR": "킥리터너", "PR": "펀트리터너", "DB": "디펜시브백", "OL": "오펜시브라인",
+                 "DL": "디펜시브라인"},
+    "soccer": {"F": "공격수", "FW": "공격수", "ST": "스트라이커", "CF": "센터포워드",
+               "W": "윙어", "LW": "레프트윙", "RW": "라이트윙", "M": "미드필더", "MF": "미드필더",
+               "CM": "중앙 미드필더", "DM": "수비형 미드필더", "AM": "공격형 미드필더",
+               "LM": "레프트 미드필더", "RM": "라이트 미드필더", "D": "수비수", "DF": "수비수",
+               "CB": "센터백", "LB": "레프트백", "RB": "라이트백", "WB": "윙백",
+               "GK": "골키퍼", "G": "골키퍼"},
+}
+
+# 국가 이름 → ESPN 국기 코드 (a.espncdn.com/i/teamlogos/countries/500/{코드}.png)
+COUNTRY_CODE = {
+    "대한민국": "kor", "한국": "kor", "South Korea": "kor", "Korea Republic": "kor", "Korea": "kor",
+    "일본": "jpn", "Japan": "jpn", "중국": "chn", "China": "chn", "대만": "tpe", "Taiwan": "tpe",
+    "미국": "usa", "USA": "usa", "United States": "usa", "캐나다": "can", "Canada": "can",
+    "멕시코": "mex", "Mexico": "mex", "쿠바": "cub", "Cuba": "cub",
+    "도미니카공화국": "dom", "Dominican Republic": "dom", "푸에르토리코": "pur", "Puerto Rico": "pur",
+    "베네수엘라": "ven", "Venezuela": "ven", "콜롬비아": "col", "Colombia": "col",
+    "파나마": "pan", "Panama": "pan", "니카라과": "nic", "Nicaragua": "nic",
+    "브라질": "bra", "Brazil": "bra", "아르헨티나": "arg", "Argentina": "arg",
+    "우루과이": "uru", "Uruguay": "uru", "페루": "per", "Peru": "per",
+    "에콰도르": "ecu", "Ecuador": "ecu", "파라과이": "par", "Paraguay": "par",
+    "볼리비아": "bol", "Bolivia": "bol", "칠레": "chi", "Chile": "chi",
+    "호주": "aus", "Australia": "aus", "뉴질랜드": "nzl", "New Zealand": "nzl",
+    "독일": "ger", "Germany": "ger", "프랑스": "fra", "France": "fra",
+    "스페인": "esp", "Spain": "esp", "이탈리아": "ita", "Italy": "ita",
+    "잉글랜드": "eng", "England": "eng", "스코틀랜드": "sco", "Scotland": "sco",
+    "웨일스": "wal", "Wales": "wal", "아일랜드": "irl", "Ireland": "irl",
+    "포르투갈": "por", "Portugal": "por", "네덜란드": "ned", "Netherlands": "ned",
+    "벨기에": "bel", "Belgium": "bel", "크로아티아": "cro", "Croatia": "cro",
+    "스위스": "sui", "Switzerland": "sui", "덴마크": "den", "Denmark": "den",
+    "스웨덴": "swe", "Sweden": "swe", "노르웨이": "nor", "Norway": "nor",
+    "핀란드": "fin", "Finland": "fin", "아이슬란드": "isl", "Iceland": "isl",
+    "폴란드": "pol", "Poland": "pol", "체코": "cze", "Czechia": "cze", "Czech Republic": "cze",
+    "슬로바키아": "svk", "Slovakia": "svk", "슬로베니아": "svn", "Slovenia": "svn",
+    "세르비아": "srb", "Serbia": "srb", "그리스": "gre", "Greece": "gre",
+    "튀르키예": "tur", "Turkey": "tur", "Türkiye": "tur", "우크라이나": "ukr", "Ukraine": "ukr",
+    "러시아": "rus", "Russia": "rus", "오스트리아": "aut", "Austria": "aut",
+    "헝가리": "hun", "Hungary": "hun", "루마니아": "rou", "Romania": "rou",
+    "불가리아": "bul", "Bulgaria": "bul", "이스라엘": "isr", "Israel": "isr",
+    "모로코": "mar", "Morocco": "mar", "세네갈": "sen", "Senegal": "sen",
+    "나이지리아": "nga", "Nigeria": "nga", "가나": "gha", "Ghana": "gha",
+    "카메룬": "cmr", "Cameroon": "cmr", "코트디부아르": "civ", "Ivory Coast": "civ",
+    "알제리": "alg", "Algeria": "alg", "이집트": "egy", "Egypt": "egy",
+    "튀니지": "tun", "Tunisia": "tun", "남아프리카공화국": "rsa", "South Africa": "rsa",
+    "콩고민주공화국": "cod", "DR Congo": "cod", "앙골라": "ang", "Angola": "ang",
+    "말리": "mli", "Mali": "mli", "부르키나파소": "bfa", "Burkina Faso": "bfa",
+    "가봉": "gab", "Gabon": "gab", "기니": "gui", "Guinea": "gui",
+    "감비아": "gam", "Gambia": "gam", "베냉": "ben", "Benin": "ben",
+    "토고": "tog", "Togo": "tog", "니제르": "nig", "Niger": "nig",
+    "카보베르데": "cpv", "Cape Verde": "cpv", "적도기니": "eqg", "Equatorial Guinea": "eqg",
+    "수단": "sud", "Sudan": "sud", "리비아": "lby", "Libya": "lby",
+    "에티오피아": "eth", "Ethiopia": "eth", "케냐": "ken", "Kenya": "ken",
+    "우간다": "uga", "Uganda": "uga", "탄자니아": "tan", "Tanzania": "tan",
+    "모잠비크": "moz", "Mozambique": "moz", "잠비아": "zmb", "Zambia": "zmb",
+    "이란": "irn", "Iran": "irn", "이라크": "irq", "Iraq": "irq",
+    "사우디아라비아": "ksa", "Saudi Arabia": "ksa", "카타르": "qat", "Qatar": "qat",
+    "아랍에미리트": "uae", "United Arab Emirates": "uae", "우즈베키스탄": "uzb", "Uzbekistan": "uzb",
+    "요르단": "jor", "Jordan": "jor", "시리아": "syr", "Syria": "syr",
+    "레바논": "lib", "Lebanon": "lib", "쿠웨이트": "kuw", "Kuwait": "kuw",
+    "바레인": "bhr", "Bahrain": "bhr", "팔레스타인": "ple", "Palestine": "ple",
+    "예멘": "yem", "Yemen": "yem", "오만": "oma", "Oman": "oma",
+    "태국": "tha", "Thailand": "tha", "베트남": "vie", "Vietnam": "vie",
+    "인도네시아": "idn", "Indonesia": "idn", "말레이시아": "mas", "Malaysia": "mas",
+    "싱가포르": "sin", "Singapore": "sin", "인도": "ind", "India": "ind",
+    "키르기스스탄": "kgz", "Kyrgyzstan": "kgz", "카자흐스탄": "kaz", "Kazakhstan": "kaz",
+    "타지키스탄": "taj", "Tajikistan": "taj", "투르크메니스탄": "tkm", "Turkmenistan": "tkm",
+    "홍콩": "hkg", "Hong Kong": "hkg", "북한": "prk", "North Korea": "prk",
+    "북마케도니아": "mkd", "North Macedonia": "mkd", "보스니아": "bih", "Bosnia": "bih",
+    "알바니아": "alb", "Albania": "alb", "몬테네그로": "mne", "Montenegro": "mne",
+    "조지아": "geo", "Georgia": "geo", "아제르바이잔": "aze", "Azerbaijan": "aze",
+    "아르메니아": "arm", "Armenia": "arm", "에스토니아": "est", "Estonia": "est",
+    "라트비아": "lva", "Latvia": "lva", "리투아니아": "ltu", "Lithuania": "ltu",
+    "벨라루스": "blr", "Belarus": "blr", "몰도바": "mda", "Moldova": "mda",
+    "룩셈부르크": "lux", "Luxembourg": "lux", "안도라": "and", "Andorra": "and",
+    "지브롤터": "gib", "Gibraltar": "gib", "리히텐슈타인": "lie", "Liechtenstein": "lie",
+    "몰타": "mlt", "Malta": "mlt", "페로제도": "fro", "Faroe Islands": "fro",
+    "코소보": "kos", "Kosovo": "kos", "키프로스": "cyp", "Cyprus": "cyp",
+    "피지": "fij", "Fiji": "fij", "솔로몬제도": "sol", "Solomon Islands": "sol",
+    "바누아투": "van", "Vanuatu": "van", "타히티": "tah", "Tahiti": "tah",
+}
+
+# 국내 리그 팀 색 — 카드 배경 그라데이션에 쓴다 (ESPN 이 팀 색을 주지 않는 리그)
+KLEAGUE_COLOR = {
+    "K01": "0B4EA2", "K02": "1E3A8A", "K03": "C8102E", "K04": "F26522", "K05": "0B6E4F",
+    "K06": "C8102E", "K07": "F2A900", "K08": "0E4C92", "K09": "C8102E", "K10": "0F7B3C",
+    "K17": "0B4EA2", "K18": "0B4EA2", "K20": "1D4E89", "K21": "E03A2F", "K22": "F5C518",
+    "K26": "1D4E89", "K27": "B31B34", "K29": "0B4EA2", "K31": "C8102E", "K32": "1B5E20",
+    "K35": "C8102E",
+}
+KBL_COLOR = {
+    "서울 SK": "E1002A", "수원 KT": "1A1A1A", "울산 현대모비스": "E4002B",
+    "안양 정관장": "C8102E", "창원 LG": "A6192E", "원주 DB": "00A651",
+    "대구 한국가스공사": "F5A623", "고양 소노": "E8B00F", "서울 삼성": "00A0E9",
+    "부산 KCC": "0B3C8C",
+}
+
+
+def _ts() -> int:
+    return int(time.time())
+
+
+def _fresh(entry, ttl: int) -> bool:
+    return isinstance(entry, dict) and (_ts() - int(entry.get("t") or 0)) < ttl
+
+
+def _inch_cm(value):
+    try:
+        return int(round(float(value) * 2.54))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _lb_kg(value):
+    try:
+        return int(round(float(value) * 0.4536))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def pos_ko(sport_type: str, abbr: str, name: str = "") -> str:
+    table = POS_KO.get(sport_type) or {}
+    key = (abbr or "").upper()
+    if key in table:
+        return table[key]
+    return (name or abbr or "").strip()
+
+
+def flag_url(country: str) -> str:
+    code = COUNTRY_CODE.get((country or "").strip())
+    return f"https://a.espncdn.com/i/teamlogos/countries/500/{code}.png" if code else ""
+
+
+def country_ko(name: str) -> str:
+    """국가 이름을 한국어로 (COUNTRY_CODE 안의 한국어 표기를 재사용)."""
+    raw = (name or "").strip()
+    code = COUNTRY_CODE.get(raw)
+    if code:
+        for key, val in COUNTRY_CODE.items():
+            if val == code and not key.isascii():
+                return key
+    return raw
 
 
 def team_ko_cached(team: dict, league_key: str = "") -> str:
@@ -948,7 +1171,11 @@ def stat_text(value, kind="int"):
 
 
 def espn_byathlete(sport_path: str, sort: str, season: int, limit: int = 10):
-    """ESPN byathlete — 한 번의 호출로 선수·팀·기록을 모두 준다."""
+    """ESPN byathlete — 한 번의 호출로 선수·팀·기록을 모두 준다.
+
+    카드용으로 id·등번호·포지션·팀 id·머리 사진과, 그 선수의 모든 부문 기록(totals)을 함께 담는다.
+    totals 는 "2,838" 같은 표시용 문자열이라 그대로 카드에 쓴다.
+    """
     url = (f"https://site.web.api.espn.com/apis/common/v3/sports/{sport_path}/statistics/byathlete"
            f"?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit={limit}"
            f"&sort={urllib.parse.quote(sort + ':desc')}&season={season}&seasontype=2")
@@ -967,16 +1194,33 @@ def espn_byathlete(sport_path: str, sort: str, season: int, limit: int = 10):
                     totals = cat.get("totals") or []
                     if idx < len(totals):
                         value = totals[idx]
+        stats = {}
+        for cat in entry.get("categories") or []:
+            cname = cat.get("name") or ""
+            cnames = names.get(cname) or []
+            for i, total in enumerate(cat.get("totals") or []):
+                if i >= len(cnames):
+                    break
+                stats[f"{cname}.{cnames[i]}"] = total
+                stats.setdefault(cnames[i], total)
         team = {"abbreviation": athlete.get("teamShortName") or "",
                 "displayName": athlete.get("teamName") or "",
                 "name": athlete.get("teamName") or ""}
         logos = athlete.get("teamLogos") or []
+        position = athlete.get("position") or {}
         out.append({
             "rank": pos,
             "player": athlete.get("displayName") or "",
             "team": team_ko_cached(team, sport_path) if athlete.get("teamName") else "",
             "emblem": (logos[0].get("href") if logos else ""),
             "value": value,
+            "id": str(athlete.get("id") or ""),
+            "teamId": str(athlete.get("teamId") or ""),
+            "jersey": str(athlete.get("jersey") or ""),
+            "posShort": position.get("abbreviation") or "",
+            "position": position.get("displayName") or "",
+            "photo": ((athlete.get("headshot") or {}).get("href") or ""),
+            "stats": stats,
         })
     return out
 
@@ -990,7 +1234,7 @@ def _core_ref(url: str):
 
 def espn_core_leaders(sport: str, league: str, season: int, stype: int, limit: int = 12):
     """ESPN core /leaders — 해외축구는 byathlete 가 비어 있어 이 경로를 쓴다."""
-    url = (f"https://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}"
+    url = (f"{CORE_SEASON}/{sport}/leagues/{league}"
            f"/seasons/{season}/types/{stype}/leaders?limit={limit}")
     payload = get_json(url)
     return {c.get("name"): c.get("leaders") or [] for c in payload.get("categories") or []}
@@ -1001,20 +1245,464 @@ def _ref_id(ref: str):
     return match.group(1) if match else ""
 
 
+# ── 선수 신상 (ESPN core athlete) ─────────────────────────────
+def _athlete_profile(sport: str, league: str, season: int, aid: str, profiles: dict) -> dict:
+    key = f"{sport}:{league}:{aid}"
+    hit = profiles.get(key)
+    if _fresh(hit, CARD_TTL):
+        return hit
+    data = _core_ref(f"{CORE_SEASON}/{sport}/leagues/{league}/seasons/{season}/athletes/{aid}")
+    prof = hit if isinstance(hit, dict) else {}
+    if data.get("displayName"):
+        position = data.get("position") or {}
+        birth = data.get("birthPlace") or {}
+        country = (data.get("citizenship") or birth.get("country") or "").strip()
+        prof = {
+            "name": data.get("displayName") or "",
+            "jersey": str(data.get("jersey") or ""),
+            "posShort": position.get("abbreviation") or "",
+            "pos": pos_ko(sport, position.get("abbreviation"), position.get("displayName")),
+            "height": _inch_cm(data.get("height")),
+            "weight": _lb_kg(data.get("weight")),
+            "age": data.get("age"),
+            "citizenship": country_ko(country),
+            "flag": ((data.get("flag") or {}).get("href") or flag_url(country)),
+            "photo": ((data.get("headshot") or {}).get("href") or ""),
+            "t": _ts(),
+        }
+    else:
+        prof = dict(prof, t=_ts(), miss=True)   # 없는 선수 — 14일 동안 다시 부르지 않는다
+    profiles[key] = prof
+    return prof
+
+
+def _fetch_profiles(sport: str, league: str, season: int, aids: list[str], profiles: dict, workers: int = 8):
+    need = [a for a in aids if a and not _fresh(profiles.get(f"{sport}:{league}:{a}"), CARD_TTL)]
+    if not need or not budget_ok(START, 250):
+        return
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        list(pool.map(lambda a: _athlete_profile(sport, league, season, a, profiles), need))
+
+
+# ── 팀 정보 (ESPN core team — 이름·엠블럼·팀 색) ──────────────
+def _team_card(sport: str, league: str, season: int, tid: str, teams: dict) -> dict:
+    key = f"{sport}:{league}:{tid}"
+    hit = teams.get(key)
+    if _fresh(hit, TEAM_TTL) and hit.get("color"):
+        return hit
+    data = _core_ref(f"{CORE_SEASON}/{sport}/leagues/{league}/seasons/{season}/teams/{tid}")
+    logos = data.get("logos") or []
+    info = {
+        "name": data.get("displayName") or "",
+        "abbr": data.get("abbreviation") or "",
+        "logo": (logos[0].get("href") if logos else ""),
+        "color": (data.get("color") or "").lstrip("#"),
+        "alt": (data.get("alternateColor") or "").lstrip("#"),
+        "t": _ts(),
+    }
+    if not info["name"]:
+        info = dict(hit or {}, t=_ts(), miss=True)
+    teams[key] = info
+    return info
+
+
+def _enrich_byathlete(sport: str, league: str, season: int, rows: list[dict],
+                      profiles: dict, teams: dict) -> None:
+    _fetch_profiles(sport, league, season, [r.get("id") for r in rows], profiles)
+    tids = [t for t in {r.get("teamId") for r in rows} if t and not (
+        _fresh(teams.get(f"{sport}:{league}:{t}"), TEAM_TTL) and (teams.get(f"{sport}:{league}:{t}") or {}).get("color"))]
+    if tids and budget_ok(START, 250):
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            list(pool.map(lambda t: _team_card(sport, league, season, t, teams), tids))
+
+
+def _card_row(row: dict, profile: dict, team: dict, stats4: list) -> dict:
+    """지금까지 모은 값으로 카드용 필드를 채운 행을 만든다."""
+    out = dict(row)
+    out["id"] = str(row.get("id") or "")
+    out["photo"] = profile.get("photo") or row.get("photo") or ""
+    out["jersey"] = str(profile.get("jersey") or row.get("jersey") or "")
+    out["posShort"] = profile.get("posShort") or row.get("posShort") or ""
+    out["position"] = profile.get("pos") or pos_ko("soccer" if row.get("_soccer") else "", row.get("posShort"), row.get("position") or "") or ""
+    out["height"] = profile.get("height")
+    out["weight"] = profile.get("weight")
+    out["age"] = profile.get("age")
+    out["citizenship"] = profile.get("citizenship") or row.get("citizenship") or ""
+    out["flag"] = profile.get("flag") or row.get("flag") or ""
+    out["color"] = (team.get("color") or row.get("color") or "").lstrip("#")
+    out["altColor"] = (team.get("alt") or row.get("altColor") or "").lstrip("#")
+    tiles = []
+    for s in stats4 or []:
+        if not s:
+            continue
+        val = s.get("v")
+        if val in (None, "", "-"):
+            continue
+        tiles.append({"k": s.get("k") or "", "v": str(val)})
+    out["stats4"] = tiles[:4]
+    out.pop("_soccer", None)
+    out.pop("stats", None)
+    return out
+
+
+# ── 해외축구 시즌 기록 ──────────────────────────────────────
+def _soccer_stats(league: str, season: int, aid: str, sstats: dict) -> dict:
+    key = f"{league}:{aid}"
+    hit = sstats.get(key)
+    if _fresh(hit, STATS_TTL):
+        return hit.get("v") or {}
+    data = _core_ref(f"{CORE_SEASON}/soccer/leagues/{league}/seasons/{season}"
+                     f"/types/1/athletes/{aid}/statistics")
+    ref = data.get("$ref") or ""
+    if ref and "/statistics/" not in ref:
+        ref += "/0"
+    split = _core_ref(ref) if ref else {}
+    values = {}
+    for cat in ((split.get("splits") or {}).get("categories") or []):
+        for st in cat.get("stats") or []:
+            if st.get("name"):
+                values[st["name"]] = st.get("displayValue")
+    sstats[key] = {"v": values, "t": _ts()}
+    return values
+
+
+# ── 유럽축구 사진: Wikipedia / Wikimedia Commons ────────────
+def _wiki_call(host: str, params: dict, tries: int = 3) -> dict:
+    """위키미디어 API POST — 요청 간 최소 간격을 지키고 429 면 쉬었다 다시 한다."""
+    body = urllib.parse.urlencode(params).encode()
+    for attempt in range(tries):
+        with _wiki_lock:
+            wait = WIKI_GAP - (time.time() - _wiki_last[0])
+            if wait > 0:
+                time.sleep(wait)
+            _wiki_last[0] = time.time()
+        try:
+            req = urllib.request.Request(host, data=body, headers={
+                "User-Agent": WIKI_UA, "Accept": "application/json",
+                "Content-Type": "application/x-www-form-urlencoded"})
+            with urllib.request.urlopen(req, timeout=25) as res:
+                return json.loads(res.read().decode("utf-8", "replace"))
+        except Exception as exc:  # noqa: BLE001
+            code = getattr(exc, "code", 0)
+            if code == 429 or code >= 500:
+                time.sleep(6 * (attempt + 1))
+                continue
+            return {}
+    return {}
+
+
+def _norm_name(text: str) -> str:
+    text = unicodedata.normalize("NFKD", text or "")
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = text.translate(_TRANSLIT)
+    return re.sub(r"[^a-z0-9 ]+", " ", text.lower()).strip()
+
+
+def _wiki_pages(titles: list[str]) -> dict:
+    """문서 제목 후보 → {요청 제목: page}. 넘겨주기(redirect)·표제어 정규화를 따라간다."""
+    out = {}
+    for i in range(0, len(titles), 40):
+        chunk = [t for t in titles[i:i + 40] if t]
+        if not chunk:
+            continue
+        data = _wiki_call(WIKI_API, {
+            "action": "query", "titles": "|".join(chunk), "redirects": "1",
+            "prop": "pageprops", "ppprop": "wikibase_item", "format": "json", "formatversion": "2"})
+        query = data.get("query") or {}
+        pages = {p.get("title"): p for p in (query.get("pages") or []) if p.get("title")}
+        alias = {}
+        for n in query.get("normalized") or []:
+            alias[n.get("from")] = n.get("to")
+        for r in query.get("redirects") or []:
+            alias[r.get("from")] = r.get("to")
+        for title in chunk:
+            cur = title
+            for _ in range(3):
+                cur = alias.get(cur, cur)
+            page = pages.get(cur)
+            if page is not None:
+                out[title] = page
+    return out
+
+
+def _wiki_search(name: str, limit: int = 4) -> list[str]:
+    """이름으로 문서 찾기 — 'footballer' 를 붙여 동명이인(정치인·배우)을 피한다."""
+    data = _wiki_call(WIKI_API, {
+        "action": "query", "list": "search", "srsearch": f"{name} footballer",
+        "srlimit": str(limit), "format": "json"})
+    return [h.get("title") for h in ((data.get("query") or {}).get("search") or []) if h.get("title")]
+
+
+def _wd_entities(qids: list[str]) -> dict:
+    out = {}
+    for i in range(0, len(qids), 40):
+        chunk = [q for q in qids[i:i + 40] if q]
+        if not chunk:
+            continue
+        data = _wiki_call(WIKIDATA_API, {
+            "action": "wbgetentities", "ids": "|".join(chunk),
+            "props": "claims|labels|aliases|descriptions", "languages": "en", "format": "json"})
+        out.update(data.get("entities") or {})
+    return out
+
+
+def _claim_values(entity: dict, prop: str) -> list:
+    vals = []
+    for claim in ((entity.get("claims") or {}).get(prop) or []):
+        value = ((claim.get("mainsnak") or {}).get("datavalue") or {}).get("value")
+        if isinstance(value, dict) and value.get("id"):
+            vals.append(value["id"])
+        elif isinstance(value, str):
+            vals.append(value)
+        elif isinstance(value, dict) and value.get("time"):
+            vals.append(value["time"])
+    return vals
+
+
+def _commons_thumbs(files: list[str], width: int = 500) -> dict:
+    out = {}
+    for i in range(0, len(files), 40):
+        chunk = [f for f in files[i:i + 40] if f]
+        if not chunk:
+            continue
+        data = _wiki_call(COMMONS_API, {
+            "action": "query", "titles": "|".join(f"File:{f}" for f in chunk),
+            "prop": "imageinfo", "iiprop": "url|mime|size", "iiurlwidth": str(width),
+            "format": "json", "formatversion": "2"})
+        for page in ((data.get("query") or {}).get("pages") or []):
+            title = (page.get("title") or "").replace("File:", "")
+            infos = page.get("imageinfo") or []
+            if infos:
+                out[title] = infos[0].get("thumburl") or infos[0].get("url") or ""
+    return out
+
+
+def resolve_soccer_photos(players: list[dict], cache: dict) -> dict:
+    """유럽축구 선수 사진 찾기.
+
+    영문 이름 → enwiki 문서 → 위키데이터 항목이 '축구선수(P106)'·'사람(P31)'인지 확인 →
+    이름·출생연도가 맞는지 확인 → P18(사진) → Commons 500px 썸네일.
+    확인이 안 되면 사진을 넣지 않는다(null → 앱이 유니폼 카드로 그린다).
+    결과는 30일 동안 leaders-cache.json 에 남긴다.
+    """
+    photos = cache.get("photos")
+    if not isinstance(photos, dict):
+        photos = cache["photos"] = {}
+    todo = [p for p in players if p.get("id") and not _fresh(photos.get(p["id"]), PHOTO_TTL)]
+    if not todo:
+        return photos
+    names = {p["id"]: (p.get("name") or "").strip() for p in todo}
+
+    def put(pid, **kw):
+        entry = {"t": _ts(), "photo": None}
+        entry.update(kw)
+        photos[pid] = entry
+
+    def _judge(ent: dict, wanted: set[str], age) -> tuple[bool, str]:
+        """위키데이터 항목이 이 선수가 맞는지 확인한다."""
+        inst = _claim_values(ent, "P31")
+        occ = _claim_values(ent, "P106")
+        if "Q4167410" in inst or "Q22808320" in inst:   # 동음이의 문서
+            return False, "disambig"
+        if FOOTBALLER_QID not in occ:
+            return False, "not_footballer"
+        if inst and HUMAN_QID not in inst:
+            return False, "not_human"
+        label = _norm_name((((ent.get("labels") or {}).get("en") or {}).get("value")) or "")
+        aliases = {_norm_name(a.get("value")) for a in (((ent.get("aliases") or {}).get("en")) or [])}
+        if not (wanted & ({label} | aliases)):
+            return False, "name_mismatch"
+        births = _claim_values(ent, "P569")
+        if age and births:
+            try:
+                year = int(births[0][1:5])
+                if abs(int(age) - (datetime.now(KST).year - year)) > 1:
+                    return False, "age_mismatch"
+            except Exception:  # noqa: BLE001
+                pass
+        return True, "ok"
+
+    ages = {p["id"]: p.get("age") for p in todo}
+    accepted: dict[str, tuple] = {}   # aid -> (qid, P18 파일명)
+    reasons: dict[str, str] = {}
+
+    def judge_candidates(cands: dict):
+        """{aid: [(title, qid), ...]} → 통과한 것만 accepted 에."""
+        all_qids = [q for lst in cands.values() for _, q in lst]
+        ents = _wd_entities(all_qids) if all_qids else {}
+        for pid, lst in cands.items():
+            if pid in accepted:
+                continue
+            wanted = {_norm_name(names.get(pid) or "")}
+            for title, qid in lst:
+                ent = ents.get(qid) or {}
+                if not ent:
+                    reasons.setdefault(pid, "no_entity")
+                    continue
+                ok, why = _judge(ent, wanted | {_norm_name(title)}, ages.get(pid))
+                if not ok:
+                    reasons[pid] = why
+                    continue
+                files = _claim_values(ent, "P18")
+                if not files:
+                    reasons[pid] = "no_image"
+                    continue
+                accepted[pid] = (qid, files[0])
+                reasons.pop(pid, None)
+                break
+
+    # 1) 이름 그대로 문서 찾기
+    pages = _wiki_pages([n for n in names.values() if n])
+    exact = {}
+    for pid, name in names.items():
+        page = pages.get(name) or {}
+        qid = (page.get("pageprops") or {}).get("wikibase_item") or ""
+        if qid:
+            exact[pid] = [(page.get("title") or name, qid)]
+    judge_candidates(exact)
+
+    # 2) 확인이 안 된 선수는 '이름 + footballer' 검색 결과로 (한 실행에 정해 둔 인원까지)
+    rest = [p for p in todo if p["id"] not in accepted]
+    searched = {}
+    for p in rest[:WIKI_MAX_SEARCH]:
+        if not budget_ok(START, 240):
+            break
+        name = names.get(p["id"]) or ""
+        if not name:
+            continue
+        titles = _wiki_search(name, limit=4)
+        if titles:
+            searched[p["id"]] = titles
+    if searched:
+        found = _wiki_pages([t for lst in searched.values() for t in lst])
+        cands = {}
+        for pid, titles in searched.items():
+            lst = []
+            for title in titles:
+                page = found.get(title) or {}
+                qid = (page.get("pageprops") or {}).get("wikibase_item") or ""
+                if qid:
+                    lst.append((page.get("title") or title, qid))
+            if lst:
+                cands[pid] = lst
+        judge_candidates(cands)
+
+    # 3) Commons 썸네일
+    thumbs = _commons_thumbs([f for _, f in accepted.values()])
+    checked = set(exact) | set(searched)
+    for pid in {p["id"] for p in todo}:
+        if pid in accepted:
+            qid, fname = accepted[pid]
+            url = thumbs.get(fname) or ""
+            put(pid, photo=url or None, reason="ok" if url else "no_thumb", qid=qid)
+        elif pid in checked:
+            put(pid, reason=reasons.get(pid) or "no_match")
+        # 검색 차례가 오지 않은 선수는 기록을 남기지 않는다 → 다음 실행에서 이어서 본다
+    return photos
+
+
+# ── K리그 상세 (키·몸무게·생일·국적) ────────────────────────
+def _kleague_detail(pid: str, kleague_cache: dict) -> dict:
+    hit = kleague_cache.get(pid)
+    if _fresh(hit, CARD_TTL):
+        return hit
+    info = {"t": _ts()}
+    try:
+        req = urllib.request.Request(f"{KLEAGUE}/record/playerDetail.do?playerId={pid}",
+                                     headers={"User-Agent": UA, "Accept-Language": "ko-KR",
+                                              "Accept": "text/html,*/*"})
+        with urllib.request.urlopen(req, timeout=25) as res:
+            html_text = res.read().decode("utf-8", "replace")
+        info["html"] = html_text
+        table = {}
+        for th, td in re.findall(r"<th>(.*?)</th>\s*<td[^>]*>(.*?)</td>", html_text, re.S):
+            key = re.sub(r"<[^>]+>", "", th).strip()
+            val = re.sub(r"<[^>]+>", "", td).replace("&nbsp;", " ").strip()
+            if key and val:
+                table[key] = val
+        info.update({
+            "name": table.get("이름", ""),
+            "en": table.get("영문명", ""),
+            "team": table.get("소속구단", ""),
+            "posShort": table.get("포지션", ""),
+            "num": table.get("배번", ""),
+            "country": table.get("국적", ""),
+            "height": int(table["키"]) if table.get("키", "").isdigit() else None,
+            "weight": int(table["몸무게"]) if table.get("몸무게", "").isdigit() else None,
+            "birth": table.get("생년월일", ""),
+        })
+        birth = table.get("생년월일", "")
+        if re.match(r"^\d{4}/\d{2}/\d{2}$", birth):
+            y, m, d = (int(x) for x in birth.split("/"))
+            today = datetime.now(KST).date()
+            age = today.year - y - ((today.month, today.day) < (m, d))
+            info["age"] = age
+    except Exception as exc:  # noqa: BLE001
+        print(f"  K리그 선수 상세 실패 {pid}: {exc}", flush=True)
+        info["miss"] = True
+    info.pop("html", None)
+    kleague_cache[pid] = info
+    return info
+
+
+def _kleague_photo(img1: str, pid: str, photo_cache: dict | None = None) -> str:
+    """K리그 공식 사진(4~5MB PNG)을 카드용 560px WebP 로 줄여 data/img/kleague 에 둔다.
+
+    카드가 사진을 네모 프레임에 그대로 잘라 넣으므로 **누끼(배경 지우기)를 하지 않는다**.
+    공식 사진의 흰 스튜디오 배경을 지우면 얼굴·어깨 둘레에 지운 자국이 남아 '오려붙인' 것처럼
+    보였기 때문이다. 원본 사진을 그대로 줄여 저장한다.
+    Pillow 가 없는 환경에서는 원본 URL 을 쓰되, 7일 동안은 다시 받지 않는다(4~5MB).
+    """
+    rel = f"img/kleague/{pid}.webp"
+    path = os.path.join(DATA_DIR, rel)
+    if os.path.exists(path) and os.path.getsize(path) > 2000:
+        return "./data/" + rel
+    src = f"{KLEAGUE_CDN}{img1}" if img1.startswith("/") else img1
+    if not src:
+        return ""
+    if photo_cache is not None:
+        hit = photo_cache.get(pid)
+        if _fresh(hit, 7 * 86400) and hit.get("src"):
+            return hit["src"]
+    try:
+        raw = http_get(src, timeout=40)
+        from PIL import Image  # noqa: PLC0415 — Pillow 가 없으면 원본 URL 로 넘어간다
+        import io  # noqa: PLC0415
+        image = Image.open(io.BytesIO(raw)).convert("RGB")   # 투명 없이 원본 사진 그대로
+        width, height = image.size
+        if width > 560:
+            image = image.resize((560, int(height * 560 / width)), Image.LANCZOS)
+        os.makedirs(KLEAGUE_IMG_DIR, exist_ok=True)
+        image.save(path, "WEBP", quality=82, method=4)
+        return "./data/" + rel
+    except Exception as exc:  # noqa: BLE001
+        print(f"  K리그 사진 압축 불가 {pid}: {str(exc)[:50]}", flush=True)
+        if photo_cache is not None:
+            photo_cache[pid] = {"src": src, "t": _ts()}
+        return src
+
+
 def build_leaders(now: datetime) -> None:
     cache = read_json(LEADER_CACHE, {}) or {}
     athletes = cache.get("athletes") or {}
     teams = cache.get("teams") or {}
+    profiles = cache.get("profiles") or {}
+    sstats = cache.get("sstats") or {}
+    kleague_cache = cache.get("kleague") or {}
+    kphoto = cache.get("kphoto") or {}
     year = now.year
     nba_season = year + 1 if now.month >= 9 else year
     leagues = []
+    soccer_rows: list[dict] = []
+    soccer_players: dict[str, dict] = {}
 
     # ── ESPN byathlete: MLB · NBA · NFL ──
     for cfg in BYATHLETE_CFG:
         season = nba_season if cfg["id"] == "nba" else year
+        sport_type, league_slug = cfg["espn"].split("/")
         cats = []
         for sort, label, kind in cfg["cats"]:
-            rows = []
+            rows, used_season = [], season
             for attempt_season in (season, season - 1):
                 try:
                     rows = espn_byathlete(cfg["espn"], sort, attempt_season, limit=10)
@@ -1022,35 +1710,54 @@ def build_leaders(now: datetime) -> None:
                     print(f"  {cfg['name']} {label} 실패: {exc}", flush=True)
                     rows = []
                 if rows:
+                    used_season = attempt_season
                     break
             if not rows:
                 continue
-            cats.append({"key": sort, "name": label, "season": str(attempt_season), "rows": [
-                {"rank": r["rank"], "player": r["player"], "team": r["team"],
-                 "emblem": r["emblem"], "value": stat_text(r["value"], kind)} for r in rows]})
+            _enrich_byathlete(sport_type, league_slug, used_season, rows, profiles, teams)
+            group = sort.split(".")[0]
+            table = STAT4_CFG[cfg["id"]].get(group) or STAT4_CFG[cfg["id"]].get("*") or []
+            out_rows = []
+            for r in rows:
+                prof = profiles.get(f"{sport_type}:{league_slug}:{r['id']}") or {}
+                team = teams.get(f"{sport_type}:{league_slug}:{r.get('teamId') or ''}") or {}
+                stats = r.get("stats") or {}
+                tiles = [{"k": k, "v": stats.get(key)} for key, k in table]
+                base = {k: r[k] for k in ("rank", "player", "team", "emblem")}
+                base.update({"id": r.get("id"), "photo": r.get("photo"), "jersey": r.get("jersey"),
+                             "posShort": r.get("posShort"), "position": r.get("position")})
+                base["value"] = stat_text(r["value"], kind)
+                out_rows.append(_card_row(base, dict(prof, pos=prof.get("pos") or pos_ko(
+                    sport_type, r.get("posShort"), r.get("position"))), team, tiles))
+            cats.append({"key": sort, "name": label, "season": str(used_season), "rows": out_rows})
         if cats:
             label = f"{season - 1}-{str(season)[2:]}" if cfg["id"] == "nba" else str(season)
             leagues.append({"id": cfg["id"], "sport": cfg["sport"], "name": cfg["name"],
                             "season": label, "source": "ESPN", "categories": cats})
             print(f"  {cfg['name']} 선수 순위 {len(cats)}부문", flush=True)
 
-    # ── ESPN core: 해외축구 (참조 → 이름·팀·로고, 캐시 사용) ──
+    # ── ESPN core: 해외축구 (참조 → 이름·팀·로고·팀 색, 캐시 사용) ──
     def team_info(team_id: str, league_key: str):
         if not team_id:
-            return "", ""
-        hit = teams.get(team_id)
-        if not hit:
-            data = _core_ref(f"https://sports.core.api.espn.com/v2/sports/soccer/leagues/{league_key}"
+            return "", "", {}
+        key = f"soccer:{league_key}:{team_id}"
+        hit = teams.get(key) or teams.get(team_id)
+        if not _fresh(hit, TEAM_TTL) or not (hit or {}).get("color"):
+            data = _core_ref(f"{CORE_SEASON}/soccer/leagues/{league_key}"
                              f"/seasons/{year}/teams/{team_id}")
             logos = data.get("logos") or []
-            hit = {"name": data.get("displayName") or data.get("name") or "",
-                   "abbr": data.get("abbreviation") or "",
-                   "logo": logos[0].get("href") if logos else ""}
-            if hit["name"]:
-                teams[team_id] = hit
-        ko = team_ko_cached({"abbreviation": hit.get("abbr", ""), "displayName": hit["name"],
-                             "name": hit["name"]}, f"soccer/{league_key}")
-        return ko or hit["name"], hit.get("logo", "")
+            if data.get("displayName"):
+                hit = {"name": data.get("displayName") or "",
+                       "abbr": data.get("abbreviation") or "",
+                       "logo": logos[0].get("href") if logos else "",
+                       "color": (data.get("color") or "").lstrip("#"),
+                       "alt": (data.get("alternateColor") or "").lstrip("#"),
+                       "t": _ts()}
+                teams[key] = hit
+        hit = hit or {}
+        ko = team_ko_cached({"abbreviation": hit.get("abbr", ""), "displayName": hit.get("name", ""),
+                             "name": hit.get("name", "")}, f"soccer/{league_key}")
+        return ko or hit.get("name", ""), hit.get("logo", ""), hit
 
     for slug, name in SOCCER_CFG:
         try:
@@ -1058,33 +1765,49 @@ def build_leaders(now: datetime) -> None:
         except Exception as exc:  # noqa: BLE001
             print(f"  {name} 선수 순위 실패: {exc}", flush=True)
             continue
+        recent = {k: (cats_raw.get(k) or [])[:10] for k, _ in SOCCER_CATS}
+        ids = []
+        for entries in recent.values():
+            for entry in entries:
+                aid = _ref_id(((entry.get("athlete") or {}).get("$ref")) or "")
+                if aid and aid not in ids:
+                    ids.append(aid)
+        _fetch_profiles("soccer", slug, year, ids, profiles)
+        for aid in ids:
+            prof = profiles.get(f"soccer:{slug}:{aid}") or {}
+            if prof.get("name"):
+                athletes[aid] = prof["name"]
+                soccer_players[aid] = {"id": aid, "name": prof["name"], "age": prof.get("age")}
+        # 이 리그에서 그 선수가 올린 득점·도움 (카드 스탯에 그대로 사용)
+        own = {}
+        for key, _ in SOCCER_CATS:
+            for entry in recent.get(key) or []:
+                aid = _ref_id(((entry.get("athlete") or {}).get("$ref")) or "")
+                if aid:
+                    own.setdefault(aid, {})[key] = stat_text(entry.get("value"), "int")
         picked = []
         for key, label in SOCCER_CATS:
-            leaders = cats_raw.get(key) or []
-            if not leaders:
-                continue
-            pending = []
-            for entry in leaders[:10]:
-                aid = _ref_id(((entry.get("athlete") or {}).get("$ref")) or "")
-                tid = _ref_id(((entry.get("team") or {}).get("$ref")) or "")
-                if aid and aid not in athletes:
-                    pending.append(aid)
-            if pending:
-                with ThreadPoolExecutor(max_workers=8) as pool:
-                    fetched = list(pool.map(
-                        lambda a: (a, _core_ref(f"https://sports.core.api.espn.com/v2/sports/soccer"
-                                                 f"/leagues/{slug}/seasons/{year}/athletes/{a}")),
-                        pending))
-                for aid, data in fetched:
-                    if data.get("displayName"):
-                        athletes[aid] = data["displayName"]
+            leaders = recent.get(key) or []
             rows = []
-            for pos, entry in enumerate(leaders[:10], start=1):
+            for pos, entry in enumerate(leaders, start=1):
                 aid = _ref_id(((entry.get("athlete") or {}).get("$ref")) or "")
                 tid = _ref_id(((entry.get("team") or {}).get("$ref")) or "")
-                team_name, logo = team_info(tid, slug)
-                rows.append({"rank": pos, "player": athletes.get(aid, ""), "team": team_name,
-                             "emblem": logo, "value": stat_text(entry.get("value"), "int")})
+                team_name, logo, team = team_info(tid, slug)
+                prof = profiles.get(f"soccer:{slug}:{aid}") or {}
+                stats = _soccer_stats(slug, year, aid, sstats) if aid else {}
+                tiles = [
+                    {"k": "득점", "v": (own.get(aid) or {}).get("goals") or stats.get("totalGoals")},
+                    {"k": "도움", "v": (own.get(aid) or {}).get("assists") or stats.get("goalAssists")},
+                    {"k": "슈팅", "v": stats.get("totalShots")},
+                    {"k": "경기", "v": stats.get("appearances")},
+                ]
+                row = _card_row({
+                    "rank": pos, "player": prof.get("name") or athletes.get(aid, ""),
+                    "team": team_name, "emblem": logo, "value": stat_text(entry.get("value"), "int"),
+                    "id": aid, "_soccer": True,
+                }, prof, team, tiles)
+                rows.append(row)
+                soccer_rows.append(row)
             rows = [r for r in rows if r["player"]]
             if rows:
                 picked.append({"key": key, "name": label, "rows": rows})
@@ -1105,12 +1828,39 @@ def build_leaders(now: datetime) -> None:
             except Exception as exc:  # noqa: BLE001
                 print(f"  {lname} {label} 실패: {exc}", flush=True)
                 continue
+            items = (((data or {}).get("data") or {}).get("list") or [])[:10]
+            need = [str(it.get("playerId")) for it in items
+                    if it.get("playerId") and not _fresh(kleague_cache.get(str(it.get("playerId"))), CARD_TTL)]
+            if need and budget_ok(START, 240):
+                with ThreadPoolExecutor(max_workers=6) as pool:
+                    list(pool.map(lambda pid: _kleague_detail(pid, kleague_cache), need))
             rows = []
-            for pos, item in enumerate((((data or {}).get("data") or {}).get("list") or [])[:10], start=1):
-                rows.append({"rank": pos, "player": (item.get("name") or "").strip(),
-                             "team": (item.get("teamName") or "").strip(),
-                             "emblem": kleague_logo(item.get("teamId")),
-                             "value": str(item.get(field) if item.get(field) is not None else "-")})
+            for pos, item in enumerate(items, start=1):
+                pid = str(item.get("playerId") or "")
+                det = kleague_cache.get(pid) or {}
+                team_id = (item.get("teamId") or "").strip().upper()
+                team_name = (item.get("teamName") or "").strip()
+                photo = _kleague_photo(item.get("img1") or "", pid, kphoto) if item.get("img1") else ""
+                position = det.get("posShort") or ""
+                tiles = [
+                    {"k": "득점", "v": item.get("goalQty")},
+                    {"k": "도움", "v": item.get("assistQty")},
+                    {"k": "공격포인트", "v": item.get("apQty")},
+                    {"k": "경기", "v": item.get("gameQty")},
+                ]
+                rows.append({
+                    "rank": pos, "player": (item.get("name") or "").strip(), "team": team_name,
+                    "emblem": kleague_logo(item.get("teamId")),
+                    "value": str(item.get(field) if item.get(field) is not None else "-"),
+                    "id": pid, "photo": photo,
+                    "jersey": str(item.get("backNo") or det.get("num") or ""),
+                    "position": pos_ko("soccer", position), "posShort": position,
+                    "height": det.get("height"), "weight": det.get("weight"), "age": det.get("age"),
+                    "citizenship": det.get("country") or "", "flag": flag_url(det.get("country") or ""),
+                    "color": KLEAGUE_COLOR.get(team_id, ""), "altColor": "",
+                    "en": det.get("en") or "",
+                    "stats4": [t for t in tiles if t["v"] not in (None, "", "-")][:4],
+                })
             if rows:
                 cats.append({"key": code, "name": label, "rows": rows})
         if cats:
@@ -1128,6 +1878,19 @@ def build_leaders(now: datetime) -> None:
         except Exception:  # noqa: BLE001
             pass
         labels = {"score": "득점", "rb": "리바운드", "ast": "어시스트", "bs": "블록", "stl": "스틸"}
+        # 선수별로 5부문 값을 모아 카드 스탯 4칸을 만든다
+        by_player: dict[str, dict] = {}
+        for part in parts or []:
+            key = part.get("part")
+            if key not in labels:
+                continue
+            for item in (part.get("list") or [])[:10]:
+                player = item.get("player") or {}
+                pcode = str(player.get("pcode") or "")
+                if not pcode:
+                    continue
+                slot = by_player.setdefault(pcode, {"player": player, "values": {}})
+                slot["values"][key] = stat_text(item.get("value"), "avg1")
         cats = []
         for part in parts or []:
             key = part.get("part")
@@ -1136,10 +1899,27 @@ def build_leaders(now: datetime) -> None:
             rows = []
             for pos, item in enumerate((part.get("list") or [])[:10], start=1):
                 player = item.get("player") or {}
+                pcode = str(player.get("pcode") or "")
                 team_name = (player.get("tname") or "").strip()
-                rows.append({"rank": pos, "player": (player.get("pname") or "").strip(),
-                             "team": team_name, "emblem": emblem_by_team.get(team_name, ""),
-                             "value": stat_text(item.get("value"), "avg1")})
+                merged = (by_player.get(pcode) or {}).get("values") or {}
+                tiles = [{"k": labels[k], "v": merged.get(k)} for k in ("score", "rb", "ast", "bs", "stl")]
+                tiles = [t for t in tiles if t["v"] not in (None, "", "-")]
+                if len(tiles) < 3 and item.get("gameCount"):
+                    tiles.append({"k": "경기", "v": str(item.get("gameCount"))})
+                rows.append({
+                    "rank": pos, "player": (player.get("pname") or "").strip(),
+                    "team": team_name, "emblem": emblem_by_team.get(team_name, ""),
+                    "value": stat_text(item.get("value"), "avg1"),
+                    "id": pcode, "photo": player.get("img") or "",
+                    "jersey": str(player.get("backNum") or ""),
+                    "position": pos_ko("basketball", player.get("pos") or "", ""),
+                    "posShort": player.get("pos") or "",
+                    "height": None, "weight": None, "age": None,
+                    "citizenship": "", "flag": "",
+                    "color": KBL_COLOR.get(team_name, ""), "altColor": "",
+                    "en": player.get("ename") or "",
+                    "stats4": tiles[:4],
+                })
             if rows:
                 cats.append({"key": key, "name": labels[key], "rows": rows})
         if cats:
@@ -1149,7 +1929,30 @@ def build_leaders(now: datetime) -> None:
     except Exception as exc:  # noqa: BLE001
         print(f"  KBL 선수 순위 실패: {exc}", flush=True)
 
-    write_json(LEADER_CACHE, {"athletes": athletes, "teams": teams})
+    # ── 유럽축구 사진 (위키백과·위키미디어) — 모든 리그를 모아 한 번에 ──
+    if soccer_players:
+        photos = {}
+        try:
+            photos = resolve_soccer_photos(list(soccer_players.values()), cache)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  유럽축구 사진 매칭 실패: {exc}", flush=True)
+        hit = 0
+        for row in soccer_rows:
+            entry = photos.get(row.get("id") or "") or {}
+            row["photo"] = entry.get("photo") or ""
+            if row["photo"]:
+                hit += 1
+        total = len({r.get("id") for r in soccer_rows if r.get("id")})
+        got = len({r["id"] for r in soccer_rows if r.get("photo") and r.get("id")})
+        print(f"  유럽축구 사진 {got}/{total}명 ({100 * got / total:.0f}%)" if total else "", flush=True)
+
+    cache["athletes"] = athletes
+    cache["teams"] = teams
+    cache["profiles"] = profiles
+    cache["sstats"] = sstats
+    cache["kleague"] = kleague_cache
+    cache["kphoto"] = kphoto
+    write_json(LEADER_CACHE, cache)
     if not leagues:
         print("  선수 순위 0개 — 그대로 둡니다", flush=True)
         return

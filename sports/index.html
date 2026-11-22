@@ -536,17 +536,30 @@
     color:#3a2a00; background:linear-gradient(100deg,#ffe9a8,#ffd463 55%,#ffe9a8);
     box-shadow:0 3px 10px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.72);
   }
-  .pc1-stage{position:absolute; left:0; right:0; top:92px; bottom:172px; z-index:2;
-    display:flex; align-items:flex-end; justify-content:center; overflow:hidden;}
+  .pc1-stage{position:absolute; left:0; right:0; top:104px; bottom:172px; z-index:2;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;}
   .pc1-stage::after{content:""; position:absolute; left:0; right:0; bottom:0; height:66px; z-index:3;
     background:linear-gradient(180deg, transparent, rgba(4,9,18,.55));}
+  .pc1-stage.has-photo::after{display:none;}
+  .pc1-stage.has-photo .pc1-halo,
+  .pc1-stage.has-photo .pc1-numghost{display:none;}
   .pc1-halo{position:absolute; left:50%; top:46%; width:350px; height:350px; transform:translate(-50%,-50%);
     background:radial-gradient(circle, rgba(255,255,255,.42) 0%, rgba(255,255,255,.10) 44%, transparent 70%);
     filter:blur(2px);}
   .pc1-numghost{position:absolute; right:-6px; bottom:-26px; font-size:214px; font-weight:900; line-height:.8;
     letter-spacing:-14px; color:rgba(255,255,255,.09); -webkit-text-stroke:1.5px rgba(255,255,255,.13);}
-  .pc1-photo{position:relative; z-index:2; height:100%; width:auto; max-width:100%; border-radius:18px;
-    object-fit:contain; object-position:bottom center; box-shadow:0 16px 30px rgba(0,0,0,.45);}
+  /* 선수 사진 — 종목·사진 종류와 상관없이 모두 같은 네모 프레임 안에 '사진 한 덩어리'로 넣는다
+     (라운드 사각형 + 팀 색 배경 + object-fit:cover 로 잘라 채움) */
+  .pc1-shot{position:relative; z-index:2; margin:0; width:300px; max-width:calc(100% - 24px); height:100%;
+    border-radius:20px; overflow:hidden;
+    background:radial-gradient(125% 92% at 50% 4%, #ffffff 0%, #eaf0f8 16%, var(--c-light) 52%, var(--c-main) 88%, var(--c-dark) 100%);
+    box-shadow:0 16px 34px rgba(0,0,0,.46);}
+  .pc1-shot::after{content:""; position:absolute; inset:0; z-index:3; pointer-events:none; border-radius:inherit;
+    box-shadow:inset 0 0 0 1.6px rgba(255,255,255,.62), inset 0 -54px 64px -32px rgba(4,9,18,.42);}
+  .pc1-shot-bg{position:absolute; left:-12%; top:-12%; width:124%; height:124%; object-fit:cover;
+    filter:blur(30px) saturate(1.15) brightness(1.02); opacity:.55;}
+  .pc1-photo{position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; object-position:center top;}
   .pc1-jersey{position:relative; z-index:2; width:352px; max-height:104%; height:auto;
     filter:drop-shadow(0 18px 26px rgba(0,0,0,.5));}
   .pc1-crestghost{position:absolute; left:50%; top:42%; width:222px; height:222px; transform:translate(-50%,-50%);
@@ -1655,7 +1668,10 @@ function pcCardHTML(row, lg, cat){
   const medal = row.rank === 1 ? "🥇" : row.rank === 2 ? "🥈" : row.rank === 3 ? "🥉" : "";
   const rarity = (medal && cat) ? `<div class="pc1-rarity">${medal} ${esc(cat.name)} ${esc(row.rank)}위</div>` : "";
   const figure = row.photo
-    ? `<img class="pc1-photo" src="${esc(row.photo)}" alt="${esc(name)}" loading="eager" referrerpolicy="no-referrer">`
+    ? `<figure class="pc1-shot">
+         <img class="pc1-shot-bg" src="${esc(row.photo)}" alt="" aria-hidden="true" loading="eager" referrerpolicy="no-referrer">
+         <img class="pc1-photo" src="${esc(row.photo)}" alt="${esc(name)}" loading="eager" referrerpolicy="no-referrer">
+       </figure>`
     : pcJerseySVG(row, t);
   const flag = row.flag ? `<img class="pc-flag" src="${esc(row.flag)}" alt="" onerror="this.remove()">` : "";
   return `
@@ -1671,7 +1687,7 @@ function pcCardHTML(row, lg, cat){
           ${row.emblem ? `<div class="pc1-crest"><img src="${esc(row.emblem)}" alt="" onerror="this.remove()"></div>` : ""}
         </div>
         ${rarity}
-        <div class="pc1-stage">
+        <div class="pc1-stage${row.photo ? " has-photo" : ""}">
           <span class="pc1-halo"></span>
           <div class="pc1-numghost">${esc(row.jersey || "")}</div>
           ${row.photo ? "" : (row.emblem ? `<img class="pc1-crestghost" src="${esc(row.emblem)}" alt="">` : "")}
@@ -1731,7 +1747,12 @@ function openPlayerCard(row, lg, cat){
   if (img) img.addEventListener("error", () => {
     const box = document.createElement("div");
     box.innerHTML = pcJerseySVG(row, pcTheme(row));
-    if (box.firstElementChild) img.replaceWith(box.firstElementChild);
+    const shot = img.closest(".pc1-shot");
+    if (shot && box.firstElementChild){
+      const stage = shot.closest(".pc1-stage");
+      if (stage) stage.classList.remove("has-photo");
+      shot.replaceWith(box.firstElementChild);
+    }
   });
   pcFit();
   window.addEventListener("resize", pcFit);

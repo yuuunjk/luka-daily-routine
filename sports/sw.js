@@ -2,7 +2,7 @@
    - 앱 껍데기(index.html, 아이콘, 매니페스트): 캐시 먼저 (빠른 실행)
    - data/*.json: 네트워크 먼저 (늘 새 데이터), 실패할 때만 캐시
 */
-const VERSION = "sports-v23";
+const VERSION = "sports-v24";
 const SHELL = [
   "./",
   "./index.html",
