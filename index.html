@@ -7024,11 +7024,7 @@ function tierTotals(){
   DEX.forEach(pk=>{ t[tierOf(pk)]++; if(state.caught[pk.id]) c[tierOf(pk)]++; });
   return { total:t, caught:c };
 }
-function nextMilestone(step, skip){
-  let m = Math.ceil((totalCatches()+1)/step)*step;
-  while(skip && skip(m)) m += step;
-  return m;
-}
+/* v72 — 예전 nextMilestone(3)·(5)(3·5의 배수) 방식은 실제 규칙과 달라 지웠다. 아래 하나만 쓴다. */
 /* v72 — 도감 마일리지 안내를 실제 규칙에 맞춘다.
    실제: 10마리 블록마다 1~9 중 미리 뽑아 둔 2자리 = 희귀, 블록의 10번째 = 전설·환상 (pickTarget 과 같은 값).
    화면: 다음에 잡을 한 마리를 포함해 며칠 마리 남았는지 — '희귀까지 3마리 · 전설까지 5마리' */
