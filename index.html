@@ -5042,6 +5042,8 @@ let wbTestHold = false;
 /* v75 — 부모가 테스트로 한 번 보고 닫은 뒤 10분 동안은 자동으로 또 띄우지 않는다
    (아침 시간대에 테스트하면 닫자마자 진짜 팝업이 또 뜨는 일을 막는다 — 날짜가 바뀌면 저절로 끝난다) */
 let wbTestQuietUntil = 0;
+/* wbPaint 가 마지막으로 그린 날씨 값의 시각 — 팝업이 떠 있는 사이 새 날씨가 도착하면 다시 칠한다 */
+let wbPaintKey = -1;
 function wbEl(id){ return document.getElementById(id); }
 function wbShown(){ const ov = wbEl('wxBrief'); return !!(ov && ov.classList.contains('show')); }
 function wbTxt(id, v){ const el = wbEl(id); if(el) el.textContent = (v == null ? '' : String(v)); }
@@ -5150,6 +5152,7 @@ function wbChips(d){
 /* 팝업 내용을 지금 날씨로 다시 칠한다 — 값이 없으면 '확인 중' 으로 두고 빈 칸을 만들지 않는다 */
 function wbPaint(){
   if(!wbEl('wxBrief')) return;
+  wbPaintKey = wxNow ? (wxNow.at || 0) : 0;
   const M = MODE_DEFS[modeId] || MODE_DEFS.school;
   const now = getNow();
   wbTxt('wbDate', `${now.getMonth()+1}월 ${now.getDate()}일 ${DAYS[now.getDay()]}`);
@@ -5234,7 +5237,11 @@ function checkWeatherBrief(now){
   if(!wbTestHold && Date.now() < wbTestQuietUntil) return;   // 테스트를 막 닫은 참 — 자동으로 또 띄우지 않는다
   if(wbTestHold){ if(!wbShown()) wbTestModeSet(false); return; }
   if(day().weatherBriefDone){ if(wbShown()) wbClose(); return; }
-  if(wbShown()){ if(!wbCanShow(now)) wbClose(); return; }
+  if(wbShown()){
+    if(!wbCanShow(now)) wbClose();
+    else if(wbPaintKey !== (wxNow ? (wxNow.at || 0) : 0)) wbPaint();   // 떠 있는 사이 날씨가 도착하면 다시 칠한다
+    return;
+  }
   if(wbCanShow(now)) wbOpen(false);
 }
 (function bindWeatherBrief(){
