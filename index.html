@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v73 — 🕘 지난 모험 도전으로 연 아침 루틴의 경험치 지급 수정.
+     v72 에서 '지난 모험 도전'을 넣은 뒤, 부모가 아침 마감(등교 08:35 · 방과후 08:45 · 공휴일 12:00 ·
+     방학 09:00)이 지난 뒤 지난 모험으로 아침 루틴을 열어 미완료 항목을 마저 끝내면
+     checkAllComplete 의 'now > DEPART' 마감 검사에 걸려 경험치(50 XP / 공휴일 100 XP → 포켓몬 1마리)가
+     지급되지 않고 '시간이 지나서 경험치는 아쉬워요 😢' 로 빠졌다.
+     → 지난 모험 도전으로 연 루틴(pastKey === key)이면 이 마감 검사만 건너뛴다.
+       일반 경로의 마감 규칙 · 하루 1회 지급(d.rewarded) · 체크 해제 회수(revokeRoutineReward/d.reclaim)는
+       v72 그대로다. 다른 동작은 바꾸지 않았다. -->
 <!-- v72 — 🕘 지난 모험 도전(부모 비번) + v71 점검에서 찾은 버그 4가지 수정.
      ① 휴식 화면 칩 줄 — 순서를 [🕘 지난 모험 도전] → [⏳ 다음 모험까지 …] → [☀️ 다음: …] 로 맞췄다
         (모든 모드 공통, 밤에는 그 뒤에 🍎 과일 주기·🌟 스페셜). '지난 모험 도전'은 버튼이고
@@ -5359,7 +5367,12 @@ function checkAllComplete(keyArg, opts){
   const d = day();
   d.rewarded = d.rewarded || { morning:false, after:false };
   const reclaim = !!(d.reclaim && d.reclaim[slot]);   /* v72 — 오늘 받았던 경험치를 체크 해제로 돌려준 경우 */
-  if(key === 'morning' && now > DEPART && !reclaim){       /* 마감 시간을 넘기면 경험치는 없다 */
+  /* v73 — 부모가 🕘 지난 모험 도전으로 연 루틴은 마감 시간이 지났어도 그 루틴의 경험치를 그대로 준다.
+     (예전에는 아침 마감 — 등교 08:35 · 방과후 08:45 · 공휴일 12:00 · 방학 09:00 — 뒤에 지난 모험으로
+      미완료 항목을 마저 채우면 '시간이 지나서 경험치는 아쉬워요' 로 빠져 50·100 XP 가 사라졌다.)
+     일반 경로의 마감 규칙과 하루 1회 지급(d.rewarded)·체크 해제 회수(d.reclaim)는 그대로 둔다. */
+  const pastOpen = pastKey === key;
+  if(key === 'morning' && now > DEPART && !reclaim && !pastOpen){       /* 마감 시간을 넘기면 경험치는 없다 */
     save(); renderProgress();
     if(!card) toast('시간이 지나서 경험치는 아쉬워요 😢 내일 다시!');
     sad();
