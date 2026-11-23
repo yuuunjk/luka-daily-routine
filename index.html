@@ -763,6 +763,13 @@
   @keyframes ppShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
   .pphint{margin-top:-2px; font-size:13.5px; font-weight:800; color:#8a6a3a; line-height:1.35; text-align:center;}
   .pphint[hidden]{display:none;}
+  /* v76 — 쉬는 시간 안내는 두 줄. 첫 줄은 인사, 둘째 줄은 대화 가능 시간대.
+     한 줄로 이어 두면 카드 폭(520px)에서 '18:00~20:50' 만 아래로 떨어져 어색했다.
+     둘째 줄은 12.5px 에서 폭 346px(카드 안쪽 482px)라 한 줄에 깔끔히 들어간다. */
+  .pphint.two{display:flex; flex-direction:column; align-items:center; gap:1px;}
+  .pphint .pph-l1{display:block; font-size:13.5px; line-height:1.3;}
+  .pphint .pph-l2{display:block; font-size:12.5px; font-weight:900; color:#9a7a48; line-height:1.3;
+    letter-spacing:-.01em; word-break:keep-all;}
 
   /* 작은 화면(태블릿 세로·낮은 창) — 무대를 낮추고 글자를 한 단 줄인다 */
   @media (max-width:560px), (max-height:660px){
@@ -1948,6 +1955,111 @@
     .mcard .m-undo{font-size:10.5px;padding:3px 8px;right:7px;bottom:7px;}
   }
 
+  /* ===== v76 — 📘 설명서 탭 (도감 오른쪽) =====
+     아이가 읽는 화면 — 보상 카드 5장을 게임 카드처럼 두른다. 넓은 화면은 3열×2행,
+     좁은 화면은 2열/1열로 내려가고 카드가 길어지면 안에서만 스크롤한다. */
+  .guide{flex:1;display:none;flex-direction:column;gap:8px;min-height:0;}
+  .guide.show{display:flex;}
+  .guide-main{
+    flex:1;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:9px 14px 10px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden;
+  }
+  .guide-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;row-gap:3px;}
+  .guide-head h2{margin:0;font-size:21px;font-weight:900;color:#54452f;line-height:1.2;}
+  .guide-head .sub{font-size:12.5px;font-weight:800;color:var(--ink2);}
+  .guide-grid{
+    flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(min-content,1fr);
+    gap:10px;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px;align-content:stretch;
+  }
+  .gcard{
+    display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0;min-height:0;overflow:hidden;
+    background:linear-gradient(180deg,#fffdf7,#fff8ec);border:3px solid #e8dcc6;border-radius:18px;
+    padding:9px 12px 10px;box-shadow:0 3px 10px rgba(120,100,70,.08);
+  }
+  .gcard.wide{grid-column:span 2;}
+  .gcard h3{margin:0;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:900;color:#54452f;line-height:1.2;}
+  .gcard h3 .ic{font-size:19px;line-height:1;flex:0 0 auto;}
+  .gcard h3 .tag{margin-left:auto;font-size:10.5px;font-weight:900;color:#6b5a8a;background:#efe9fb;
+    border:2px solid #ddd2f5;border-radius:999px;padding:1px 8px;white-space:nowrap;}
+  .gcard ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;min-height:0;}
+  .gcard li{position:relative;padding-left:13px;font-size:13px;font-weight:800;color:#5f5138;line-height:1.32;word-break:keep-all;}
+  .gcard li::before{content:'•';position:absolute;left:2px;top:-1px;color:#d9b348;font-weight:900;}
+  .gcard li b{color:#1f5aa8;font-weight:900;}
+  .gcard .note{margin-top:6px;font-size:11.5px;font-weight:900;color:#8a7a66;background:#f4f0e2;
+    border-radius:10px;padding:3px 8px;line-height:1.3;word-break:keep-all;}
+  /* 하루 루틴 카드 — 아침 +50 · 오후 +50 = 100 XP → 포켓몬 1마리 를 한 줄 수식으로 */
+  .gformula{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px;
+    background:rgba(255,255,255,.72);border:2px dashed #cfe7bf;border-radius:12px;padding:5px 8px;}
+  .gformula .gf{font-size:13px;font-weight:900;color:#4d6b3a;background:#fff;border:2px solid #cfe7bf;
+    border-radius:999px;padding:2px 10px;white-space:nowrap;}
+  .gformula .gf b{color:#3f7a2a;}
+  .gformula .gf.hot{background:#fff8d8;border-color:#f0d069;color:#8a5a00;}
+  .gformula .gf.hot b{color:#a8630a;}
+  .gformula .gf.ball{background:#fff2f2;border-color:#f3b6b6;color:#8f3a3a;}
+  .gformula .gf.ball b{color:#b02f2f;}
+  .gformula .op{font-size:15px;font-weight:900;color:#9aa88e;line-height:1;}
+  /* 잘 준비 카드 — 시각 | 보상 두 줄 */
+  .grows{display:flex;flex-direction:column;gap:4px;}
+  .grows .gr{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.72);
+    border:2px solid #ddd9f2;border-radius:10px;padding:4px 8px;min-width:0;}
+  .grows .gr b{flex:0 0 auto;font-size:12.5px;font-weight:900;color:#4a4f9e;white-space:nowrap;}
+  .grows .gr span{font-size:12.5px;font-weight:800;color:#5f5138;line-height:1.3;word-break:keep-all;}
+  .grows .gr span b{flex:none;font-size:inherit;color:#4a4f9e;white-space:normal;}
+  /* 카드마다 테마색 — 제목 아이콘을 보고 어느 보상인지 바로 알아보게 */
+  .g-routine{border-color:#cfe7bf;background:linear-gradient(180deg,#fdfef7,#f4fbe9);}
+  .g-routine li b{color:#3f7a2a;}
+  .g-night{border-color:#d6d9f0;background:linear-gradient(180deg,#fdfdff,#f1f2fc);}
+  .g-night li b{color:#4a4f9e;}
+  .g-study{border-color:#cfe4f4;background:linear-gradient(180deg,#fdfeff,#f2f9ff);}
+  .g-center{border-color:#f3d9d2;background:linear-gradient(180deg,#fffdf9,#fff4ef);}
+  .g-center li b{color:#b26a00;}
+  .g-partner{border-color:#f3d4e2;background:linear-gradient(180deg,#fffdfd,#fff3f8);}
+  .g-partner li b{color:#b0285c;}
+  @media (max-width:1120px){
+    .guide-main{padding:7px 10px 8px;gap:7px;}
+    .guide-head h2{font-size:17px;}
+    .guide-head .sub{font-size:11px;}
+    .guide-grid{gap:8px;}
+    .gcard{border-radius:15px;padding:8px 10px 9px;gap:5px;}
+    .gcard h3{font-size:13.5px;}
+    .gcard h3 .ic{font-size:17px;}
+    .gcard li{font-size:12px;padding-left:12px;line-height:1.3;}
+    .gcard .note{font-size:10.5px;padding:3px 7px;}
+    .gformula{gap:4px;padding:4px 6px;}
+    .gformula .gf{font-size:11.5px;padding:2px 8px;}
+    .gformula .op{font-size:13px;}
+    .grows .gr{padding:3px 6px;gap:6px;}
+    .grows .gr b{font-size:11.5px;}
+    .grows .gr span{font-size:11.5px;}
+  }
+  @media (min-width:881px) and (max-height:760px){
+    .guide-main{padding:6px 10px 7px;gap:4px;}
+    .guide-grid{gap:5px;padding:1px;}
+    .gcard{padding:6px 9px 7px;gap:3px;}
+    .gcard h3{font-size:12.5px;}
+    .gcard h3 .ic{font-size:16px;}
+    .gcard ul{gap:2px;}
+    .gcard li{font-size:11.5px;line-height:1.24;}
+    .gcard .note{font-size:10px;padding:2px 7px;margin-top:4px;}
+    .gformula{gap:3px;padding:3px 5px;}
+    .gformula .gf{font-size:11px;padding:1px 7px;}
+    .gformula .op{font-size:12px;}
+    .grows{gap:3px;}
+    .grows .gr{padding:2px 6px;gap:5px;}
+    .grows .gr b{font-size:11px;}
+    .grows .gr span{font-size:11px;line-height:1.26;}
+  }
+  /* 세로 화면·휴대폰 — 카드가 좁아지면 2열, 아주 좁으면 1열로 내려가고 안에서 스크롤한다 */
+  @media (max-width:880px){
+    .guide-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(max-content,1fr);align-content:stretch;}
+    .gcard.wide{grid-column:span 2;}
+    .gcard li{font-size:12.5px;}
+  }
+  @media (max-width:560px){
+    .guide-grid{grid-template-columns:minmax(0,1fr);}
+    .gcard.wide{grid-column:span 1;}
+  }
+
   /* ===== 구글 시트 연동 상태 (오늘의 공부) ===== */
   .sheet-sync{
     margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto;
@@ -2923,6 +3035,7 @@
         <button class="tab" id="tabStudy">📚 오늘의 공부</button>
         <button class="tab" id="tabCenter">🏥 포켓몬센터 미션</button>
         <button class="tab" id="tabDex">📕 도감<span class="tbadge" id="dexBadge">0</span></button>
+        <button class="tab" id="tabGuide">📘 설명서</button>
       </div>
       <div class="spacer"></div>
       <button class="soundbtn on" id="soundBtn" type="button" aria-pressed="true" title="효과음 켜기/끄기">🔊 소리 켜짐</button>
@@ -3115,6 +3228,81 @@
       <span id="upBannerTx">강화권이 있어요! 잡은 포켓몬을 눌러 능력치를 올려 보세요!</span>
     </div>
     <div class="dex-grid" id="dexGrid"></div>
+  </div>
+
+  <!-- ======= v76 — 📘 설명서 (도감 오른쪽 탭) =======
+       내가 받는 보상을 카드로 정리한 화면. 숫자·시간은 모두 실제 코드 규칙 그대로다.
+       아이가 읽는 화면이라 반말로 짧게 썼고, 내용을 고칠 때는 반드시 아래 코드를 다시 확인한다:
+         · 아침/오후 경험치 — MODE_DEFS(MODE_DEFS[modeId].xp / afterXp)
+         · 잘 준비 보상 — NIGHT_BED(21:40) · nightRewardLine() · syncNightFruit()
+         · 공부 과일·타이머 보너스 — studyFruitSync() · stToggleDone()
+         · 미션·강화 — incrementSelfProgress() · BOOST_MAX(8) · LV_UP[10,5,5]
+         · 파트너 대화·과일 — PP_SLOTS · PP_TALK_TAPS · ppFeed / ppFeedSp -->
+  <div class="guide" id="guide">
+    <div class="guide-main">
+      <div class="guide-head">
+        <h2>📘 LUKA의 루틴 설명서</h2>
+        <span class="sub">내가 받는 보상을 한눈에 모아 봤어요!</span>
+      </div>
+      <div class="guide-grid">
+        <section class="gcard g-routine wide" aria-label="하루 루틴과 포켓몬 포획">
+          <h3><span class="ic">🏃</span>하루 루틴 → 새 포켓몬!</h3>
+          <div class="gformula">
+            <span class="gf">☀️ 아침 <b>+50</b></span>
+            <span class="op">+</span>
+            <span class="gf">🎒 오후 <b>+50</b></span>
+            <span class="op">=</span>
+            <span class="gf hot"><b>100 XP</b></span>
+            <span class="op">→</span>
+            <span class="gf ball">🔴 새 포켓몬 <b>1마리</b></span>
+          </div>
+          <ul>
+            <li>🗓️ 공휴일은 아침 루틴(07:00~12:00) 하나로 <b>경험치 +100</b> · 포켓몬 1마리</li>
+            <li>놓친 루틴은 쉬는 화면의 <b>[🕘 지난 모험 도전]</b>으로 마저 할 수 있어요 (부모님 확인)</li>
+          </ul>
+          <div class="note">체크를 풀면 그 루틴에서 받은 경험치도 같이 돌아가요</div>
+        </section>
+
+        <section class="gcard g-night" aria-label="잘 준비 루틴">
+          <h3><span class="ic">🌙</span>잘 준비 루틴<span class="tag">21:00~21:40</span></h3>
+          <div class="grows">
+            <div class="gr"><b>21:40까지</b><span>🌟 스페셜 과일 <b>1개</b> · ⚡ 강화 XP <b>2칸</b></span></div>
+            <div class="gr"><b>21:41~21:59</b><span>🌟 스페셜 과일 <b>1개</b> · ⚡ 강화 XP <b>1칸</b></span></div>
+          </div>
+          <div class="note">밤 10시부터는 잘 자는 시간이에요 🌜</div>
+        </section>
+
+        <section class="gcard g-study" aria-label="오늘의 공부와 타이머">
+          <h3><span class="ic">📚</span>오늘의 공부 &amp; 타이머</h3>
+          <ul>
+            <li>공부를 한 개 끝낼 때마다 <b>🍎 과일 1개</b></li>
+            <li><b>⏱️ 타이머</b>를 켜고 시간 안에 <b>✓ 끝</b> 하면 <b>🍎 과일 2개</b> (타이머는 한 번에 하나)</li>
+            <li>공부를 <b>다</b> 끝내면 <b>🌟 스페셜 과일 1개</b></li>
+            <li><b>✓ 스스로 했어요</b> → <b>⚡ 강화 XP +1</b></li>
+          </ul>
+        </section>
+
+        <section class="gcard g-center" aria-label="포켓몬센터 미션과 강화">
+          <h3><span class="ic">🏥</span>미션 &amp; ⚡ 강화</h3>
+          <ul>
+            <li>포켓몬센터 미션을 한 번 할 때마다 <b>⚡ 강화 XP +1</b></li>
+            <li>미션마다 하루에 할 수 있는 <b>횟수</b>가 정해져 있어요</li>
+            <li><b>⚡ 강화 XP 8칸</b>을 다 모으면 <b>🎟 강화권 1장</b>!</li>
+            <li>도감에서 🎟 강화권을 쓰면 <b>HP +10 · 공격 +5 · 방어 +5 · 전투력 +30</b></li>
+          </ul>
+        </section>
+
+        <section class="gcard g-partner" aria-label="파트너 포켓몬">
+          <h3><span class="ic">🍎</span>파트너 포켓몬</h3>
+          <ul>
+            <li>도감 카드에서 <b>[너로 정했다!]</b>를 누르면 내 파트너가 돼요</li>
+            <li><b>🍎 과일</b>·<b>🌟 스페셜 과일</b>은 과일이 있으면 언제든 줄 수 있어요</li>
+            <li><b>💬 대화 시간</b> 08:00~11:59 · 12:00~17:59 · 18:00~20:50 — 시간대마다 <b>3번씩</b></li>
+            <li><b>20:51~07:59</b>는 파트너가 쉬는 시간이에요</li>
+          </ul>
+        </section>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -6202,6 +6390,8 @@ const PP_SLOTS = [
 ];
 const PP_TALK_TAPS = 3;                // 시간대마다 주고받기 3회 — 3회째 끝에 마무리 멘트
 const PP_SLOT_GUIDE = '대화 가능 시간: 08:00~11:59 · 12:00~17:59 · 18:00~20:50';
+/* v76 — 쉬는 시간 안내는 두 줄로 나눠 그린다(인사 / 대화 가능 시간대) */
+const PP_REST_HINT_L1 = '지금은 파트너가 쉬는 시간이에요.';
 function ppSlotClose(s){ return '대화 즐거웠어! ' + (s ? s.next : '다음에 또 만나!'); }
 function ppSlotDoneLine(s){
   return s ? `${s.label} 대화는 여기까지야! ${s.next}` : '지금은 내가 쉬는 시간이야!';
@@ -6747,11 +6937,17 @@ function updatePartnerPopup(){
   const sb = ppEl('ppFeedSp'); if(sb) sb.disabled = sp <= 0;
   const hint = ppEl('ppHint'), slot = ppSlotOf();
   if(hint){
-    /* v64 — 쉬는 시간에는 무엇보다 대화 가능 시간을 먼저 알려 준다 */
-    if(!slot){ hint.textContent = '지금은 파트너가 쉬는 시간이에요. ' + PP_SLOT_GUIDE; hint.hidden = false; }
-    else if(f <= 0){ hint.textContent = PP_NEED_FRUIT; hint.hidden = false; }
-    else if(sp <= 0){ hint.textContent = '공부를 모두 끝내면 🌟 스페셜 과일도 받을 수 있어요!'; hint.hidden = false; }
-    else hint.hidden = true;
+    /* v64 — 쉬는 시간에는 무엇보다 대화 가능 시간을 먼저 알려 준다.
+       v76 — 한 줄이면 마지막 시간대만 아래로 떨어져 어색하므로 두 줄로 나눈다. */
+    if(!slot){
+      hint.classList.add('two');
+      hint.innerHTML = '<span class="pph-l1">' + PP_REST_HINT_L1 + '</span>'
+                     + '<span class="pph-l2">' + PP_SLOT_GUIDE + '</span>';
+      hint.hidden = false;
+    }
+    else if(f <= 0){ hint.classList.remove('two'); hint.textContent = PP_NEED_FRUIT; hint.hidden = false; }
+    else if(sp <= 0){ hint.classList.remove('two'); hint.textContent = '공부를 모두 끝내면 🌟 스페셜 과일도 받을 수 있어요!'; hint.hidden = false; }
+    else { hint.classList.remove('two'); hint.hidden = true; }
   }
   ppSyncTalkBtn();
 }
@@ -8830,7 +9026,7 @@ function renderSheetChip(){
 })();
 
 /* ---------- tabs ---------- */
-const TAB_IDS = { dash:'tabDash', study:'tabStudy', center:'tabCenter', dex:'tabDex' };
+const TAB_IDS = { dash:'tabDash', study:'tabStudy', center:'tabCenter', dex:'tabDex', guide:'tabGuide' };
 let curTab = 'dash';
 function showTab(key){
   curTab = key;
@@ -8839,6 +9035,7 @@ function showTab(key){
   document.getElementById('dex').classList.toggle('show', key === 'dex');
   document.getElementById('study').classList.toggle('show', key === 'study');
   document.getElementById('center').classList.toggle('show', key === 'center');
+  document.getElementById('guide').classList.toggle('show', key === 'guide');   // v76 — 📘 설명서
   if(key === 'dex') renderDex();
   if(key === 'study'){ renderStudy(); sheetFetch('tab'); }
   if(key === 'center'){ renderMission(); renderHeaderXp(); }
