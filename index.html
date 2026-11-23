@@ -2055,6 +2055,26 @@
     .gcard.wide{grid-column:span 2;}
     .gcard li{font-size:12.5px;}
   }
+  /* 세로로 긴 화면(800×1280 등) — 공간이 넉넉하니 글자를 키워 카드를 채운다 */
+  @media (max-width:880px) and (min-height:1100px){
+    .guide-head h2{font-size:23px;}
+    .guide-head .sub{font-size:13.5px;}
+    .guide-grid{gap:12px;}
+    .gcard{padding:14px 16px 15px;gap:9px;border-radius:20px;}
+    .gcard h3{font-size:18px;}
+    .gcard h3 .ic{font-size:23px;}
+    .gcard h3 .tag{font-size:12px;padding:2px 10px;}
+    .gcard li{font-size:15.5px;padding-left:16px;line-height:1.4;}
+    .gcard ul{gap:5px;}
+    .gcard .note{font-size:13px;padding:5px 10px;margin-top:9px;}
+    .gformula{padding:8px 10px;gap:8px;border-radius:14px;}
+    .gformula .gf{font-size:15px;padding:3px 13px;}
+    .gformula .op{font-size:17px;}
+    .grows{gap:7px;}
+    .grows .gr{padding:7px 11px;gap:9px;border-radius:12px;}
+    .grows .gr b{font-size:15px;}
+    .grows .gr span{font-size:15px;}
+  }
   @media (max-width:560px){
     .guide-grid{grid-template-columns:minmax(0,1fr);}
     .gcard.wide{grid-column:span 1;}
