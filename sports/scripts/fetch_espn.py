@@ -1648,9 +1648,10 @@ def _kleague_detail(pid: str, kleague_cache: dict) -> dict:
 def _kleague_photo(img1: str, pid: str, photo_cache: dict | None = None) -> str:
     """K리그 공식 사진(4~5MB PNG)을 카드용 560px WebP 로 줄여 data/img/kleague 에 둔다.
 
-    카드가 사진을 네모 프레임에 그대로 잘라 넣으므로 **누끼(배경 지우기)를 하지 않는다**.
-    공식 사진의 흰 스튜디오 배경을 지우면 얼굴·어깨 둘레에 지운 자국이 남아 '오려붙인' 것처럼
-    보였기 때문이다. 원본 사진을 그대로 줄여 저장한다.
+    K리그 공식 사진은 **투명 배경 PNG** 다(구단 배경 위에 얹어 쓰는 누끼 원본).
+    그래서 배경을 지우거나 다른 색으로 채우지 않고 **투명도까지 원본 그대로** 줄여 저장한다.
+    예전에는 `.convert("RGB")` 로 알파를 버렸는데, 투명 영역의 RGB 에 남아 있던 회색
+    스튜디오 배경이 그대로 드러나 사진 안에 회색 사각형이 겹쳐 보였다(하정우 카드).
     Pillow 가 없는 환경에서는 원본 URL 을 쓰되, 7일 동안은 다시 받지 않는다(4~5MB).
     """
     rel = f"img/kleague/{pid}.webp"
@@ -1668,10 +1669,11 @@ def _kleague_photo(img1: str, pid: str, photo_cache: dict | None = None) -> str:
         raw = http_get(src, timeout=40)
         from PIL import Image  # noqa: PLC0415 — Pillow 가 없으면 원본 URL 로 넘어간다
         import io  # noqa: PLC0415
-        image = Image.open(io.BytesIO(raw)).convert("RGB")   # 투명 없이 원본 사진 그대로
+        image = Image.open(io.BytesIO(raw))
+        image = image.convert("RGBA")      # 알파 보존 — 원본 배경을 건드리지 않는다
         width, height = image.size
         if width > 560:
-            image = image.resize((560, int(height * 560 / width)), Image.LANCZOS)
+            image = image.resize((560, max(1, int(height * 560 / width))), Image.LANCZOS)
         os.makedirs(KLEAGUE_IMG_DIR, exist_ok=True)
         image.save(path, "WEBP", quality=82, method=4)
         return "./data/" + rel

@@ -556,8 +556,8 @@
     box-shadow:0 16px 34px rgba(0,0,0,.46);}
   .pc1-shot::after{content:""; position:absolute; inset:0; z-index:3; pointer-events:none; border-radius:inherit;
     box-shadow:inset 0 0 0 1.6px rgba(255,255,255,.62), inset 0 -54px 64px -32px rgba(4,9,18,.42);}
-  .pc1-shot-bg{position:absolute; left:-12%; top:-12%; width:124%; height:124%; object-fit:cover;
-    filter:blur(30px) saturate(1.15) brightness(1.02); opacity:.55;}
+  /* 사진은 원본 한 장만 쓴다 — 뒤에 같은 사진을 흐리게 한 장 더 깔면 투명 배경 사진에서
+     가장자리에 흐린 테두리가 겹쳐 보인다(이중 경계). */
   .pc1-photo{position:absolute; inset:0; width:100%; height:100%;
     object-fit:cover; object-position:center top;}
   .pc1-jersey{position:relative; z-index:2; width:352px; max-height:104%; height:auto;
@@ -1669,7 +1669,6 @@ function pcCardHTML(row, lg, cat){
   const rarity = (medal && cat) ? `<div class="pc1-rarity">${medal} ${esc(cat.name)} ${esc(row.rank)}위</div>` : "";
   const figure = row.photo
     ? `<figure class="pc1-shot">
-         <img class="pc1-shot-bg" src="${esc(row.photo)}" alt="" aria-hidden="true" loading="eager" referrerpolicy="no-referrer">
          <img class="pc1-photo" src="${esc(row.photo)}" alt="${esc(name)}" loading="eager" referrerpolicy="no-referrer">
        </figure>`
     : pcJerseySVG(row, t);
