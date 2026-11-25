@@ -83,6 +83,12 @@
     font-size:14px; font-weight:900; color:#0b7a43; min-height:36px; white-space:nowrap; letter-spacing:-.3px;}
   .btn-power.off{background:#ffeaea; border-color:#ffbdbd; color:#b91c1c;}
   .btn-power:active{transform:scale(.97);}
+  /* 📲 앱 설치 — 설치된 웹앱으로 열고 있으면 JS가 숨긴다 */
+  .btn-install{background:#eaf2ff; border:2px solid #bfdbfe; border-radius:999px; padding:5px 11px;
+    font-size:14px; font-weight:900; color:var(--blue-dark); min-height:36px; white-space:nowrap; letter-spacing:-.3px;}
+  .btn-install:active{transform:scale(.97);}
+  .btn-install[hidden]{display:none !important;}
+  @media (display-mode:standalone){ .btn-install{display:none !important;} }
 
   /* ── tabs (4개 한 줄에 고르게) ────────────── */
   .tabs{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:16px 0 4px;}
@@ -319,6 +325,25 @@
   .sheet .btn-close-all{margin-top:16px; width:100%; background:var(--blue); color:#fff; font-weight:900;
     border-radius:999px; padding:14px; min-height:52px; font-size:19px;}
 
+  /* ── 📲 앱 설치 안내 (삼성 인터넷 · 아이폰 사파리) ── */
+  .inst-lead{margin:0 0 14px; font-size:17px; font-weight:700; color:var(--sub); line-height:1.55; word-break:keep-all;}
+  .ig{border:2px solid #eef3fb; border-radius:18px; background:#fbfdff; padding:13px 15px 12px; margin-bottom:10px;}
+  .ig.is-this{border-color:#bfdbfe; background:linear-gradient(160deg,#eaf2ff,#ffffff 76%);}
+  .ig-head{display:flex; align-items:center; gap:7px; margin-bottom:8px;}
+  .ig-ico{font-size:17px; line-height:1;}
+  .ig-head h3{margin:0; font-size:17px; font-weight:900; letter-spacing:-.3px; word-break:keep-all;}
+  .ig-badge{margin-left:auto; font-size:12px; font-weight:900; color:#fff; background:var(--blue);
+    border-radius:999px; padding:3px 9px; white-space:nowrap;}
+  .ig-badge[hidden]{display:none !important;}
+  .ig ol{margin:0; padding-left:19px; display:grid; gap:5px;}
+  .ig li{font-size:16px; font-weight:700; color:#3d4a6b; line-height:1.55; word-break:keep-all;}
+  .ig li b{font-weight:900; color:var(--blue-dark);}
+  .inst-foot{margin:12px 0 0; font-size:14px; font-weight:700; color:#93a2bd; text-align:center;}
+  @media (max-width:480px){
+    .inst-lead{font-size:16px;}
+    .ig li{font-size:15px;}
+  }
+
   /* ── ⭐ 우리 팀 고르기 창 ─────────────────── */
   .sheet .fp-hint{margin:0 0 4px; color:var(--sub); font-size:17px; font-weight:700;}
   .favpick{display:grid; gap:2px;}
@@ -458,7 +483,7 @@
     .brand{font-size:27px;}
     .brand .appicon{width:32px; height:32px; border-radius:10px;}
     .hd-right{gap:6px;}
-    .btn-fav,.btn-refresh,.btn-power,.livetoggle{padding:5px 9px; font-size:13px; min-height:34px;}
+    .btn-fav,.btn-refresh,.btn-power,.livetoggle,.btn-install{padding:5px 9px; font-size:13px; min-height:34px;}
     .today-label{font-size:13px; padding:5px 9px;}
     .score{font-size:38px; min-width:96px;}
     .news h3{font-size:22px;}
@@ -716,6 +741,8 @@
         <button class="btn-power" id="powerBtn" type="button" aria-pressed="true"
                 title="사용 ON · 부모 비밀번호로 끌 수 있어요">🟢 ON</button>
         <button class="btn-refresh" id="settingsBtn" aria-label="설정">⚙ 설정</button>
+        <button class="btn-install" id="installBtn" type="button" aria-haspopup="dialog"
+                title="홈 화면에 앱으로 담기">📲 앱 설치</button>
       </div>
     </div>
     <nav class="tabs" id="tabs">
@@ -884,6 +911,44 @@
     <div class="favpick" id="favBody"></div>
     <div class="fp-picked" id="favPicked">아직 고른 팀이 없어요</div>
     <button class="btn-close-all" id="favDone">다 골랐어요</button>
+  </div>
+</div>
+
+<!-- 📲 앱 설치 안내 (상단 '앱 설치' 버튼 · beforeinstallprompt 가 없는 브라우저) -->
+<div class="modal" id="installModal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="installTitle">
+    <div class="sh-top">
+      <span class="sh-tag">📲 앱 설치</span>
+      <button class="sh-close" id="installClose" type="button">✕ 닫기</button>
+    </div>
+    <h2 id="installTitle">📲 홈 화면에 앱으로 담기</h2>
+    <p class="inst-lead">홈 화면에 아이콘으로 담아 두면 주소를 치지 않고 한 번에 열려요. 화면도 앱처럼 꽉 차게 나와요.</p>
+    <section class="ig" id="igSamsung">
+      <div class="ig-head">
+        <span class="ig-ico" aria-hidden="true">🌐</span>
+        <h3>갤럭시탭 · 삼성 인터넷</h3>
+        <span class="ig-badge" hidden>이 기기</span>
+      </div>
+      <ol>
+        <li>주소창 오른쪽의 <b>↓ 아이콘</b>을 누르거나, 오른쪽 위 <b>≡ 메뉴</b>를 열어요.</li>
+        <li><b>현재 페이지 추가</b>를 누르고 <b>홈 화면</b>을 골라요.</li>
+        <li><b>추가</b>를 누르면 홈 화면에 <b>오늘의 경기장</b> 아이콘이 생겨요.</li>
+      </ol>
+    </section>
+    <section class="ig" id="igIos">
+      <div class="ig-head">
+        <span class="ig-ico" aria-hidden="true">🍎</span>
+        <h3>아이폰 · 사파리</h3>
+        <span class="ig-badge" hidden>이 기기</span>
+      </div>
+      <ol>
+        <li>아래쪽 <b>공유 버튼</b>(□↑)을 눌러요.</li>
+        <li>목록을 내려 <b>홈 화면에 추가</b>를 눌러요.</li>
+        <li>오른쪽 위 <b>추가</b>를 누르면 홈 화면에 아이콘이 생겨요.</li>
+      </ol>
+    </section>
+    <p class="inst-foot">이미 앱으로 열리고 있다면 이 안내는 필요 없어요.</p>
+    <button class="btn-close-all" id="installDone" type="button">닫기</button>
   </div>
 </div>
 
@@ -2633,6 +2698,51 @@ function closeFavPicker(){
   if (!$("#articleModal").classList.contains("show")) document.body.classList.remove("modal-open");
 }
 
+/* ── 📲 앱 설치 ───────────────────────────────
+   beforeinstallprompt 가 오면(크롬 계열) 누를 때 바로 설치 창을 띄우고,
+   없는 브라우저(삼성 인터넷·아이폰 사파리)에서는 손으로 담는 방법을 안내한다.
+   이미 설치된 웹앱(standalone)으로 열고 있으면 버튼은 숨긴다. */
+let installPrompt = null;
+const standaloneMq = window.matchMedia ? window.matchMedia("(display-mode: standalone)") : null;
+function isStandaloneApp(){
+  return (standaloneMq && standaloneMq.matches) || window.navigator.standalone === true;
+}
+function updateInstallBtn(){
+  const b = $("#installBtn");
+  if (b) b.hidden = isStandaloneApp();
+}
+function markInstallDevice(){
+  const ua = navigator.userAgent || "";
+  const isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isSamsung = /SamsungBrowser/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const sel = isIOS ? "#igIos" : ((isSamsung || isAndroid) ? "#igSamsung" : null);   // PC 브라우저면 표시하지 않는다
+  if (!sel) return;
+  const card = $(sel);
+  if (!card) return;
+  card.classList.add("is-this");
+  const badge = card.querySelector(".ig-badge");
+  if (badge) badge.hidden = false;
+}
+function openInstallGuide(){
+  const m = $("#installModal");
+  if (!m) return;
+  markInstallDevice();
+  m.classList.add("show");
+  m.setAttribute("aria-hidden", "false");
+  m.scrollTop = 0;
+  document.body.classList.add("modal-open");
+}
+function closeInstallGuide(){
+  const m = $("#installModal");
+  if (!m) return;
+  m.classList.remove("show");
+  m.setAttribute("aria-hidden", "true");
+  const others = ["articleModal", "predModal", "favModal", "summaryModal"]
+    .some(id => $(`#${id}`)?.classList.contains("show"));
+  if (!others) document.body.classList.remove("modal-open");
+}
+
 /* ── 탭 & 새로고침 타이머 ─────────────── */
 function renderAll(){
   renderSportChips(); renderStateChips(); renderToday();
@@ -3468,6 +3578,43 @@ function bind(){
   $("#favModal").addEventListener("click", (e) => {
     if (e.target && e.target.id === "favModal") closeFavPicker();
   });
+  /* 📲 앱 설치 — 바로 설치되면 창을, 안 되는 브라우저면 담는 방법을 보여 준다 */
+  const installBtn = $("#installBtn");
+  if (installBtn){
+    installBtn.onclick = async () => {
+      const prompt = installPrompt;
+      if (prompt && typeof prompt.prompt === "function"){
+        installPrompt = null;
+        try {
+          prompt.prompt();
+          const choice = prompt.userChoice ? await prompt.userChoice : null;
+          if (choice && choice.outcome === "accepted"){ installBtn.hidden = true; return; }
+        } catch (err) { /* 프롬프트를 못 쓰면 안내로 넘어간다 */ }
+        openInstallGuide();
+        return;
+      }
+      openInstallGuide();
+    };
+  }
+  $("#installClose").onclick = closeInstallGuide;
+  $("#installDone").onclick = closeInstallGuide;
+  $("#installModal").addEventListener("click", (e) => {
+    if (e.target && e.target.id === "installModal") closeInstallGuide();
+  });
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    updateInstallBtn();
+  });
+  window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    updateInstallBtn();
+  });
+  if (standaloneMq){
+    if (standaloneMq.addEventListener) standaloneMq.addEventListener("change", updateInstallBtn);
+    else if (standaloneMq.addListener) standaloneMq.addListener(updateInstallBtn);
+  }
+  updateInstallBtn();
   /* 예측 버튼은 화면을 다시 그려도 살아 있도록 한 곳에서 받는다 */
   document.addEventListener("click", (e) => {
     if (!e.target || !e.target.closest) return;
@@ -3574,6 +3721,7 @@ function bind(){
     if ($("#articleModal").classList.contains("show")) closeArticle();
     else if ($("#predModal").classList.contains("show")) closePredHistory();
     else if ($("#favModal").classList.contains("show")) closeFavPicker();
+    else if ($("#installModal").classList.contains("show")) closeInstallGuide();
   });
   /* 🌙 잠금 화면 · 부모님 확인 */
   $("#nightUnlockBtn").onclick = openPin;
