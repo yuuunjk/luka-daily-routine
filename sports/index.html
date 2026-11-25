@@ -2184,8 +2184,9 @@ function smTrimRaw(raw, g){
       }
     }
     s.heroes = Object.values(made).sort((a, b) => b.mins.length - a.mins.length || b.ast - a.ast).slice(0, 3)
-      .map(m => ({side: m.side, tag: m.mins.length ? `${m.mins.length}골` : "도움", n: m.n,
-        s: [m.mins.slice(0, 4).join(" · "), m.ast ? `도움 ${m.ast}` : ""].filter(Boolean).join(" · ")}));
+      .map(m => ({side: m.side, tag: m.mins.length ? `${m.mins.length}골` : `도움 ${m.ast}`, n: m.n,
+        s: [m.mins.slice(0, 4).join(" · "), (m.mins.length && m.ast) ? `도움 ${m.ast}` : ""].filter(Boolean).join(" · ")
+          || (m.side === "home" ? hname : aname)}));
     return s;
   }
   if (["농구", "해외농구"].includes(g.sport)){

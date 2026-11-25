@@ -949,11 +949,12 @@ def _soccer(raw: dict, game: dict) -> dict:
                        "d": team_name, "sc": ""})
     heroes = []
     for (side, name), m in sorted(made.items(), key=lambda kv: (-len(kv[1]["mins"]), -kv[1]["ast"]))[:3]:
-        tag = f"{len(m['mins'])}골" if m["mins"] else "도움"
+        tag = f"{len(m['mins'])}골" if m["mins"] else f"도움 {m['ast']}"
         bits = [str(x) for x in m["mins"][:4]]
-        if m["ast"]:
+        if m["mins"] and m["ast"]:
             bits.append(f"도움 {m['ast']}")
-        heroes.append({"side": side, "tag": tag, "n": name, "s": " · ".join(bits)})
+        heroes.append({"side": side, "tag": tag, "n": name,
+                       "s": " · ".join(bits) or (hname if side == "home" else aname)})
     return {"periods": labels[:n] if n else labels[:2], "ph": ph, "pa": pa,
             "heroes": heroes, "stats": rows, "tl": _cap_tl(tl)}
 
