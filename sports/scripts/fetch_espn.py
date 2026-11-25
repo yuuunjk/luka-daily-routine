@@ -1070,8 +1070,8 @@ def _basket_runs(raw: dict, hname: str, aname: str, limit: int = 6) -> list:
     for r in keep:
         label = f"{r['period']}쿼터" if 0 < r["period"] <= 4 else ("연장" if r["period"] else "")
         team = hname if r["side"] == "home" else aname
-        items.append({"k": "run", "t": f"{label} {r['clock']}".strip(), "side": r["side"],
-                      "m": f"{team} {r['pts']}점 연속", "d": "", "sc": f"{r['h']}:{r['a']}"})
+        items.append({"k": "run", "t": r["clock"], "side": r["side"],
+                      "m": f"{team} {r['pts']}점 연속", "d": label, "sc": f"{r['h']}:{r['a']}"})
     return items
 
 
@@ -1121,8 +1121,8 @@ def _football(raw: dict, game: dict) -> dict:
         text = str(p.get("text") or "")
         main = _nfl_play_kr(text) or str(typ.get("text") or "득점")
         label = f"{period}쿼터" if 0 < period <= 4 else ("연장" if period else "")
-        tl.append({"k": "goal", "t": f"{label} {clock}".strip(), "side": side, "m": main,
-                   "d": team_name, "sc": f"{p.get('homeScore')}:{p.get('awayScore')}"})
+        tl.append({"k": "goal", "t": clock, "side": side, "m": main,
+                   "d": f"{team_name} · {label}".strip(" ·"), "sc": f"{p.get('homeScore')}:{p.get('awayScore')}"})
     return {"periods": labels, "ph": ph, "pa": pa, "heroes": heroes, "stats": rows, "tl": _cap_tl(tl, 12)}
 
 
