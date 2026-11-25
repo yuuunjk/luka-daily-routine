@@ -2212,9 +2212,24 @@ const ESPN_LEAGUES = [
   {espn:"soccer/uefa.euro", sport:"국제대회", name:"유로", intl:true},
   {espn:"soccer/caf.nations", sport:"국제대회", name:"아프리카 네이션스컵", intl:true},
   {espn:"soccer/conmebol.america", sport:"국제대회", name:"코파 아메리카", intl:true},
-  {espn:"soccer/fifa.friendly", sport:"국제대회", name:"국가대표 평가전", intl:true},
+  {espn:"soccer/fifa.friendly", sport:"국제대회", name:"친선경기", intl:true, koreaOnly:true},
 ];
 const INT_LEAGUES = new Set(ESPN_LEAGUES.filter(l => l.intl).map(l => l.espn));
+
+/* 친선경기는 대한민국이 뛰는 경기만 — ESPN은 그날 전 세계 A매치를 다 준다 */
+const KOREA_ABBRS = new Set(["KOR"]);
+const KOREA_NAMES = new Set(["south korea", "korea republic", "korea rep.", "korea rep", "republic of korea"]);
+function isKoreaTeam(team){
+  if (!team) return false;
+  if (KOREA_ABBRS.has(String(team.abbreviation || "").toUpperCase())) return true;
+  if (String(team.id || "") === "451") return true;   // ESPN 축구 국가대표 'South Korea' id
+  const nm = String(team.displayName || team.shortDisplayName || team.name || "").trim().toLowerCase();
+  return KOREA_NAMES.has(nm);
+}
+function eventHasKorea(ev){
+  const comp = (ev?.competitions || [])[0] || {};
+  return (comp.competitors || []).some(c => isKoreaTeam(c.team));
+}
 const KO_BY_LEAGUE = {
   /* 리그별로 약어가 겹쳐서 한 장으로는 맞출 수 없는 이름들
      (MUN = 분데스리가 바이에른 / 프리미어리그 맨유, LEV = 라리가 레반테 / 분데스리가 레버쿠젠 등) */
@@ -2348,6 +2363,7 @@ async function fetchEspn(){
     okCount++;
     const {d, lg, events} = r.value;
     for (const ev of events){
+      if (lg.koreaOnly && !eventHasKorea(ev)) continue;   // 친선경기는 대한민국 경기만
       const g = espnToGame(ev, lg);
       if (!g) continue;
       if (d !== dates[0] && g.state !== "done") continue;

@@ -62,9 +62,15 @@ LEAGUES = [
     {"espn": "soccer/uefa.euro", "sport": "국제대회", "name": "유로", "season": "2026", "intl": True},
     {"espn": "soccer/caf.nations", "sport": "국제대회", "name": "아프리카 네이션스컵", "season": "2026", "intl": True},
     {"espn": "soccer/conmebol.america", "sport": "국제대회", "name": "코파 아메리카", "season": "2026", "intl": True},
-    {"espn": "soccer/fifa.friendly", "sport": "국제대회", "name": "국가대표 평가전", "season": "2026", "intl": True},
+    # 친선경기(A매치) — ESPN은 그날 열리는 전 세계 친선경기를 다 주므로
+    # koreaOnly 로 대한민국이 뛰는 경기만 남긴다(사용자 요청: "친선경기는 대한민국과 다른 나라의 경기").
+    {"espn": "soccer/fifa.friendly", "sport": "국제대회", "name": "친선경기", "season": "2026", "intl": True, "koreaOnly": True},
 ]
 INTL_KEYS = {l["espn"] for l in LEAGUES if l.get("intl")}
+
+# 대한민국 국가대표 — ESPN은 'South Korea'(약어 KOR)로 준다. 예전 표기(Korea Republic)도 함께 본다.
+KOREA_ABBRS = {"KOR"}
+KOREA_NAMES = {"south korea", "korea republic", "korea rep.", "korea rep", "republic of korea"}
 
 TEAMS_KO = {
     # NBA
@@ -164,6 +170,8 @@ INT_TEAMS_KO = {
     "NIG": "니제르", "CPV": "카보베르데", "EQG": "적도기니", "SUD": "수단", "LBY": "리비아",
     "NZL": "뉴질랜드", "TAH": "타히티", "FIJ": "피지", "SOL": "솔로몬제도", "VAN": "바누아투",
     "COK": "쿡제도", "PNG": "파푸아뉴기니", "NCL": "뉴칼레도니아",
+    "TRI": "트리니다드 토바고",  # ESPN은 Trinidad and Tobago 를 TRI 로 준다
+    "TJK": "타지키스탄",          # ESPN은 Tajikistan 을 TJK 로 준다(위 TAJ 와 함께 둔다)
 }
 
 STATE_KO = {"pre": "예정", "in": "진행 중", "post": "종료"}
@@ -404,11 +412,32 @@ def to_game(event: dict, league: dict) -> dict | None:
     }
 
 
+def is_korea_team(team: dict) -> bool:
+    """대한민국 국가대표인지 — 약어(KOR)를 먼저 보고, 없으면 영문 표기를 본다."""
+    if (team.get("abbreviation") or "").upper() in KOREA_ABBRS:
+        return True
+    if str(team.get("id") or "") == "451":   # ESPN 축구 국가대표 'South Korea' id
+        return True
+    name = (team.get("displayName") or team.get("shortDisplayName") or team.get("name") or "").strip().lower()
+    return name in KOREA_NAMES
+
+
+def event_has_korea(event: dict) -> bool:
+    for comp in event.get("competitions") or []:
+        for side in comp.get("competitors") or []:
+            if is_korea_team(side.get("team") or {}):
+                return True
+    return False
+
+
 def fetch_scoreboard(league: dict, date_str: str) -> list[dict]:
     url = f"{SITE}/{league['espn']}/scoreboard?dates={date_str}&limit=50"
     payload = get_json(url)
     out = []
     for ev in payload.get("events") or []:
+        # 친선경기는 대한민국 경기만 (다른 나라끼리의 평가전은 앱에 올리지 않는다)
+        if league.get("koreaOnly") and not event_has_korea(ev):
+            continue
         game = to_game(ev, league)
         if game:
             out.append(game)
@@ -2240,9 +2269,13 @@ def build_news(now: datetime) -> None:
                 continue
             if "fantasy" in headline.lower() or "betting" in headline.lower():
                 continue  # 판타지·배팅 기사는 아이 화면에 올리지 않는다
+            if league.get("koreaOnly") and not re.search(r"\bkorea\b", f"{headline} {desc}", re.I):
+                continue  # 친선경기 소식도 대한민국 이야기만 — 전 세계 A매치 기사를 다 올리지 않는다
             if aid in cache:
-                items.append(cache[aid])
-                new_cache[aid] = cache[aid]
+                cached = dict(cache[aid])
+                cached["label"] = league["name"]   # 리그 이름을 바꿔도 예전 캐시가 옛 이름을 달고 나오지 않게
+                items.append(cached)
+                new_cache[aid] = cached
                 used_ids.add(aid)
             else:
                 ko_title = translate(headline)
