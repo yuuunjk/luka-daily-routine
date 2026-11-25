@@ -64,9 +64,8 @@ LEAGUES = [
     {"espn": "soccer/conmebol.america", "sport": "국제대회", "name": "코파 아메리카", "season": "2026", "intl": True},
     # 친선경기(A매치) — ESPN은 그날 열리는 전 세계 친선경기를 다 주므로
     # koreaOnly 로 대한민국이 뛰는 경기만 남긴다(사용자 요청: "친선경기는 대한민국과 다른 나라의 경기").
+    # 여자 친선경기(soccer/fifa.friendly.w)는 사용자 요청으로 뺐다(2026-11-25 "여자 친선 경기는 우선 빼").
     {"espn": "soccer/fifa.friendly", "sport": "국제대회", "name": "친선경기", "season": "2026", "intl": True, "koreaOnly": True},
-    # 여자 국가대표 친선경기도 같은 규칙(대한민국 경기만) — 지금은 예정된 경기가 없지만 생기면 같이 보인다.
-    {"espn": "soccer/fifa.friendly.w", "sport": "국제대회", "name": "여자 친선경기", "season": "2026", "intl": True, "koreaOnly": True},
 ]
 INTL_KEYS = {l["espn"] for l in LEAGUES if l.get("intl")}
 
@@ -405,6 +404,8 @@ def to_game(event: dict, league: dict) -> dict | None:
         "sport": league["sport"], "emoji": SPORT_EMOJI[league["sport"]],
         "league": league["espn"], "leagueName": league["name"],
         "time": time_text, "date": date_text, "state": state, "status": status_text,
+        # 전후반·쿼터·이닝 점수 — 요약 팝업의 점수표에 그대로 쓴다(요약 파일이 없어도 보인다)
+        "ph": _linescores(home), "pa": _linescores(away),
         "home": {"name": team_ko(home_team, league["espn"]), "code": home_team.get("abbreviation") or "",
                  "emblem": logo_of(home_team), "score": home_score},
         "away": {"name": team_ko(away_team, league["espn"]), "code": away_team.get("abbreviation") or "",
@@ -746,13 +747,31 @@ def kovo_games(now: datetime) -> list[dict]:
             state, status = "upcoming", ""
         gender = str(m.get("gender") or "1")
         lname = "V리그 남자부" if gender == "1" else "V리그 여자부"
-        out.append(kr_game(
+        game = kr_game(
             f"kovo-{m.get('gnum')}-{date}", "배구", "kovo.m" if gender == "1" else "kovo.w", lname,
             date, time_text, state, status,
             V_TEAMS_KO.get(str(m.get("hcode") or ""), (m.get("hname") or "").strip()), hscore,
             V_TEAMS_KO.get(str(m.get("acode") or ""), (m.get("aname") or "").strip()), ascore,
             (m.get("place") or "").strip(), kovo_logo(m.get("homeEmblemUrl")), kovo_logo(m.get("awayEmblemUrl")),
-        ))
+        )
+        # 세트별 점수(hs1~5 / as1~5)와 경기 정보 — 예전에는 버렸는데, 요약 팝업의 세트 표에 쓴다
+        hs = [int(m.get(f"hs{i}point") or 0) for i in range(1, 6)]
+        as_ = [int(m.get(f"as{i}point") or 0) for i in range(1, 6)]
+        while len(hs) > 1 and hs[-1] == 0 and as_[-1] == 0:
+            hs.pop()
+            as_.pop()
+        if state != "upcoming" and any(hs):
+            game["sets"] = {"h": hs, "a": as_}
+        info = {}
+        if str(m.get("sptime") or "0:00") not in ("", "0:00", "0"):
+            info["duration"] = str(m.get("sptime"))
+        if int(m.get("spectators") or 0) > 0:
+            info["spectators"] = int(m.get("spectators"))
+        if str(m.get("getime") or "").strip():
+            info["end"] = str(m.get("getime"))[:5]
+        if info:
+            game["info"] = info
+        out.append(game)
     return out
 
 
@@ -781,6 +800,475 @@ def kovo_standings() -> list[dict]:
     label = f"{start_year}-{str(start_year + 1)[2:]}"
     return [{"id": "kovo", "sport": "배구", "name": "V리그 남자부", "season": label,
              "metric": "pct", "teamCount": len(rows), "rows": rows}]
+
+
+# ══ 종료 경기 요약 (매치 리포트) ════════════════════════════╗
+# ESPN summary?event={id} 는 축구 460KB · NBA 440KB · NFL 620KB 라서 앱이 그대로 받기 무겁다.
+# 끝난 경기마다 딱 한 번만 받아 필요한 필드만 2~4KB 로 줄여 data/summaries/{id}.json 에 남기고,
+# 3일이 지난 파일은 지운다. 앱은 이 작은 파일을 먼저 열고, 아직 없으면 오늘 경기 데이터만으로
+# 스코어보드를 그린다(수집기가 5분마다 돌아 곧 채워진다).
+SUMMARY_DIR = os.path.join(DATA_DIR, "summaries")
+SUMMARY_KEEP_DAYS = 3            # 오늘 포함 3일치 보관
+SUMMARY_LEAGUE_HEADS = ("soccer/", "basketball/", "football/", "baseball/")
+
+PERIOD_NOTE = ("전반", "후반", "연장 전반", "연장 후반", "승부차기", "추가")
+
+
+def _num(v):
+    try:
+        return float(str(v).replace(",", "").replace("%", "").strip())
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _fmt(v, unit=""):
+    """61.0 → '61', 61.5 → '61.5' (+단위)"""
+    if v is None:
+        return ""
+    v = round(float(v), 1)
+    s = str(int(v)) if v == int(v) else f"{v:g}"
+    return f"{s}{unit}"
+
+
+def _linescores(side: dict) -> list:
+    out = []
+    for x in (side or {}).get("linescores") or []:
+        v = x.get("displayValue")
+        if v in (None, ""):
+            v = x.get("value")
+        n = _num(v)
+        out.append(None if n is None else int(n))
+    return out
+
+
+def _team_stats(block: dict) -> dict:
+    """boxscore.teams[] → {homeAway: {statName: displayValue}}"""
+    out: dict = {}
+    for t in (block or {}).get("teams") or []:
+        side = t.get("homeAway") or "home"
+        out[side] = {str(s.get("name")): s.get("displayValue") for s in t.get("statistics") or []}
+    return out
+
+
+def _bar_rows(stats: dict, spec: list) -> list:
+    """(statName, 한국어, 단위, 배수, 최소표시) 목록 → 좌우 비교 막대 줄"""
+    rows = []
+    for key, label, unit, mul, zero_ok in spec:
+        hv = _num((stats.get("home") or {}).get(key))
+        av = _num((stats.get("away") or {}).get(key))
+        if hv is None or av is None:
+            continue
+        if not zero_ok and hv == 0 and av == 0:
+            continue
+        hv, av = hv * mul, av * mul
+        rows.append({"k": label, "h": _fmt(hv, unit), "a": _fmt(av, unit), "hv": hv, "av": av})
+    return rows
+
+
+def _side_of_team(comps: list, team_id) -> str:
+    for c in comps:
+        if str(((c or {}).get("team") or {}).get("id")) == str(team_id):
+            return c.get("homeAway") or ""
+    return ""
+
+
+def _heads(raw: dict, game: dict) -> tuple:
+    """header 의 양팀 — {homeAway: competitor} · home/away id"""
+    comp = ((raw.get("header") or {}).get("competitions") or [{}])[0]
+    cs = comp.get("competitors") or []
+    home = next((c for c in cs if c.get("homeAway") == "home"), {}) or {}
+    away = next((c for c in cs if c.get("homeAway") == "away"), {}) or {}
+    return comp, cs, home, away
+
+
+def _soccer(raw: dict, game: dict) -> dict:
+    comp, cs, home, away = _heads(raw, game)
+    ph, pa = _linescores(home), _linescores(away)
+    n = max(len(ph), len(pa))
+    labels = list(PERIOD_NOTE[:max(n, 2)])
+    stats = _team_stats(raw.get("boxscore") or {})
+    rows = _bar_rows(stats, [
+        ("possessionPct", "점유율", "%", 1, True),
+        ("totalShots", "슈팅", "", 1, False),
+        ("shotsOnTarget", "유효 슈팅", "", 1, False),
+        ("wonCorners", "코너킥", "", 1, False),
+        ("foulsCommitted", "파울", "", 1, False),
+        ("passPct", "패스 성공률", "%", 100, False),
+    ])
+    if not rows:                       # 옛 경기처럼 boxscore 가 비면 leaders 로 대신한다
+        for grp in raw.get("leaders") or []:
+            pass
+
+    home_id = ((home or {}).get("team") or {}).get("id")
+    hname = (game.get("home") or {}).get("name") or ""
+    aname = (game.get("away") or {}).get("name") or ""
+
+    score = [0, 0]
+    tl: list = []
+    made: dict = {}
+    last_period = 0
+    for ev in raw.get("keyEvents") or []:
+        typ = (ev.get("type") or {})
+        code = f"{typ.get('type') or ''} {typ.get('text') or ''}".lower()
+        period = ((ev.get("period") or {}).get("number") or 0)
+        minute = str(((ev.get("clock") or {}).get("displayValue")) or "").strip()
+        team_id = ((ev.get("team") or {}).get("id"))
+        side = "home" if str(team_id) == str(home_id) else ("away" if team_id not in (None, "") else "")
+        parts = [(p.get("athlete") or {}).get("displayName") or "" for p in ev.get("participants") or []]
+        who = parts[0] if parts else ""
+        assist = parts[1] if len(parts) > 1 else ""
+        team_name = hname if side == "home" else aname
+        if ev.get("scoringPlay"):
+            pk = "penalty" in code and "shootout" not in code
+            own = "own goal" in code
+            shootout = period >= 5 or "shootout" in code
+            if not shootout and side:
+                score[0 if side == "home" else 1] += 1
+            if tl and last_period != period:
+                if period and labels[min(period, len(labels)) - 1]:
+                    tl.append({"k": "div", "m": f"{labels[min(period, len(labels)) - 1]} 시작"})
+            last_period = period
+            main = who or "골"
+            if pk:
+                main += " · PK"
+            if own:
+                main += " · 자책골"
+            sub = team_name if not shootout else f"{team_name} · 승부차기"
+            if assist and assist != who:
+                sub = f"{sub} · 도움 {assist}"
+            tl.append({"k": "pk" if shootout else "goal", "t": minute, "side": side,
+                       "m": main, "d": sub, "sc": f"{score[0]}:{score[1]}"})
+            if who and side and not own and not shootout:
+                m = made.setdefault((side, who), {"mins": [], "ast": 0, "side": side, "n": who})
+                m["mins"].append(minute)
+            if assist and assist != who and not own and not shootout:
+                m = made.setdefault((side, assist), {"mins": [], "ast": 0, "side": side, "n": assist})
+                m["ast"] += 1
+        elif "red card" in code and who:
+            tl.append({"k": "red", "t": minute, "side": side, "m": f"{who} · 퇴장",
+                       "d": team_name, "sc": ""})
+    heroes = []
+    for (side, name), m in sorted(made.items(), key=lambda kv: (-len(kv[1]["mins"]), -kv[1]["ast"]))[:3]:
+        tag = f"{len(m['mins'])}골" if m["mins"] else "도움"
+        bits = [str(x) for x in m["mins"][:4]]
+        if m["ast"]:
+            bits.append(f"도움 {m['ast']}")
+        heroes.append({"side": side, "tag": tag, "n": name, "s": " · ".join(bits)})
+    return {"periods": labels[:n] if n else labels[:2], "ph": ph, "pa": pa,
+            "heroes": heroes, "stats": rows, "tl": _cap_tl(tl)}
+
+
+def _cap_tl(tl: list, limit: int = 14) -> list:
+    """타임라인이 너무 길면 골만 남기고 줄인다(카드·교체는 뒤로)."""
+    if len(tl) <= limit:
+        return tl
+    keep = [x for x in tl if x.get("k") in ("goal", "pk", "div")]
+    return keep[:limit] if keep else tl[:limit]
+
+
+def _player_box(raw: dict, comps: list) -> dict:
+    """boxscore.players → {side: [{n, pts, reb, ast, min}]}"""
+    out: dict = {}
+    side_of = {str(((c or {}).get("team") or {}).get("id")): c.get("homeAway") for c in comps}
+    for block in (raw.get("boxscore") or {}).get("players") or []:
+        side = side_of.get(str((block.get("team") or {}).get("id")))
+        if not side:
+            continue
+        for group in block.get("statistics") or []:
+            labels = [str(x) for x in group.get("labels") or []]
+            idx = {k: i for i, k in enumerate(labels)}
+
+            def gv(vals, key):
+                i = idx.get(key)
+                return _num(vals[i]) if i is not None and i < len(vals) else None
+
+            for a in group.get("athletes") or []:
+                vals = a.get("stats") or []
+                name = ((a.get("athlete") or {}).get("displayName")) or ""
+                if not name:
+                    continue
+                out.setdefault(side, []).append({
+                    "n": name, "pts": gv(vals, "PTS"), "reb": gv(vals, "REB"),
+                    "ast": gv(vals, "AST"), "min": gv(vals, "MIN"),
+                })
+    return out
+
+
+def _basket(raw: dict, game: dict) -> dict:
+    comp, cs, home, away = _heads(raw, game)
+    ph, pa = _linescores(home), _linescores(away)
+    n = max(len(ph), len(pa))
+    labels = [f"{i + 1}쿼터" for i in range(min(n, 4))] + ["연장"] * max(0, n - 4)
+    stats = _team_stats(raw.get("boxscore") or {})
+    rows = _bar_rows(stats, [
+        ("fieldGoalPct", "야투 성공률", "%", 1, False),
+        ("threePointFieldGoalPct", "3점 성공률", "%", 1, False),
+        ("totalRebounds", "리바운드", "", 1, False),
+        ("assists", "어시스트", "", 1, False),
+        ("steals", "스틸", "", 1, False),
+        ("turnovers", "턴오버", "", 1, True),
+    ])
+    box = _player_box(raw, cs)
+    hname = (game.get("home") or {}).get("name") or ""
+    aname = (game.get("away") or {}).get("name") or ""
+    heroes = []
+    for side in ("home", "away"):
+        rows_p = [p for p in box.get(side) or [] if (p.get("pts") or 0) > 0]
+        if not rows_p:
+            continue
+        top = max(rows_p, key=lambda p: (p.get("pts") or 0, p.get("reb") or 0))
+        bits = []
+        if top.get("reb"):
+            bits.append(f"{_fmt(top['reb'])}리바운드")
+        if top.get("ast"):
+            bits.append(f"{_fmt(top['ast'])}어시스트")
+        heroes.append({"side": side, "tag": f"{_fmt(top.get('pts'))}점", "n": top["n"],
+                       "s": " · ".join(bits) or (hname if side == "home" else aname)})
+    tl = _basket_runs(raw, hname, aname)
+    return {"periods": labels, "ph": ph, "pa": pa, "heroes": heroes, "stats": rows, "tl": tl}
+
+
+def _bball_clock(v) -> str:
+    """NBA 플레이 시계는 '11:14' 또는 '28.7'(초) 로 온다 — 'm:ss' 로 맞춘다."""
+    s = str(v or "").strip()
+    if re.fullmatch(r"\d+(\.\d+)?", s):
+        sec = int(float(s))
+        return f"{sec // 60}:{sec % 60:02d}"
+    return s
+
+
+def _basket_runs(raw: dict, hname: str, aname: str, limit: int = 6) -> list:
+    """한 팀이 연달아 넣은 점수(8점 이상)만 추린다 — 117개 득점을 다 나열하면 읽을 수 없다."""
+    out: list = []
+    cur = None
+    prev_h = prev_a = 0
+    for p in raw.get("plays") or []:
+        if not p.get("scoringPlay"):
+            continue
+        h, a = p.get("homeScore"), p.get("awayScore")
+        if h is None or a is None:
+            continue
+        dh, da = h - prev_h, a - prev_a
+        prev_h, prev_a = h, a
+        if dh <= 0 and da <= 0:
+            continue
+        side = "home" if dh > 0 else "away"
+        pts = dh if side == "home" else da
+        period = ((p.get("period") or {}).get("number")) or 0
+        clock = _bball_clock(((p.get("clock") or {}).get("displayValue")))
+        if cur and cur["side"] == side:
+            cur["pts"] += pts
+        else:
+            if cur:
+                out.append(cur)
+            cur = {"side": side, "pts": pts, "h": h, "a": a, "period": period, "clock": clock}
+        cur.update({"h": h, "a": a, "period": period, "clock": clock})
+    if cur:
+        out.append(cur)
+    keep = [r for r in out if r["pts"] >= 8][-limit:]
+    items = []
+    for r in keep:
+        label = f"{r['period']}쿼터" if 0 < r["period"] <= 4 else ("연장" if r["period"] else "")
+        team = hname if r["side"] == "home" else aname
+        items.append({"k": "run", "t": f"{label} {r['clock']}".strip(), "side": r["side"],
+                      "m": f"{team} {r['pts']}점 연속", "d": "", "sc": f"{r['h']}:{r['a']}"})
+    return items
+
+
+def _football(raw: dict, game: dict) -> dict:
+    comp, cs, home, away = _heads(raw, game)
+    ph, pa = _linescores(home), _linescores(away)
+    n = max(len(ph), len(pa))
+    labels = [f"{i + 1}쿼터" for i in range(min(n, 4))] + ["연장"] * max(0, n - 4)
+    stats = _team_stats(raw.get("boxscore") or {})
+    rows = _bar_rows(stats, [
+        ("totalYards", "총 야드", "", 1, False),
+        ("netPassingYards", "패싱 야드", "", 1, False),
+        ("rushingYards", "러싱 야드", "", 1, False),
+        ("firstDowns", "퍼스트다운", "", 1, False),
+        ("turnovers", "턴오버", "", 1, True),
+    ])
+    abbr_side = {}
+    for c in cs:
+        t = (c or {}).get("team") or {}
+        if t.get("abbreviation"):
+            abbr_side[str(t["abbreviation"]).upper()] = c.get("homeAway")
+    heroes = []
+    for grp in raw.get("leaders") or []:
+        ts = (grp.get("team") or {})
+        side = abbr_side.get(str(ts.get("abbreviation") or "").upper()) or ""
+        cat = next((c for c in grp.get("leaders") or [] if c.get("name") == "passingYards"), None)
+        if not side or not cat or not cat.get("leaders"):
+            continue
+        top = cat["leaders"][0]
+        athlete = top.get("athlete") or {}
+        detail = str(top.get("displayValue") or "")
+        detail = (detail.replace(" YDS", "야드").replace(" TD", "TD")
+                        .replace(" CAR", " 캐리").replace(" REC", " 리시브"))
+        heroes.append({"side": side, "tag": ((athlete.get("position") or {}).get("abbreviation") or "QB"),
+                       "n": athlete.get("displayName") or "", "s": detail})
+    hname = (game.get("home") or {}).get("name") or ""
+    aname = (game.get("away") or {}).get("name") or ""
+    tl = []
+    for p in raw.get("scoringPlays") or []:
+        typ = p.get("type") or {}
+        period = ((p.get("period") or {}).get("number")) or 0
+        clock = str(((p.get("clock") or {}).get("displayValue")) or "")
+        team = (p.get("team") or {})
+        side = abbr_side.get(str(team.get("abbreviation") or "").upper()) or ""
+        team_name = (team.get("displayName") or "").strip()
+        team_name = hname if side == "home" else (aname if side == "away" else team_name)
+        text = str(p.get("text") or "")
+        main = _nfl_play_kr(text) or str(typ.get("text") or "득점")
+        label = f"{period}쿼터" if 0 < period <= 4 else ("연장" if period else "")
+        tl.append({"k": "goal", "t": f"{label} {clock}".strip(), "side": side, "m": main,
+                   "d": team_name, "sc": f"{p.get('homeScore')}:{p.get('awayScore')}"})
+    return {"periods": labels, "ph": ph, "pa": pa, "heroes": heroes, "stats": rows, "tl": _cap_tl(tl, 12)}
+
+
+def _nfl_play_kr(text: str) -> str:
+    """'Tee Higgins 31 Yd pass from Joe Burrow (Evan McPherson Kick)' → 'Tee Higgins 31야드 패스 터치다운'"""
+    t = text.strip()
+    m = re.match(r"^(.+?) (\d+) Yd pass from (.+?)(?: \(.+\))?$", t)
+    if m:
+        return f"{m.group(1)} {m.group(2)}야드 패스 터치다운"
+    m = re.match(r"^(.+?) (\d+) Yd Rush(?: \(.+\))?$", t)
+    if m:
+        return f"{m.group(1)} {m.group(2)}야드 러싱 터치다운"
+    m = re.match(r"^(.+?) (\d+) Yd Field Goal$", t)
+    if m:
+        return f"{m.group(1)} {m.group(2)}야드 필드골"
+    m = re.match(r"^(.+?) (\d+) Yd (?:Interception|Fumble) Return(?: Touchdown)?(?: \(.+\))?$", t)
+    if m:
+        return f"{m.group(1)} {m.group(2)}야드 리턴 터치다운"
+    low = t.lower()
+    if "two-point" in low:
+        return "2점 컨버전 성공"
+    if "extra point" in low:
+        return "추가 득점(PAT)"
+    if "touchdown" in low:
+        return "터치다운"
+    if "field goal" in low:
+        return "필드골"
+    if "safety" in low:
+        return "세이프티"
+    return ""
+
+
+def _baseball(raw: dict, game: dict) -> dict:
+    comp, cs, home, away = _heads(raw, game)
+    ph, pa = _linescores(home), _linescores(away)
+    n = max(len(ph), len(pa))
+    labels = [f"{i + 1}회" for i in range(n)]
+    def _sum(side):
+        return sum(x.get("hits") or 0 for x in (side or {}).get("linescores") or [])
+    rows = []
+    hh, ah = _sum(home), _sum(away)
+    if hh or ah:
+        rows.append({"k": "안타", "h": _fmt(hh), "a": _fmt(ah), "hv": hh, "av": ah})
+    he = sum(x.get("errors") or 0 for x in (home or {}).get("linescores") or [])
+    ae = sum(x.get("errors") or 0 for x in (away or {}).get("linescores") or [])
+    if he or ae:
+        rows.append({"k": "실책", "h": _fmt(he), "a": _fmt(ae), "hv": he, "av": ae})
+    tl = []
+    for p in raw.get("plays") or []:
+        if not p.get("scoringPlay"):
+            continue
+        period = p.get("period") or {}
+        inn = period.get("number") or 0
+        half = "초" if str(period.get("type") or "").lower().startswith("top") else "말"
+        text = str(p.get("text") or "")
+        low = text.lower()
+        if "homered" in low or "home run" in low:
+            main = "홈런"
+        elif "sacrifice" in low:
+            main = "희생플라이 득점"
+        elif "scored" in low:
+            main = "적시타 득점"
+        else:
+            main = "득점"
+        tl.append({"k": "goal", "t": f"{inn}회{half}", "side": "",
+                   "m": main, "d": "", "sc": f"{p.get('homeScore')}:{p.get('awayScore')}"})
+    return {"periods": labels, "ph": ph, "pa": pa, "heroes": [], "stats": rows, "tl": _cap_tl(tl, 10)}
+
+
+def summarize(raw: dict, game: dict) -> dict | None:
+    sport = game.get("sport") or ""
+    body = None
+    if sport in ("해외축구", "축구", "국제대회"):
+        body = _soccer(raw, game)
+    elif sport in ("농구", "해외농구"):
+        body = _basket(raw, game)
+    elif sport == "미식축구":
+        body = _football(raw, game)
+    elif sport in ("야구", "해외야구"):
+        body = _baseball(raw, game)
+    if not body:
+        return None
+    gi = raw.get("gameInfo") or {}
+    venue = ((gi.get("venue") or {}).get("fullName")) or game.get("stadium") or ""
+    att = gi.get("attendance")
+    out = {
+        "id": str(game.get("id") or ""), "d": game.get("date") or "", "lg": game.get("league") or "",
+        "name": game.get("leagueName") or "", "sport": sport, "emoji": game.get("emoji") or "",
+        "time": game.get("time") or "", "venue": venue,
+        "home": {"n": (game.get("home") or {}).get("name") or "", "a": ((game.get("home") or {}).get("code") or ""),
+                 "l": (game.get("home") or {}).get("emblem") or "", "s": (game.get("home") or {}).get("score")},
+        "away": {"n": (game.get("away") or {}).get("name") or "", "a": ((game.get("away") or {}).get("code") or ""),
+                 "l": (game.get("away") or {}).get("emblem") or "", "s": (game.get("away") or {}).get("score")},
+    }
+    if att:
+        out["att"] = att
+    out.update(body)
+    return out
+
+
+def build_summaries(games: list, now: datetime) -> None:
+    """끝난 경기의 ESPN 요약을 경기당 한 번만 받아 data/summaries/ 에 작게 남긴다."""
+    os.makedirs(SUMMARY_DIR, exist_ok=True)
+    idx_path = os.path.join(SUMMARY_DIR, "index.json")
+    try:
+        with open(idx_path, encoding="utf-8") as fh:
+            files = (json.load(fh) or {}).get("files") or {}
+    except Exception:  # noqa: BLE001
+        files = {}
+    made = 0
+    for g in games:
+        if g.get("state") != "done":
+            continue
+        lg = str(g.get("league") or "")
+        gid = str(g.get("id") or "")
+        if not lg.startswith(SUMMARY_LEAGUE_HEADS) or not gid.isdigit():
+            continue                      # 국내 리그(KOVO·KBL·K리그)는 오늘 경기 데이터로 그린다
+        if files.get(gid) and os.path.exists(os.path.join(SUMMARY_DIR, f"{gid}.json")):
+            continue                      # 이미 받아 둔 경기 — 다시 조회하지 않는다
+        try:
+            raw = get_json(f"{SITE}/{lg}/summary?event={gid}")
+            summ = summarize(raw, g)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  요약 실패 {gid}: {exc}", flush=True)
+            continue
+        if not summ:
+            continue
+        with open(os.path.join(SUMMARY_DIR, f"{gid}.json"), "w", encoding="utf-8") as fh:
+            json.dump(summ, fh, ensure_ascii=False, separators=(",", ":"))
+            fh.write("\n")
+        files[gid] = {"f": f"{gid}.json", "d": g.get("date") or now.strftime("%Y-%m-%d"), "lg": lg}
+        made += 1
+    keep_from = (now - timedelta(days=SUMMARY_KEEP_DAYS - 1)).strftime("%Y-%m-%d")
+    for gid, e in list(files.items()):
+        if str(e.get("d") or "") < keep_from:
+            try:
+                os.remove(os.path.join(SUMMARY_DIR, e.get("f") or f"{gid}.json"))
+            except Exception:  # noqa: BLE001
+                pass
+            files.pop(gid, None)
+    with open(idx_path, "w", encoding="utf-8") as fh:
+        json.dump({"updated": now.isoformat(timespec="seconds"), "files": files},
+                  fh, ensure_ascii=False, separators=(",", ":"))
+        fh.write("\n")
+    if made:
+        print(f"  경기 요약 {made}건 새로 저장 (모두 {len(files)}건)", flush=True)
 
 
 def build_today(now: datetime) -> None:
@@ -836,6 +1324,11 @@ def build_today(now: datetime) -> None:
         "games": games,
     })
     print(f"  경기 {len(games)}건 {counts}", flush=True)
+    # 끝난 경기 요약(매치 리포트) — 경기마다 한 번만 받아 data/summaries/ 에 남긴다
+    try:
+        build_summaries(games, now)
+    except Exception as exc:  # noqa: BLE001
+        print(f"  !! 요약 실패: {exc}", flush=True)
 
 
 def stat_value(entry: dict, *names):

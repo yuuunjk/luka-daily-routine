@@ -264,6 +264,10 @@
   .last5 .W{background:var(--green);} .last5 .L{background:#e0574a;} .last5 .D{background:#c3ccdd;}
   .empty{background:#fff; border:2px dashed var(--line); border-radius:var(--radius); padding:34px 20px;
     text-align:center; color:var(--sub); font-size:20px; font-weight:700; margin-top:14px;}
+  /* 끝난 경기 카드는 눌러서 요약을 연다 */
+  article.card[data-summary]{cursor:pointer;}
+  article.card[data-summary]:active{transform:scale(.995);}
+  article.card[data-summary]:focus-visible{outline:3px solid #93c5fd; outline-offset:2px;}
 
   /* ── news ───────────────────────────────── */
   .news{background:#fff; border:2px solid var(--line); border-radius:var(--radius); padding:18px 20px;
@@ -590,6 +594,113 @@
   @media (max-width:470px){
     .pc-close{top:-14px; right:-10px; width:40px; height:40px; font-size:17px;}
   }
+
+  /* ── 종료 경기 요약 (매치 리포트) ─────────────────
+     1안(스코어보드 + 주인공 + 팀 비교)에 2안의 주요 타임라인을 더한 팝업 */
+  .sm-board{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;
+    margin:2px 0 10px; padding:13px 14px 12px; border-radius:20px;
+    background:linear-gradient(180deg,#f7fbff,#eef6ff); border:2px solid #e6effc;}
+  .sm-team{display:flex; align-items:center; gap:10px; min-width:0;}
+  .sm-team.away{flex-direction:row-reverse; text-align:right;}
+  .sm-team img{width:52px; height:52px; object-fit:contain; flex:none;
+    filter:drop-shadow(0 3px 7px rgba(20,40,90,.12));}
+  .sm-team.lose img{filter:grayscale(1) opacity(.45);}
+  .sm-team .nm{font-size:21px; font-weight:900; letter-spacing:-.6px; line-height:1.2;
+    overflow-wrap:anywhere;}
+  .sm-team.win .nm{color:var(--blue-dark);}
+  .sm-team.lose .nm{color:#8a97ad;}
+  .sm-team .sub{font-size:13px; font-weight:800; color:var(--sub); margin-top:1px;}
+  .sm-mid{text-align:center;}
+  .sm-score{font-size:44px; font-weight:900; letter-spacing:-1.8px; line-height:1;}
+  .sm-score .c{color:#c3cee0; font-size:32px; margin:0 4px; position:relative; top:-4px;}
+  .sm-mid .st{font-size:13px; font-weight:900; color:var(--sub); margin-top:3px; white-space:nowrap;}
+  /* 전후반·쿼터·세트 점수표 */
+  .sm-tblwrap{overflow-x:auto; margin:0 -2px 4px; padding:2px;}
+  table.sm-tbl{width:100%; border-collapse:separate; border-spacing:3px; margin:0;}
+  table.sm-tbl th,table.sm-tbl td{font-size:15px; font-weight:900; text-align:center; padding:6px 2px;
+    white-space:nowrap; font-variant-numeric:tabular-nums;}
+  table.sm-tbl thead th{font-size:12.5px; font-weight:900; color:#8a97ad; background:#f4f7fc;
+    border-radius:9px; padding:5px 3px;}
+  table.sm-tbl td{background:#fbfdff; border-radius:9px; color:#22304c;}
+  table.sm-tbl tbody th{text-align:left; font-size:14px; padding-left:8px; border-radius:9px; background:#f7fbff;
+    max-width:122px; white-space:normal; line-height:1.24; overflow:hidden;}
+  table.sm-tbl tbody th img{width:20px; height:20px; object-fit:contain; vertical-align:-5px; margin-right:5px;}
+  table.sm-tbl td.tot{background:#eef5ff; color:var(--blue-dark);}
+  table.sm-tbl th.tot{background:#eef5ff; color:var(--blue-dark);}
+  /* 구역 제목 */
+  .sm-sect{display:flex; align-items:center; gap:7px; margin:16px 0 8px;
+    font-size:18px; font-weight:900; letter-spacing:-.3px;}
+  .sm-sect .n{font-size:12px; font-weight:900; color:#7c93bd; background:#f2f7ff;
+    border-radius:999px; padding:2px 8px;}
+  /* 이 경기의 주인공 */
+  .sm-heros{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:7px;}
+  .sm-hero{display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:15px;
+    border:2px solid #eef3fb; background:#fbfdff; min-width:0;}
+  .sm-hero.a{border-color:#fde8ec; background:#fffafb;}
+  .sm-hero .mn{flex:none; width:42px; height:42px; border-radius:13px; background:#fff3d6;
+    border:2px solid #f6dfa4; display:flex; align-items:center; justify-content:center;
+    font-size:13.5px; font-weight:900; color:#8a5b00;}
+  .sm-hero.a .mn{background:#ffe9ee; border-color:#f8c9d4; color:#a1163a;}
+  .sm-hero .tx{min-width:0;}
+  .sm-hero .nm{font-size:16.5px; font-weight:900; letter-spacing:-.4px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sm-hero .st{font-size:12.5px; font-weight:800; color:var(--sub); margin-top:1px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  /* 팀 비교 막대 */
+  .sm-stat{display:grid; grid-template-columns:1fr auto 1fr; align-items:end; gap:6px; margin:7px 0 0;}
+  .sm-stat .vl{font-size:17px; font-weight:900; color:var(--blue-dark); text-align:right;}
+  .sm-stat .vr{font-size:17px; font-weight:900; color:var(--red); text-align:left;}
+  .sm-stat .lb{grid-column:2; font-size:13px; font-weight:900; color:var(--sub); text-align:center;
+    padding:0 8px 3px; white-space:nowrap;}
+  .sm-stat .track{grid-column:1 / -1; display:flex; height:12px; border-radius:999px;
+    overflow:hidden; background:#eef3fb;}
+  .sm-stat .track .h{background:linear-gradient(90deg,#3b82f6,#1d4ed8);}
+  .sm-stat .track .a{background:linear-gradient(90deg,#fb7185,#e11d48);}
+  /* 주요 타임라인 */
+  .sm-tl{display:flex; flex-direction:column; gap:5px;}
+  .sm-ev{display:grid; grid-template-columns:50px 6px 1fr auto; align-items:center; gap:8px;
+    padding:6px 10px 6px 5px; min-height:44px; border-radius:14px;
+    border:2px solid #eef3fb; background:#fbfdff;}
+  .sm-ev .tm{font-size:14px; font-weight:900; color:var(--sub); text-align:center;
+    font-variant-numeric:tabular-nums;}
+  .sm-ev .bar{width:6px; height:26px; border-radius:4px; background:var(--blue);}
+  .sm-ev.a .bar{background:var(--red);}
+  .sm-ev.red .bar{background:#f59e0b;}
+  .sm-ev .tx{min-width:0;}
+  .sm-ev .p{font-size:16px; font-weight:900; letter-spacing:-.3px; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;}
+  .sm-ev .d{font-size:12.5px; font-weight:800; color:var(--sub); margin-top:1px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sm-ev .sc{font-size:14.5px; font-weight:900; color:var(--blue-dark); background:#eef5ff;
+    border-radius:999px; padding:3px 9px; white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .sm-ev.a .sc{background:#fff1f4; color:#b3123c;}
+  .sm-div{display:flex; justify-content:center; margin:1px 0;}
+  .sm-div span{font-size:12.5px; font-weight:900; color:#8a97ad; background:#f4f7fc;
+    border:2px solid #eaf0fa; border-radius:999px; padding:1px 12px;}
+  .sm-more{width:100%; margin-top:7px; padding:11px; min-height:46px; border-radius:999px;
+    border:2px solid #d6e6ff; background:#f5f9ff; color:var(--blue-dark); font-family:inherit;
+    font-size:16px; font-weight:900;}
+  .sm-more:active{transform:scale(.99); background:#e6f1ff;}
+  .sm-info{margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);
+    font-size:14px; font-weight:800; color:#93a2bd; line-height:1.6; word-break:keep-all;}
+  .sm-info b{color:#5b6b8c;}
+  .sm-loading{padding:26px 10px; text-align:center; color:var(--sub); font-size:17px; font-weight:700;}
+  .sm-hide{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+  .sm-note{margin:10px 0 0; padding:11px 13px; border-radius:14px; background:#fff8e3;
+    border:2px solid #f4e2b0; color:#6b4700; font-size:14.5px; font-weight:800; line-height:1.5;}
+  @media (max-width:560px){
+    .sm-board{grid-template-columns:1fr 1fr; gap:8px 6px; padding:12px 12px 11px;}
+    .sm-mid{grid-column:1 / -1; order:-1;}
+    .sm-score{font-size:40px;}
+    .sm-team,.sm-team.away{flex-direction:column; text-align:center; gap:5px;}
+    .sm-team .nm{font-size:17px;}
+    .sm-team img{width:46px; height:46px;}
+    .sm-ev{grid-template-columns:44px 5px 1fr auto; gap:6px; padding:6px 8px 6px 4px;}
+    .sm-ev .p{font-size:15px; white-space:normal;}
+    .sm-ev .tm{font-size:13px;}
+    .sm-ev .sc{font-size:13px; padding:2px 7px;}
+    table.sm-tbl th,table.sm-tbl td{font-size:14px;}
+  }
 </style>
 </head>
 <body>
@@ -744,6 +855,19 @@
     <div class="sh-meta" id="predModalMeta"></div>
     <div class="sh-body" id="predModalBody"></div>
     <button class="btn-close-all" id="predModalDone">닫기</button>
+  </div>
+</div>
+
+<!-- 🏁 끝난 경기 요약 창 (끝난 경기 카드를 누를 때) -->
+<div class="modal" id="summaryModal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="smTitle">
+    <div class="sh-top">
+      <span class="sh-tag" id="smTag">🏁 경기 요약</span>
+      <button class="sh-close" id="smClose" type="button">✕ 닫기</button>
+    </div>
+    <h2 id="smTitle" class="sm-hide">경기 요약</h2>
+    <div class="sh-body" id="smBody"></div>
+    <button class="btn-close-all" id="smDone" type="button">닫기</button>
   </div>
 </div>
 
@@ -1467,7 +1591,7 @@ function gameCard(g){
         ${g.stadium ? `<div class="m2">📍 ${esc(g.stadium)}</div>` : ""}
         <div class="m3">${g.emoji || "🏅"} ${esc(g.leagueName)}</div>
       </div>`;
-  return `<article class="${cls}">
+  return `<article class="${cls}" data-gid="${esc(g.id)}"${g.state === "done" ? ' data-summary="1" role="button" tabindex="0"' : ""}>
       <div class="hd">
         <span class="league">${g.emoji || "🏅"} ${esc(g.leagueName)}</span>
         <span style="display:flex;gap:6px;align-items:center">${fav?'<span class="mytag">⭐ 우리 팀</span>':""}${badge}</span>
@@ -1968,6 +2092,283 @@ function renderNews(){
   });
 }
 
+/* =========================================================
+   🏁 끝난 경기 요약 — 점수표 · 이 경기의 주인공 · 팀 비교 · 주요 타임라인
+   · 수집기가 끝난 경기마다 한 번만 받아 둔 작은 파일(data/summaries/{id}.json)을 먼저 연다.
+   · 그 파일이 아직 없으면 ESPN 요약을 브라우저에서 직접 받아(축구·농구) 같은 모양으로 줄여 그린다.
+   · 국내 리그(배구·KBL·K리그)는 오늘 경기 데이터에 담긴 점수만으로 그린다.
+   ========================================================= */
+let smIndex = null, smGame = null, smOpen = false, smLast = null;
+
+async function smIndexMap(){
+  if (smIndex) return smIndex;
+  try{
+    const r = await fetch("./data/summaries/index.json", {cache:"no-store"});
+    smIndex = r.ok ? (((await r.json()) || {}).files || {}) : {};
+  }catch{ smIndex = {}; }
+  return smIndex;
+}
+async function smCached(g){
+  const idx = await smIndexMap();
+  const e = idx[String(g.id)];
+  if (!e) return null;
+  try{
+    const r = await fetch(`./data/summaries/${e.f || String(g.id) + ".json"}`, {cache:"no-store"});
+    return r.ok ? await r.json() : null;
+  }catch{ return null; }
+}
+/* ESPN 요약을 그대로 받았을 때(캐시가 아직 없을 때) — 축구·농구만 골라서 줄인다 */
+function smNum(v){
+  const x = Number(String(v == null ? "" : v).replace(/[%,]/g, "").trim());
+  return Number.isFinite(x) ? x : null;
+}
+function smV(v, unit){
+  if (v === null || v === undefined) return "";
+  const r = Math.round(v * 10) / 10;
+  return `${Number.isInteger(r) ? r : r}${unit || ""}`;
+}
+function smRows(stats, spec){
+  const out = [];
+  for (const [key, label, unit, mul] of spec){
+    const hv = smNum(stats.home?.[key]), av = smNum(stats.away?.[key]);
+    if (hv === null || av === null) continue;
+    out.push({k: label, h: smV(hv * mul, unit), a: smV(av * mul, unit), hv: hv * mul, av: av * mul});
+  }
+  return out;
+}
+function smTrimRaw(raw, g){
+  if (!raw || !raw.header) return null;
+  const comp = (raw.header.competitions || [])[0] || {};
+  const cs = comp.competitors || [];
+  const H = cs.find(c => c.homeAway === "home"), A = cs.find(c => c.homeAway === "away");
+  if (!H || !A) return null;
+  const per = (c) => (c.linescores || []).map(x => smNum(x.displayValue ?? x.value));
+  const stats = {};
+  for (const t of (raw.boxscore?.teams || [])){
+    stats[t.homeAway] = {};
+    for (const s of (t.statistics || [])) stats[t.homeAway][s.name] = s.displayValue;
+  }
+  const s = {id: String(g.id), periods: [], ph: per(H), pa: per(A), heroes: [], stats: [], tl: []};
+  const soc = ["해외축구", "축구", "국제대회"].includes(g.sport);
+  if (soc){
+    const labels = ["전반", "후반", "연장 전반", "연장 후반", "승부차기"];
+    s.periods = labels.slice(0, Math.max(s.ph.length, s.pa.length, 2));
+    s.stats = smRows(stats, [["possessionPct", "점유율", "%", 1], ["totalShots", "슈팅", "", 1],
+      ["shotsOnTarget", "유효 슈팅", "", 1], ["wonCorners", "코너킥", "", 1], ["passPct", "패스 성공률", "%", 100]]);
+    const score = [0, 0], made = {};
+    const hname = g.home?.name || "", aname = g.away?.name || "";
+    for (const ev of (raw.keyEvents || [])){
+      if (!ev.scoringPlay) continue;
+      const t = String((ev.type || {}).type || "") + " " + String((ev.type || {}).text || "").toLowerCase();
+      const period = (ev.period || {}).number || 0;
+      if (period > 4 || t.includes("shootout")) continue;
+      const side = ev.team?.id === H.team?.id ? "home" : (ev.team?.id === A.team?.id ? "away" : "");
+      if (side) score[side === "home" ? 0 : 1] += 1;
+      const parts = (ev.participants || []).map(x => x.athlete?.displayName || "");
+      const who = parts[0] || "", assist = parts[1] || "";
+      const pk = t.includes("penalty"), own = t.includes("own goal");
+      let main = who || "골";
+      if (pk) main += " · PK";
+      if (own) main += " · 자책골";
+      const team = side === "home" ? hname : aname;
+      s.tl.push({k:"goal", t: (ev.clock?.displayValue || ""), side,
+        m: main, d: team + (assist && assist !== who ? ` · 도움 ${assist}` : ""),
+        sc: `${score[0]}:${score[1]}`});
+      if (who && side && !own){
+        const m = made[side + "|" + who] || (made[side + "|" + who] = {side, mins: [], ast: 0, n: who});
+        m.mins.push(ev.clock?.displayValue || "");
+        if (assist && assist !== who) {
+          const a2 = made[side + "|" + assist] || (made[side + "|" + assist] = {side, mins: [], ast: 0, n: assist});
+          a2.ast += 1;
+        }
+      }
+    }
+    s.heroes = Object.values(made).sort((a, b) => b.mins.length - a.mins.length || b.ast - a.ast).slice(0, 3)
+      .map(m => ({side: m.side, tag: m.mins.length ? `${m.mins.length}골` : "도움", n: m.n,
+        s: [m.mins.slice(0, 4).join(" · "), m.ast ? `도움 ${m.ast}` : ""].filter(Boolean).join(" · ")}));
+    return s;
+  }
+  if (["농구", "해외농구"].includes(g.sport)){
+    s.periods = ((s.ph.length || s.pa.length) ? ["1쿼터","2쿼터","3쿼터","4쿼터","연장"] : []).slice(0, Math.max(s.ph.length, s.pa.length, 4));
+    s.stats = smRows(stats, [["fieldGoalPct", "야투 성공률", "%", 1], ["threePointFieldGoalPct", "3점 성공률", "%", 1],
+      ["totalRebounds", "리바운드", "", 1], ["assists", "어시스트", "", 1], ["steals", "스틸", "", 1], ["turnovers", "턴오버", "", 1]]);
+    const sideOf = {};
+    for (const c of cs) sideOf[String(c.team?.id)] = c.homeAway;
+    const box = {};
+    for (const b of (raw.boxscore?.players || [])){
+      const side = sideOf[String(b.team?.id)];
+      if (!side) continue;
+      for (const grp of (b.statistics || [])){
+        const lab = (grp.labels || []).map(String);
+        const ix = (k) => lab.indexOf(k);
+        for (const a of (grp.athletes || [])){
+          const v = a.stats || [];
+          const get = (k) => (ix(k) >= 0 ? smNum(v[ix(k)]) : null);
+          (box[side] = box[side] || []).push({n: a.athlete?.displayName || "", pts: get("PTS"), reb: get("REB"), ast: get("AST")});
+        }
+      }
+    }
+    for (const side of ["home", "away"]){
+      const list = (box[side] || []).filter(p => (p.pts || 0) > 0);
+      if (!list.length) continue;
+      const top = list.sort((a, b) => (b.pts || 0) - (a.pts || 0))[0];
+      s.heroes.push({side, tag: `${smV(top.pts)}점`, n: top.n,
+        s: [top.reb ? `${smV(top.reb)}리바운드` : "", top.ast ? `${smV(top.ast)}어시스트` : ""].filter(Boolean).join(" · ")});
+    }
+  }
+  return s;
+}
+async function smDirect(g){
+  const espnLike = /^(soccer|basketball|football|baseball|hockey)\//.test(String(g.league || ""));
+  if (!espnLike || !String(g.id).match(/^\d+$/)) return null;
+  try{
+    const r = await fetch(`${ESPN_SITE}/${g.league}/summary?event=${g.id}`, {cache:"no-store"});
+    if (!r.ok) return null;
+    return smTrimRaw(await r.json(), g);
+  }catch{ return null; }
+}
+/* 국내 리그 — 오늘 경기 데이터에 담긴 것만으로 그린다 (배구는 세트 점수·경기 정보까지) */
+function smLocal(g){
+  const s = {id: String(g.id), periods: [], ph: [], pa: [], heroes: [], stats: [], tl: [], local: true};
+  if (g.stadium) s.venue = g.stadium;
+  if (g.sets && Array.isArray(g.sets.h) && g.sets.h.length){
+    const n = Math.max(g.sets.h.length, g.sets.a.length);
+    s.periods = Array.from({length: n}, (_, i) => `${i + 1}세트`);
+    s.ph = g.sets.h;
+    s.pa = g.sets.a;
+    const th = g.sets.h.reduce((a, b) => a + (b || 0), 0), ta = g.sets.a.reduce((a, b) => a + (b || 0), 0);
+    const winOf = (mine, other) => g.sets[mine].filter((v, i) => (v || 0) > (g.sets[other][i] || 0)).length;
+    const hw = winOf("h", "a"), aw = winOf("a", "h");
+    if (th || ta){
+      s.stats.push({k: "총 득점", h: String(th), a: String(ta), hv: th, av: ta});
+      s.stats.push({k: "세트 승", h: String(hw), a: String(aw), hv: hw, av: aw});
+    }
+  }
+  if (g.info){
+    if (g.info.spectators) s.att = g.info.spectators;
+    if (g.info.duration) s.duration = g.info.duration;
+    if (g.info.end) s.end = g.info.end;
+  }
+  return s;
+}
+function smPeriodLabels(s, g, n){
+  const sp = g.sport || "";
+  if (sp === "배구") return Array.from({length: n}, (_, i) => `${i + 1}세트`);
+  if (sp === "농구" || sp === "해외농구" || sp === "미식축구")
+    return Array.from({length: n}, (_, i) => (i < 4 ? `${i + 1}쿼터` : "연장"));
+  if (sp === "야구" || sp === "해외야구") return Array.from({length: n}, (_, i) => `${i + 1}회`);
+  return ["전반", "후반", "연장 전반", "연장 후반", "승부차기"].slice(0, n);
+}
+function smBar(row){
+  const tot = Math.abs(row.hv) + Math.abs(row.av);
+  const hp = tot ? Math.round((Math.abs(row.hv) / tot) * 100) : 50;
+  return `<div class="sm-stat"><div class="vl">${esc(row.h)}</div><div class="lb">${esc(row.k)}</div>
+    <div class="vr">${esc(row.a)}</div>
+    <div class="track"><div class="h" style="width:${hp}%"></div><div class="a" style="width:${100 - hp}%"></div></div></div>`;
+}
+function smBodyHTML(g, s){
+  const hs = g.home?.score ?? s.home?.s ?? null;
+  const as = g.away?.score ?? s.away?.s ?? null;
+  const oc = outcomeOf(g);
+  const hWin = oc === "home", aWin = oc === "away";
+  const ph = (s.ph && s.ph.length ? s.ph : (g.home?.periods || []));
+  const pa = (s.pa && s.pa.length ? s.pa : (g.away?.periods || []));
+  const n = Math.max(ph.length, pa.length);
+  const labels = n ? smPeriodLabels(s, g, n) : [];
+  const logo = (t) => t?.emblem ? `<img src="${esc(t.emblem)}" alt="" loading="lazy" onerror="this.remove()">` : "";
+  let html = `<div class="sm-board">
+    <div class="sm-team home ${hWin ? "win" : (aWin ? "lose" : "")}">${logo(g.home)}
+      <div><div class="nm">${esc(g.home?.name || "")}</div><div class="sub">홈</div></div></div>
+    <div class="sm-mid"><div class="sm-score">${hs ?? "-"}<span class="c">:</span>${as ?? "-"}</div>
+      <div class="st">✅ 종료</div></div>
+    <div class="sm-team away ${aWin ? "win" : (hWin ? "lose" : "")}">${logo(g.away)}
+      <div><div class="nm">${esc(g.away?.name || "")}</div><div class="sub">원정</div></div></div>
+  </div>`;
+  if (n){
+    const cell = (arr, i) => (arr[i] === null || arr[i] === undefined ? "-" : arr[i]);
+    html += `<div class="sm-tblwrap"><table class="sm-tbl"><thead><tr><th>${esc(g.emoji || "🏅")}</th>
+      ${labels.map(l => `<th>${esc(l)}</th>`).join("")}<th class="tot">합</th></tr></thead><tbody>
+      <tr><th>${logo(g.home)}${esc(g.home?.name || "")}</th>${Array.from({length: n}, (_, i) => `<td>${esc(cell(ph, i))}</td>`).join("")}<td class="tot">${esc(hs ?? "-")}</td></tr>
+      <tr><th>${logo(g.away)}${esc(g.away?.name || "")}</th>${Array.from({length: n}, (_, i) => `<td>${esc(cell(pa, i))}</td>`).join("")}<td class="tot">${esc(as ?? "-")}</td></tr>
+      </tbody></table></div>`;
+  }
+  if (s.heroes?.length){
+    html += `<div class="sm-sect">🏅 이 경기의 주인공</div><div class="sm-heros">` +
+      s.heroes.map(h => `<div class="sm-hero${h.side === "away" ? " a" : ""}">
+        <div class="mn">${esc(h.tag)}</div><div class="tx"><div class="nm">${esc(h.n)}</div>
+        <div class="st">${esc(h.s || "")}</div></div></div>`).join("") + `</div>`;
+  }
+  if (s.stats?.length){
+    html += `<div class="sm-sect">📊 팀 비교</div>` + s.stats.map(smBar).join("");
+  }
+  const tl = s.tl || [];
+  if (tl.length){
+    const limit = 6;
+    const shown = smOpen ? tl : tl.slice(0, limit);
+    html += `<div class="sm-sect">⏱️ 주요 타임라인 <span class="n">${tl.length}장면</span></div><div class="sm-tl">`;
+    for (const it of shown){
+      if (it.k === "div"){ html += `<div class="sm-div"><span>${esc(it.m || "")}</span></div>`; continue; }
+      const sideCls = it.side === "away" ? " a" : "";
+      const kindCls = it.k === "red" ? " red" : "";
+      html += `<div class="sm-ev${sideCls}${kindCls}">
+        <div class="tm">${esc(it.t || "")}</div><div class="bar"></div>
+        <div class="tx"><div class="p">${esc(it.m || "")}</div>${it.d ? `<div class="d">${esc(it.d)}</div>` : ""}</div>
+        <div class="sc"${it.sc ? "" : ' style="visibility:hidden"'}>${esc(it.sc || "·")}</div></div>`;
+    }
+    html += `</div>`;
+    if (tl.length > limit)
+      html += `<button class="sm-more" id="smMore" type="button">${smOpen ? "접기" : `+ ${tl.length - limit}장면 더 보기`}</button>`;
+  }
+  const bits = [];
+  if (s.venue) bits.push(`📍 ${s.venue}`);
+  if (s.att) bits.push(`관중 ${Number(s.att).toLocaleString("ko-KR")}명`);
+  if (s.duration) bits.push(`경기 시간 ${s.duration}`);
+  if (s.end) bits.push(`${s.end} 종료`);
+  if (g.date) bits.push(`📅 ${g.date}${g.time ? " " + g.time : ""}`);
+  const src = s.local ? "K리그·KBL·KOVO 공개 기록" : "ESPN 공식 경기 데이터";
+  html += `<div class="sm-info">${bits.map(b => esc(b)).join(" · ")}<br>기록: ${esc(src)}</div>`;
+  return html;
+}
+function smRender(g, s){
+  if (!smGame || String(smGame.id) !== String(g.id)) return;
+  smLast = s;
+  $("#smBody").innerHTML = smBodyHTML(g, s);
+}
+async function openSummary(g){
+  if (!g || g.state !== "done") return;
+  smGame = g;
+  smOpen = false;
+  $("#smTag").textContent = `${g.emoji || "🏅"} ${g.leagueName || ""} · ✅ 종료`;
+  $("#smTitle").textContent = `${g.home?.name || ""} ${g.home?.score ?? ""} : ${g.away?.score ?? ""} ${g.away?.name || ""} 경기 요약`;
+  $("#smBody").innerHTML = `<div class="sm-loading">경기 기록을 불러오는 중이에요…</div>`;
+  const modal = $("#summaryModal");
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+  modal.scrollTop = 0;
+  document.body.classList.add("modal-open");
+  let s = null;
+  if (g.league && /^(kovo|kbl|kleague)/.test(String(g.league))) s = smLocal(g);
+  if (!s) s = await smCached(g);
+  if (!s) s = await smDirect(g);
+  if (!smGame || String(smGame.id) !== String(g.id)) return;   // 그 사이 닫았거나 다른 경기를 눌렀다
+  if (!s) s = smLocal(g);
+  smRender(g, s);
+  /* 아직 기록이 안 채워진 ESPN 경기 — 점수표만 보여 주고 양해를 구한다 */
+  if (!s.local && !(s.tl || []).length && !(s.heroes || []).length && !(s.stats || []).length){
+    $("#smBody").insertAdjacentHTML("beforeend",
+      `<div class="sm-note">자세한 기록은 아직 준비 중이에요. 잠시 뒤(5분마다 새로 받아요) 다시 열면 보여요.</div>`);
+  }
+}
+function closeSummary(){
+  const modal = $("#summaryModal");
+  if (!modal || !modal.classList.contains("show")) { smGame = null; return; }
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden", "true");
+  smGame = null;
+  const others = ["articleModal", "predModal", "favModal"].some(id => $(`#${id}`)?.classList.contains("show"));
+  if (!others) document.body.classList.remove("modal-open");
+}
+
 /* ── 기사 읽기 창 ───────────────────────── */
 function openArticle(idx){
   const it = state.newsFlat[idx];
@@ -2289,7 +2690,6 @@ const ESPN_LEAGUES = [
   {espn:"soccer/caf.nations", sport:"국제대회", name:"아프리카 네이션스컵", intl:true},
   {espn:"soccer/conmebol.america", sport:"국제대회", name:"코파 아메리카", intl:true},
   {espn:"soccer/fifa.friendly", sport:"국제대회", name:"친선경기", intl:true, koreaOnly:true},
-  {espn:"soccer/fifa.friendly.w", sport:"국제대회", name:"여자 친선경기", intl:true, koreaOnly:true},
 ];
 const INT_LEAGUES = new Set(ESPN_LEAGUES.filter(l => l.intl).map(l => l.espn));
 
@@ -2404,11 +2804,15 @@ function espnToGame(ev, lg){
     date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   }
   const num = (v) => (v === null || v === undefined || v === "") ? null : Number(v);
+  const periods = (c) => (c?.linescores || []).map(x => {
+    const v = (x.displayValue ?? x.value);
+    return (v === null || v === undefined || v === "") ? null : Number(v);
+  });
   return {
     id: String(ev.id || comp.id || ""), sport: lg.sport, emoji: SPORT_EMOJI[lg.sport] || "🏅",
     league: lg.espn, leagueName: lg.name, time, date, state: st, status: statusText,
-    home: {name: teamName(home.team, lg.espn), code: home.team?.abbreviation || "", emblem: logoOf(home.team), score: num(home.score)},
-    away: {name: teamName(away.team, lg.espn), code: away.team?.abbreviation || "", emblem: logoOf(away.team), score: num(away.score)},
+    home: {name: teamName(home.team, lg.espn), code: home.team?.abbreviation || "", emblem: logoOf(home.team), score: num(home.score), periods: periods(home)},
+    away: {name: teamName(away.team, lg.espn), code: away.team?.abbreviation || "", emblem: logoOf(away.team), score: num(away.score), periods: periods(away)},
     winner: home.winner ? "HOME" : (away.winner ? "AWAY" : "DRAW"),
     stadium: comp.venue?.fullName || "", channel: "", onAir: st === "live",
   };
@@ -3128,6 +3532,36 @@ function bind(){
   $("#shDone").onclick = closeArticle;
   $("#predModalClose").onclick = closePredHistory;
   $("#predModalDone").onclick = closePredHistory;
+  /* 🏁 끝난 경기 요약 — 카드를 누르면 열리고, ✕·바깥 배경·Escape 로 닫힌다 */
+  $("#smClose").onclick = closeSummary;
+  $("#smDone").onclick = closeSummary;
+  $("#summaryModal").addEventListener("click", (e) => {
+    if (e.target && e.target.id === "summaryModal") closeSummary();
+  });
+  $("#smBody").addEventListener("click", (e) => {
+    if (!e.target || !e.target.closest || !e.target.closest("#smMore")) return;
+    smOpen = !smOpen;
+    if (smGame && smLast) smRender(smGame, smLast);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && $("#summaryModal")?.classList.contains("show")) closeSummary();
+  });
+  $("#todayBody").addEventListener("click", (e) => {
+    if (!e.target || !e.target.closest) return;
+    if (e.target.closest("button")) return;            // 승부예측·취소 버튼은 그대로
+    const card = e.target.closest("article.card[data-summary]");
+    if (!card) return;
+    const g = gameList().find(x => String(x.id) === String(card.dataset.gid));
+    if (g) openSummary(g);
+  });
+  $("#todayBody").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const card = e.target.closest ? e.target.closest("article.card[data-summary]") : null;
+    if (!card) return;
+    e.preventDefault();
+    const g = gameList().find(x => String(x.id) === String(card.dataset.gid));
+    if (g) openSummary(g);
+  });
   $("#predModal").addEventListener("click", (e) => {
     if (e.target && e.target.id === "predModal") closePredHistory();
   });
