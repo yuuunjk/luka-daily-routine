@@ -3586,8 +3586,12 @@ function bind(){
       if (prompt && typeof prompt.prompt === "function"){
         installPrompt = null;
         try {
-          prompt.prompt();
-          const choice = prompt.userChoice ? await prompt.userChoice : null;
+          prompt.prompt();                       // 브라우저 기본 설치 창
+          /* 기본 창이 뜨지 않는 환경도 있어서 2.5초 안에 대답이 없으면 안내로 넘어간다 */
+          const choice = await Promise.race([
+            prompt.userChoice || Promise.resolve(null),
+            new Promise((r) => setTimeout(() => r({ outcome: "timeout" }), 2500)),
+          ]);
           if (choice && choice.outcome === "accepted"){ installBtn.hidden = true; return; }
         } catch (err) { /* 프롬프트를 못 쓰면 안내로 넘어간다 */ }
         openInstallGuide();
@@ -3609,6 +3613,7 @@ function bind(){
   window.addEventListener("appinstalled", () => {
     installPrompt = null;
     updateInstallBtn();
+    if ($("#installModal").classList.contains("show")) closeInstallGuide();
   });
   if (standaloneMq){
     if (standaloneMq.addEventListener) standaloneMq.addEventListener("change", updateInstallBtn);
