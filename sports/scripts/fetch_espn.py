@@ -499,6 +499,33 @@ V_TEAMS_KO = {
     "2005": "GS칼텍스", "2006": "IBK기업은행", "2008": "SOOP",
 }
 
+# KBL 구단 이름 — 1군 순위표는 정식명('원주 DB')인데, D리그·EASL 경기 목록은 약칭('DB')이나
+# 붙여 쓴 이름('고양소노')으로 줘서 앱의 '우리 팀' 목록에 같은 구단이 두 번 나왔다.
+# 수집 단계에서 정식명으로 맞춰 data/*.json 에 한 이름만 남긴다. (앱 쪽 이름표와 같은 내용)
+KBL_TEAMS_KO = {
+    "DB": "원주 DB", "원주DB": "원주 DB", "원주 DB 프로미": "원주 DB",
+    "KCC": "부산 KCC", "부산KCC": "부산 KCC", "부산 KCC 이지스": "부산 KCC",
+    "소노": "고양 소노", "고양소노": "고양 소노", "고양 소노 스카이거너스": "고양 소노",
+    "한국가스공사": "대구 한국가스공사", "대구한국가스공사": "대구 한국가스공사",
+    "대구 한국가스공사 페가수스": "대구 한국가스공사",
+    "삼성": "서울 삼성", "서울삼성": "서울 삼성", "서울 삼성 썬더스": "서울 삼성",
+    "현대모비스": "울산 현대모비스", "울산현대모비스": "울산 현대모비스",
+    "울산 현대모비스 피버스": "울산 현대모비스",
+    "KT": "수원 KT", "수원KT": "수원 KT", "수원 KT 소닉붐": "수원 KT",
+    "LG": "창원 LG", "창원LG": "창원 LG", "창원 LG 세이커스": "창원 LG",
+    "SK": "서울 SK", "서울SK": "서울 SK", "서울 SK 나이츠": "서울 SK",
+    "정관장": "안양 정관장", "안양정관장": "안양 정관장", "안양 정관장 레드부스터스": "안양 정관장",
+}
+
+
+def kbl_name(raw: str) -> str:
+    """KBL 팀 이름을 정식명으로 — 약칭·붙여 쓴 이름·풀네임 모두 같은 구단으로 모은다.
+    D리그 전용 팀('상무')과 EASL 초청팀은 사전에 없으니 그대로 둔다."""
+    n = (raw or "").strip()
+    if not n:
+        return n
+    return KBL_TEAMS_KO.get(n) or KBL_TEAMS_KO.get(n.replace(" ", "")) or n
+
 
 def kr_get_json(url: str, extra_headers: dict | None = None) -> dict | list:
     headers = dict(KR_HEADERS)
@@ -654,7 +681,7 @@ def kbl_games(now: datetime) -> list[dict]:
         ascore = m.get("scoreA") if state != "upcoming" else None
         out.append(kr_game(
             f"kbl-{m.get('gmkey')}", "농구", "kbl", "KBL", date, time_text, state, status,
-            (m.get("tnameH") or "").strip(), hscore, (m.get("tnameA") or "").strip(), ascore,
+            kbl_name(m.get("tnameH")), hscore, kbl_name(m.get("tnameA")), ascore,
             (m.get("stadiumname") or m.get("place") or "").strip() if isinstance(m.get("stadiumname"), str) else "",
             kbl_logo(m.get("logoH")), kbl_logo(m.get("logoA")),
         ))
@@ -669,7 +696,7 @@ def kbl_standings() -> list[dict]:
         rate = (win / (win + loss)) if (win + loss) else 0.0
         rows.append({
             "rank": int(r.get("rank") or len(rows) + 1),
-            "team": (r.get("tname") or r.get("tnameF") or "").strip(),
+            "team": kbl_name(r.get("tname") or r.get("tnameF")),
             "emblem": kbl_logo(r.get("teamLogoClass")), "games": win + loss, "w": win, "d": int(r.get("draw") or 0), "l": loss,
             "rate": f"{rate:.3f}", "points": None, "last5": "", "group": "",
         })
