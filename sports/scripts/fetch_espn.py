@@ -65,6 +65,8 @@ LEAGUES = [
     # 친선경기(A매치) — ESPN은 그날 열리는 전 세계 친선경기를 다 주므로
     # koreaOnly 로 대한민국이 뛰는 경기만 남긴다(사용자 요청: "친선경기는 대한민국과 다른 나라의 경기").
     {"espn": "soccer/fifa.friendly", "sport": "국제대회", "name": "친선경기", "season": "2026", "intl": True, "koreaOnly": True},
+    # 여자 국가대표 친선경기도 같은 규칙(대한민국 경기만) — 지금은 예정된 경기가 없지만 생기면 같이 보인다.
+    {"espn": "soccer/fifa.friendly.w", "sport": "국제대회", "name": "여자 친선경기", "season": "2026", "intl": True, "koreaOnly": True},
 ]
 INTL_KEYS = {l["espn"] for l in LEAGUES if l.get("intl")}
 
