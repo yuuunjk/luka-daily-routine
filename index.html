@@ -6015,9 +6015,11 @@ function restPlan(partnerName){
     sayFree = `${head}<br>지금은 자유 시간이야 — 신나게 놀거나 <em>오늘의 공부</em>도 해 보고, 이따 ${nextTime}에 다시 모험하자!`;
     say = sayFree;
     const studyN = studyLeftCount();
-    if(afterAllDone() && studyN > 0){
-      say = restStudySayHTML(head, nextTime, studyN);
-      sayStudy = say;
+    if(afterAllDone()){
+      /* v88 — 개수가 0이어도 대사 원본은 만들어 둔다: 쉬는 화면에 앉아 있는 동안
+         시트 연동으로 공부 항목이 새로 들어오면, tick 동기화가 말풍선에 바로 알약을 넣는다. */
+      sayStudy = restStudySayHTML(head, nextTime, studyN);
+      if(studyN > 0) say = sayStudy;
     }
     chipLead = '⏳ 다음 모험까지 ';
     depart = `${nextName} ${nextTime}`;
@@ -6140,6 +6142,11 @@ function restStudySync(panel){
     if(el._sayStudy) rs.innerHTML = el._sayStudy;
     const nb2 = rs.querySelector('[data-study-go] b');
     if(nb2) nb2.textContent = `${n}개`;
+    const btn2 = rs.querySelector('[data-study-go]');
+    if(btn2){
+      const aria2 = `오늘의 공부 ${n}개 남았어 — 누르면 오늘의 공부 탭으로 가요`;
+      if(btn2.getAttribute('aria-label') !== aria2) btn2.setAttribute('aria-label', aria2);
+    }
     fitRestPanel();
     return;
   }
