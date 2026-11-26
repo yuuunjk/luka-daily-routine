@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v90 — ☀️ 아침 브리핑: 🧥 추천 코디·계절용품 + 📅 오늘의 일정 · 준비물 + 3안 칭찬 멘트
+     (사용자 확정 2026-11-27: "오후 2:30으로 하자 / 날씨 아래 오늘 챙길 것 대신 아래에 있는 추천 코디를
+      넣고, 우산이나 장갑 모자 등 계절용품을 같이 추천하도록 해" + "시안보고 캘린더 연결할 때 3안칭찬멘트 올려")
+     · 아침 날씨 브리핑 팝업(v75)에서 '오늘 챙길 것' 칩 줄과 아래 중복 코디 문구('긴팔 + … 추천!')를 뺐다.
+       대신 날씨 3칸 바로 아래 한 줄 [🧥 추천 코디 · 계절용품] — 기온에 맞는 옷차림 + 오늘 챙길 계절용품
+       (비·눈 ☔ 우산 / 추울 때 🧣 장갑·모자·목도리 / 더울 때 🧢 모자·💧 물통 / 미세먼지 나쁨 😷 마스크).
+     · 그 아래 [📅 오늘의 일정 · 준비물] — 부모님이 배포한 Apps Script 웹앱이 오늘 일정의 제목·시각·
+       설명(준비물)만 JSONP 로 건네준다. 시각은 '오전 9:00 / 오후 2:30 / 종일' 로 보여 준다.
+       일정이 없으면 '오늘은 등록된 일정이 없어요', 연결 전·응답 실패면 띠를 통째로 숨겨 v75 와 같다.
+       웹앱 주소는 부모 설정([💾 데이터·앱] → '📅 루카 구글 캘린더 연동 주소')에서 한 번 넣고,
+       **이 기기의 localStorage 에만** 둔다(공개 index.html·백업 파일에 남지 않는다). 하루치 캐시 + 5분 갱신.
+     · 오후 루틴과 오늘의 공부를 **모두** 끝낸 낮 휴식 화면(band-day)의 파트너 말풍선을 3안으로 —
+       '우와, 오후 루틴에 오늘의 공부까지 전부 해냈네! 할 일 끝낸 멋진 트레이너, 오후 9시까지 마음껏 쉬고 놀아!'
+       (공부가 1개 이상 남은 날의 v89 세 줄 대사와 공부 쉬는 날의 자유 시간 대사는 그대로다.)
+     · 루틴·공부·도감·미션·소리·시트 연동은 v89 그대로 손대지 않았다. -->
 <!-- v89 — 📚 남은 공부 말풍선에서 '지금은 자유 시간이야 —' 멘트 제거
      (사용자 요청 2026-11-26: "지금은 자유시간이야 멘트 빼")
      · 오후 루틴을 끝낸 낮 휴식 화면(band-day)에서 공부가 남아 있을 때 파트너가 하는 말이
@@ -1239,6 +1254,8 @@
   .wbchip.hot{background:#fff4d9;border-color:#ffd98a;color:#7a5b00;}
   .wbchip.b{background:#eef7ff;border-color:#c9e2ff;color:#1f6fd4;}
   .wbchip.g{background:#f2faf0;border-color:#cfe8c6;color:#2f8a3a;}
+  /* v90 — 추천 코디 칩은 계절용품 칩과 구분되는 크림 톤 */
+  .wbchip.fit{background:#fff7e0;border-color:#ffd98a;color:#6b4e00;}
   .wbfoot{display:flex;align-items:center;gap:12px;margin-top:14px;position:relative;z-index:2;flex-wrap:wrap;}
   .wbfoot .note{flex:1 1 220px;font-size:clamp(11px,1.7vh,15px);font-weight:900;color:var(--ink2);word-break:keep-all;line-height:1.35;}
   .wbbtn{flex:0 0 auto;margin-left:auto;min-width:min(330px,100%);height:clamp(46px,7.4vh,64px);border:none;border-radius:22px;
@@ -1249,6 +1266,38 @@
   .wbtestclose{flex:0 0 auto;border:none;border-radius:14px;font-family:inherit;font-weight:900;cursor:pointer;
     font-size:clamp(11px,1.6vh,14px);padding:8px 12px;color:#7a6a55;background:#efe9da;border:2px solid #e2d8c0;}
   .wbtestclose[hidden]{display:none;}
+  /* ===== v90 — 📅 오늘의 일정 · 준비물 =====
+     날씨 3칸과 코디 줄 아래, 아래 버튼 위에 한 줄 띠로 들어간다.
+     · 일정 2건을 2열로 나란히 — 카드가 낮아도 팝업이 길어지지 않는다(세로 화면에서도 2열)
+     · 제목은 한 줄(길면 …), 준비물은 두 줄까지 — 준비물이 길어도 카드 높이가 튀지 않는다
+     · 일정 없음: 띠는 남기고 한 줄만 조용히 / 캘린더 미연결: 띠 자체를 숨긴다(.wbsched.off) */
+  .wbsched{margin-top:13px;position:relative;z-index:2;background:#fff;border:2.5px solid #efe3c6;
+    border-radius:20px;padding:8px 11px 9px;box-shadow:0 6px 12px rgba(150,120,60,.07);}
+  .wbsched .sc-head{display:flex;align-items:center;gap:8px;}
+  .wbsched .sc-lb{font-size:clamp(11px,1.6vh,14px);font-weight:900;color:#8a7a66;letter-spacing:-.2px;}
+  .wbsched .sc-cnt[hidden]{display:none;}
+  .wbsched .sc-cnt{font-size:clamp(9.5px,1.3vh,11.5px);font-weight:900;color:#7a5b00;
+    background:#fff0c2;border:2px solid #ffdf8e;border-radius:999px;padding:0 7px;line-height:1.5;}
+  .wbsched .sc-list{margin-top:7px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .wbsi{display:flex;align-items:center;gap:8px;min-width:0;background:#fffdf6;
+    border:2px solid #f4ecd9;border-radius:14px;padding:5px 9px;}
+  .wbsi .tm{flex:0 0 auto;font-size:clamp(11px,1.55vh,13.5px);font-weight:900;color:#2f7fd4;
+    background:#e8f3ff;border:2px solid #c9e2ff;border-radius:999px;padding:1px 8px;
+    letter-spacing:-.3px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .wbsi .tm.allday{color:#3f7a2a;background:#eaf6df;border-color:#cfe8bd;}
+  .wbsi .bd{min-width:0;display:flex;flex-direction:column;gap:1px;}
+  .wbsi .tt{font-size:clamp(13px,1.9vh,16.5px);font-weight:900;color:#3b2f20;letter-spacing:-.4px;
+    line-height:1.24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .wbsi .pp{font-size:clamp(10.5px,1.5vh,13px);font-weight:900;color:#8a7a66;line-height:1.3;
+    overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;
+    -webkit-line-clamp:2;line-clamp:2;word-break:keep-all;}
+  .wbsi .pp:empty{display:none;}
+  .wbsi.empty .pp{color:#b6a894;}
+  .wbsched.empty .sc-list{display:none;}
+  .wbsched .sc-none{display:none;margin-top:5px;font-size:clamp(11px,1.6vh,14px);font-weight:900;
+    color:#a89880;letter-spacing:-.2px;}
+  .wbsched.empty .sc-none{display:block;}
+  .wbsched.off{display:none;}
   /* 좁은 화면 — 파트너를 말풍선 위 한 줄로, 꼬리는 위를 향한다 */
   @media (max-width:900px){
     .wbcard{padding:16px 16px 18px;border-radius:26px;}
@@ -1273,6 +1322,13 @@
     .wbtiles{margin-top:8px;}
     .wbwear{margin-top:7px;}
     .wbfoot{margin-top:9px;}
+    .wbsched{margin-top:8px;padding:6px 10px 7px;}
+    .wbsched .sc-list{margin-top:5px;gap:7px;}
+    .wbsi{padding:3px 8px;}
+  }
+  /* 아주 좁은 화면(휴대폰) — 일정은 한 줄에 하나씩 */
+  @media (max-width:560px){
+    .wbsched .sc-list{grid-template-columns:minmax(0,1fr);}
   }
 
   /* ===== v69 — ✨ 루틴 완료 확인 팝업 · 완료 축하 카드 =====
@@ -3985,11 +4041,19 @@
             <div class="val" id="wbDustVal">확인 중</div><div class="sub" id="wbDustSub"></div>
           </div>
         </div>
-        <div class="wbwear"><span class="lb">오늘 챙길 것</span><span id="wbChips"></span></div>
+        <div class="wbwear"><span class="lb">🧥 추천 코디 · 계절용품</span><span id="wbChips"></span></div>
       </div>
     </div>
+    <!-- v90 — 📅 오늘의 일정 · 준비물 (부모 설정의 캘린더 웹앱 주소를 연결했을 때만 보인다) -->
+    <div class="wbsched off" id="wbSched">
+      <div class="sc-head">
+        <span class="sc-lb">📅 오늘의 일정 · 준비물</span>
+        <span class="sc-cnt" id="wbSchedCnt" hidden></span>
+      </div>
+      <div class="sc-list" id="wbSchedList"></div>
+      <div class="sc-none" id="wbSchedNone">오늘은 등록된 일정이 없어요</div>
+    </div>
     <div class="wbfoot">
-      <span class="note" id="wbNote">날씨를 불러오는 중이야 — 잠깐만 기다려 줘!</span>
       <button class="wbtestclose" id="wbTestClose" type="button" hidden>✕ 테스트 닫기</button>
       <button class="wbbtn" id="wbConfirm" type="button">☀️ 확인! 출발하자!</button>
     </div>
@@ -4104,6 +4168,7 @@
         <button class="pbtn" id="testWxBriefReset" type="button">↩ 오늘 팝업 초기화</button>
       </div>
       <span class="phint">기상(또는 '아침 루틴 시작')부터 출발 시각 전까지 루틴 화면을 보고 있으면 하루 한 번 자동으로 떠요. '띄우기'는 지금 한 번 보여 주고(오늘 기록은 건드리지 않음), '초기화'는 오늘 봤던 기록을 지워 다시 뜰 수 있게 해요.</span>
+      <span class="phint" id="wxCalHint">📅 일정을 함께 보려면 [💾 데이터·앱] 탭의 캘린더 연동 주소를 넣어 주세요.</span>
     </div>
 
     <!-- 탭 2: 확언 · 미션 -->
@@ -4172,6 +4237,16 @@
       <div class="pgrid">
         <a class="pbtn wide" id="sheetOpenLink" target="_blank" rel="noopener">📊 오늘의 공부 시트 열기 ↗</a>
       </div>
+      <!-- v90 — 📅 부모님 구글 캘린더(Apps Script 웹앱) 주소. 이 기기의 localStorage 에만 저장한다. -->
+      <div class="psec">📅 루카 구글 캘린더 연동 주소 <span class="pbadge" id="calBadge">미연결</span></div>
+      <input class="ptext" id="calUrlInput" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+             placeholder="https://script.google.com/macros/s/…/exec" aria-label="루카 구글 캘린더 연동 주소">
+      <div class="pgrid" style="margin-top:6px">
+        <button class="pbtn" id="calSave" type="button">저장</button>
+        <button class="pbtn" id="calTest" type="button">연결 테스트</button>
+        <button class="pbtn wide" id="calClear" type="button">해제</button>
+      </div>
+      <span class="phint" id="calState">아직 연결하지 않았어요 — 루카 구글 캘린더 웹앱 주소를 붙여넣고 [저장]을 눌러 주세요. 이 주소는 이 기기에만 저장되고, 주소를 공유해도 다른 기기에는 일정이 보이지 않아요.</span>
       <div class="psec">부모 비밀번호</div>
       <span class="phint">🔑 비밀번호는 구글 시트의 '비밀번호' 칸에서 바꿔요.</span>
       <div class="psec">위험</div>
@@ -5809,21 +5884,33 @@ function wbLines(d){
   return { main:`루카야! 오늘 ${wbSkyWord(d.code)} 하루야! 기분 좋게 출발하자 ${WCODE(d.code)[0]}`,
            sub: join([temp, dustTxt]) };
 }
-/* 오늘 챙길 것 칩 — 날씨에 따라 달라진다(최대 4개) */
+/* v90 — 🧥 추천 코디 · 계절용품 칩(사용자 요청: "날씨 아래 오늘 챙길 것 대신 아래에 있는 추천 코디를
+   넣고, 우산이나 장갑 모자 등 계절용품을 같이 추천하도록 해"). 첫 칩은 기온에 맞는 옷차림,
+   그 뒤로 오늘 필요한 계절용품만 붙인다 — 비·눈 ☔ 우산 / 추울 때 🧣 장갑·모자·목도리 /
+   맑고 더울 때 🧢 모자·💧 물통 / 미세먼지 나쁨 😷 마스크. (최대 5개) */
+function wbOutfit(t){
+  const c = Math.round(t);
+  if(c <= 0)  return '내복 + 두꺼운 패딩';
+  if(c <= 5)  return '내복 + 두꺼운 니트·패딩';
+  if(c <= 11) return '긴팔 + 맨투맨·자켓';
+  if(c <= 16) return '긴팔 + 가벼운 겉옷';
+  if(c <= 22) return '얇은 긴팔·반팔 + 가디건';
+  if(c <= 27) return '반팔 + 가벼운 바지';
+  return '시원한 반팔·반바지';
+}
 function wbChips(d){
-  if(!d) return [['🎒 준비물 챙기기', '']];
-  const out = [];
-  if(d.wet){
-    if(d.snow) out.push(d.tOut <= 5 ? ['🧣 목도리·장갑', 'hot'] : ['👟 미끄러지지 않는 신발', '']);
-    else out.push(['☔ 우산', 'b']);
+  if(!d) return [['⏳ 코디 확인 중', '']];
+  const out = [[`🧥 ${wbOutfit(d.tOut)}`, 'fit']];
+  if(d.wet) out.push(['☔ 우산', 'b']);
+  const cold = (d.tmin != null && d.tmin <= 5) || d.tOut <= 5;
+  if(cold) out.push(['🧣 장갑·모자·목도리', 'hot']);
+  if(d.tmax != null && d.tmax >= 26){
+    if(d.code <= 2) out.push(['🧢 모자', 'hot']);              // 맑고 더운 날
+    out.push(['💧 물통', 'b']);
   }
   if(d.dust === 'bad') out.push(['😷 마스크', 'g']);
-  if(d.tOut <= 5) out.push(['🧥 두꺼운 겉옷', 'hot']);
-  else if(d.tOut <= 11) out.push(['🧥 겉옷 챙기기', 'hot']);
-  else if(d.tOut <= 16) out.push(['🧥 얇은 겉옷', 'hot']);
-  if(d.tmax != null && d.tmax >= 24) out.push(['💧 물병', 'b']);
   if(out.length < 2) out.push(['👟 편한 신발', '']);
-  return out.slice(0, 4);
+  return out.slice(0, 5);
 }
 /* 팝업 내용을 지금 날씨로 다시 칠한다 — 값이 없으면 '확인 중' 으로 두고 빈 칸을 만들지 않는다 */
 function wbPaint(){
@@ -5876,16 +5963,17 @@ function wbPaint(){
     wbTxt('wbDustVal', `${DUST_WORD[d.dust] || '—'}${d.pm10 != null ? ' ' + d.pm10 : ''}`);
     wbTxt('wbDustSub', d.dust === 'bad' ? '마스크 꼭 챙겨요' : d.dust === 'mid' ? '마스크는 안 챙겨도 OK' : '공기 깨끗해요');
   }
-  /* 오늘 챙길 것 */
+  /* v90 — 🧥 추천 코디 · 계절용품 (기존 '오늘 챙길 것'과 아래 중복 코디 문구를 대신한다) */
   const chipBox = wbEl('wbChips');
   if(chipBox) chipBox.innerHTML = wbChips(d).map(([t, c]) => `<span class="wbchip${c ? ' ' + c : ''}">${t}</span>`).join('');
-  /* 아래 한 줄 — 기온별 옷차림 조언(비·미세먼지 포함) */
-  wbTxt('wbNote', d ? outfitTip(d.tOut, { wet: !!d.wet, dusty: d.dust === 'bad' })
-                    : '날씨를 불러오는 중이야 — 잠깐만 기다려 줘!');
+  /* v90 — 📅 오늘의 일정 · 준비물 — 받아 둔 값이 있으면 바로 그리고, 없으면 띠를 숨긴다 */
+  renderSched(schedToday ? schedToday.res : null);
 }
 function wbOpen(test){
   const ov = wbEl('wxBrief'); if(!ov) return;
   wbPaint();
+  /* v90 — 캘린더를 연결했으면 팝업을 열 때 오늘 일정도 한 번 새로 청한다(5분 캐시) */
+  if(calUrl && (!schedToday || Date.now() - schedToday.at > CAL_REFRESH_MS)) schedFetch('open');
   const tc = wbEl('wbTestClose'); if(tc) tc.hidden = !test;
   ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
   if(!test && !wxNow) fetchWeather();      // 아직 날씨가 없으면 한 번 더 청한다(도착하면 wbPaint 가 다시 칠한다)
@@ -5929,6 +6017,229 @@ function checkWeatherBrief(now){
   if(ov) ov.addEventListener('click', e=>{ if(e.target === ov && wbTestHold) testClose(); });
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && wbShown() && wbTestHold) testClose(); });
 })();
+
+/* =========================================================
+   v90 — 📅 오늘의 일정 · 준비물 (부모님 구글 캘린더 → Apps Script 웹앱)
+   · '캘린더를 전체 공개'하지 않는다. 부모님이 자기 구글 계정으로 배포한 Apps Script 웹앱
+     (dashboard/apps-script-calendar.gs)이 오늘 일정의 제목·시각·설명(준비물)만 JSONP 로 건넨다.
+   · 웹앱 주소는 **이 기기의 localStorage 에만** 둔다 — 공개 index.html 소스에도, 시트나
+     백업 파일에도 남지 않는다. 주소를 지인에게 공유해도 그쪽 기기에는 일정이 안 보인다.
+   · 하루치 결과를 localStorage 에 캐시하고 5분이 지나면 조용히 다시 받는다.
+     받는 중·실패해도 캐시가 있으면 그대로 보여 주고, 캐시도 없으면 📅 띠를 통째로 숨긴다.
+   ========================================================= */
+const CAL_URL_KEY = 'lukaCal.url.v1';
+const CAL_CACHE_KEY = 'lukaCal.day.v1';
+const CAL_REFRESH_MS = 5 * 60 * 1000;      // 5분마다 새로 — 스크립트 쪽 캐시(300초)와 같은 간격
+let calUrl = '';
+let schedToday = null;                     // { day:'2026-11-27', at: ms, res:{...} }
+let schedStatus = 'idle';                  // idle | loading | live | cache | error | off
+let schedLastAt = 0;                       // 마지막 요청 시작 시각 (연속 호출 막기)
+let schedReqSeq = 0;
+let calCbSeq = 0;
+function calUrlLoad(){
+  try{ calUrl = String(localStorage.getItem(CAL_URL_KEY) || '').trim(); }catch(e){ calUrl = ''; }
+  return calUrl;
+}
+function calUrlSave(u){
+  u = String(u == null ? '' : u).trim();
+  try{
+    if(u) localStorage.setItem(CAL_URL_KEY, u);
+    else  localStorage.removeItem(CAL_URL_KEY);
+  }catch(e){}
+  calUrl = u;
+  return calUrl;
+}
+function calUrlLooksOk(u){ return /^https:\/\/script\.google\.com\//i.test(String(u || '')); }
+/* 주소 끝에 ?key=… 가 붙어 있어도 파라미터를 잃지 않게 붙인다 */
+function calEndpoint(params){
+  const base = String(calUrl || '');
+  const q = Object.keys(params || {}).map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`).join('&');
+  if(!q) return base;
+  return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
+}
+/* '14:30' → '오후 2:30' / '09:00' → '오전 9:00' / '12:00' → '오후 12:00' (사용자 확정 표기) */
+function schedTimeKo(hm){
+  const m = String(hm == null ? '' : hm).match(/^(\d{1,2}):(\d{2})$/);
+  if(!m) return '';
+  const h = Number(m[1]);
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h < 12 ? '오전' : '오후'} ${h12}:${m[2]}`;
+}
+function schedEsc(s){
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+/* JSONP — 시트(gviz)와 같은 방식. 스크립트 태그라서 CORS·리디렉터 문제가 없다. */
+function calJsonp(params, done){
+  const cb = '__calCb' + (++calCbSeq);
+  let s = null, timer = null, closed = false;
+  const finish = (ok, res) => {
+    if(closed) return;
+    closed = true;
+    clearTimeout(timer);
+    try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
+    if(s && s.parentNode) s.parentNode.removeChild(s);
+    done(ok, res);
+  };
+  window[cb] = res => finish(true, res);
+  s = document.createElement('script');
+  s.src = calEndpoint(Object.assign({ callback: cb, _: Date.now() }, params || {}));
+  s.async = true;
+  s.onerror = () => finish(false, null);
+  timer = setTimeout(() => finish(false, null), 8000);
+  document.head.appendChild(s);
+}
+function schedCacheRead(){
+  try{
+    const c = JSON.parse(localStorage.getItem(CAL_CACHE_KEY) || 'null');
+    if(c && c.day === todayKey() && c.res && c.res.ok !== false) return c;
+  }catch(e){}
+  return null;
+}
+function schedCacheWrite(c){
+  try{ localStorage.setItem(CAL_CACHE_KEY, JSON.stringify(c)); }catch(e){}
+}
+function schedCacheClear(){
+  try{ localStorage.removeItem(CAL_CACHE_KEY); }catch(e){}
+}
+/* 오늘 일정을 받아 둔다. 캘린더 미연결이면 아무 것도 하지 않고 띠를 숨긴다. */
+function schedFetch(reason){
+  if(!calUrl){ schedStatus = 'off'; renderSched(null); renderCalSettings(); return; }
+  if(Date.now() - schedLastAt < 3000) return;         // 너무 잦은 호출 막기
+  schedLastAt = Date.now();
+  const my = ++schedReqSeq;
+  schedStatus = 'loading';
+  renderCalSettings();
+  calJsonp({ action:'calendar' }, (ok, res) => {
+    if(my !== schedReqSeq) return;                     // 더 새 요청이 있으면 옛 응답은 버린다
+    if(ok && res && res.ok !== false){
+      schedToday = { day: todayKey(), at: Date.now(), res };
+      schedCacheWrite(schedToday);
+      schedStatus = 'live';
+      renderSched(res);
+    }else{
+      schedStatus = schedToday ? 'cache' : 'error';
+      renderSched(schedToday ? schedToday.res : null);  // 캐시가 있으면 조용히 그대로
+    }
+    renderCalSettings();
+  });
+}
+/* 일정 한 건의 준비물 — 서버가 잘라 준 prep 이 우선, 없으면 설명을 한 줄로 */
+function schedPrepText(e){
+  if(Array.isArray(e.prep) && e.prep.length) return e.prep.join(', ');
+  return String(e.desc || '').split('\n').map(t => t.trim()).filter(Boolean).join(' · ');
+}
+/* 일정 목록을 팝업 안 📅 띠에 그린다 — 일정 0건이면 한 줄 안내, 응답 없음·미연결이면 띠 숨김 */
+function renderSched(res){
+  const box = wbEl('wbSched');
+  if(!box) return;
+  const list = wbEl('wbSchedList');
+  const cnt = wbEl('wbSchedCnt');
+  if(!res || res.ok === false){
+    box.classList.add('off');
+    box.classList.remove('empty');
+    if(list) list.innerHTML = '';
+    if(cnt){ cnt.textContent = ''; cnt.hidden = true; }
+    return;
+  }
+  box.classList.remove('off');
+  const evs = (Array.isArray(res.events) ? res.events : []).slice(0, 4);
+  if(cnt){ cnt.textContent = evs.length ? `${evs.length}개` : ''; cnt.hidden = evs.length === 0; }
+  box.classList.toggle('empty', evs.length === 0);
+  if(list){
+    list.innerHTML = evs.map(e => {
+      const allDay = !!e.allDay;
+      const time = allDay ? '종일' : (schedTimeKo(e.start) || String(e.startKo || ''));
+      const prep = schedPrepText(e);
+      return `<div class="wbsi${prep ? '' : ' empty'}">`
+        +   `<span class="tm${allDay ? ' allday' : ''}">${schedEsc(time)}</span>`
+        +   `<div class="bd">`
+        +     `<b class="tt">${schedEsc(e.title)}</b>`
+        +     `<span class="pp">${prep ? '🎒 ' + schedEsc(prep) : ''}</span>`
+        +   `</div>`
+        + `</div>`;
+    }).join('');
+  }
+}
+/* 부모 설정 [💾 데이터·앱] 의 캘린더 줄 — 지금 상태·지난 확인 시각을 그대로 보여 준다 */
+function renderCalSettings(){
+  const inp = document.getElementById('calUrlInput');
+  if(inp && document.activeElement !== inp) inp.value = calUrl;
+  const badge = document.getElementById('calBadge');
+  const st = document.getElementById('calState');
+  const hhmm = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+  const at = schedToday && schedToday.at ? hhmm(schedToday.at) : '';
+  const calName = schedToday && schedToday.res && schedToday.res.cal ? ` · ${schedToday.res.cal}` : '';
+  let word = '미연결', cls = '', text = '아직 연결하지 않았어요 — 루카 구글 캘린더 웹앱 주소를 붙여넣고 [저장]을 눌러 주세요.';
+  if(calUrl){
+    if(schedStatus === 'loading'){ word = '확인 중'; text = '오늘 일정을 불러오는 중이에요…'; }
+    else if(schedStatus === 'live'){ word = '연결됨'; cls = 'manual'; text = `오늘 일정을 받았어요${calName} · ${at} 확인`; }
+    else if(schedStatus === 'cache'){ word = '저장된 일정'; text = at ? `${at}에 받은 일정을 보여 주고 있어요 (지금은 응답이 없어요)` : '저장된 일정을 보여 주고 있어요'; }
+    else if(schedStatus === 'error'){ word = '연결 실패'; text = '주소를 확인해 주세요 — [연결 테스트]로 한 번 더 볼 수 있어요.'; }
+    else { word = '연결됨'; text = '주소를 저장했어요. 다음에 팝업이 열릴 때 일정을 보여 줘요.'; }
+  }
+  if(badge){ badge.textContent = word; badge.classList.toggle('manual', cls === 'manual'); }
+  if(st) st.textContent = text + ' 이 주소는 이 기기에만 저장되고, 주소를 공유해도 다른 기기에는 일정이 보이지 않아요.';
+  /* 아침 브리핑 테스트 줄 안내도 같이 맞춘다 */
+  const hint = document.getElementById('wxCalHint');
+  if(hint) hint.textContent = calUrl ? '📅 오늘의 일정이 날씨 아래에 함께 나와요.' : '📅 일정을 함께 보려면 [💾 데이터·앱] 탭의 캘린더 연동 주소를 넣어 주세요.';
+}
+function calSaveTap(){
+  const inp = document.getElementById('calUrlInput');
+  const u = inp ? String(inp.value || '').trim() : '';
+  if(u && !calUrlLooksOk(u)){
+    toast('📅 script.google.com 으로 시작하는 웹앱 주소를 넣어 주세요');
+    if(inp) inp.focus();
+    return;
+  }
+  const changed = u !== calUrl;
+  if(changed){ schedToday = null; schedCacheClear(); schedReqSeq++; }
+  calUrlSave(u);
+  schedStatus = u ? 'idle' : 'off';
+  schedLastAt = 0;
+  renderSched(schedToday ? schedToday.res : null);
+  renderCalSettings();
+  if(u){ schedFetch('save'); toast('📅 캘린더 주소를 저장했어요'); }
+  else toast('📅 캘린더 연결을 해제했어요');
+}
+function calTestTap(){
+  if(!calUrl){ toast('📅 먼저 캘린더 웹앱 주소를 저장해 주세요'); return; }
+  const st = document.getElementById('calState');
+  if(st) st.textContent = '연결을 확인하는 중이에요…';
+  calJsonp({ action:'ping' }, (ok, res) => {
+    if(ok && res && res.ok){
+      toast(`✅ 캘린더 연결됨 — ${res.cal || '캘린더'}${res.today ? ' · ' + res.today : ''}`);
+      schedLastAt = 0;
+      schedFetch('test');
+    }else{
+      toast(res && res.error === 'key' ? '❌ 열쇠(key)가 맞지 않아요 — 주소를 다시 확인해 주세요'
+                                       : '❌ 연결하지 못했어요 — 주소·배포 설정을 확인해 주세요');
+      if(st) st.textContent = '연결 실패 — 주소와 배포 설정(액세스 권한: 모든 사용자)을 확인해 주세요.';
+    }
+  });
+}
+function calClearTap(){
+  calUrlSave('');
+  schedToday = null;
+  schedCacheClear();
+  schedReqSeq++;
+  schedStatus = 'off';
+  const inp = document.getElementById('calUrlInput');
+  if(inp) inp.value = '';
+  renderSched(null);
+  renderCalSettings();
+  toast('📅 캘린더 연결을 해제했어요');
+}
+(function bindCalSettings(){
+  const sv = document.getElementById('calSave');
+  const ts = document.getElementById('calTest');
+  const cl = document.getElementById('calClear');
+  if(sv) sv.addEventListener('click', calSaveTap);
+  if(ts) ts.addEventListener('click', calTestTap);
+  if(cl) cl.addEventListener('click', calClearTap);
+  const inp = document.getElementById('calUrlInput');
+  if(inp) inp.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); calSaveTap(); } });
+})();
+calUrlLoad();
 
 /* ---------- tasks ---------- */
 function allDone(){
@@ -5979,7 +6290,7 @@ function restPlan(partnerName){
   if(!nm){ try{ const p = partnerPk(); nm = (p && p.name) || '파트너'; }catch(e){ nm = '파트너'; } }
   const NIGHT_AT = NIGHT_START;              // 취침 루틴 시작 21:00
   let band, nextMin, nextEmoji, nextName, nextTime, say, chipLead, barLabel, depart, pct;
-  let sayFree = '', sayStudy = '';          // v88 — 공부 알약이 든 대사와, 공부를 다 했을 때 돌아갈 평범한 대사
+  let sayFree = '', sayStudy = '', sayPraise = '';   // v88 공부 알약 대사 · v90 3안 칭찬 대사
   if(now >= NIGHT_START && (nightAllDone() || now >= NIGHT_END)){   // ── 취침 완료 뒤 / 밤 10시 이후 ──
     band = 'night';
     nextMin = wake + 1440;
@@ -6029,7 +6340,17 @@ function restPlan(partnerName){
       /* v88 — 개수가 0이어도 대사 원본은 만들어 둔다: 쉬는 화면에 앉아 있는 동안
          시트 연동으로 공부 항목이 새로 들어오면, tick 동기화가 말풍선에 바로 알약을 넣는다. */
       sayStudy = restStudySayHTML(head, nextTime, studyN);
-      if(studyN > 0) say = sayStudy;
+      if(studyN > 0){
+        say = sayStudy;
+      }else if(!isRestToday()){
+        /* v90 — 3안 칭찬(사용자 선택 2026-11-26: "3안 · 성취감 칭찬").
+           오후 루틴과 오늘의 공부를 **모두** 끝낸 날의 낮 휴식 화면이다.
+           공부 쉬는 날(restDates)에는 공부를 해냈다고 말하지 않고 v89 자유 시간 대사 그대로 둔다.
+           sayFree(평범한 자유 시간 대사)는 그대로 두고 sayPraise 를 따로 넣어 두는 이유:
+           앉아 있는 사이 공부 쉬는 날로 바뀌거나 공부가 새로 들어오면 tick 동기화가 둘 중 맞는 말로 돌린다. */
+        sayPraise = restPraiseHTML(nextTime);
+        say = sayPraise;
+      }
     }
     chipLead = '⏳ 다음 모험까지 ';
     depart = `${nextName} ${nextTime}`;
@@ -6046,7 +6367,7 @@ function restPlan(partnerName){
   }
   barLabel = `${nextEmoji} ${nextName}까지`;
   return { band, nextMin, nextEmoji, nextName, nextTime, say, chipLead, barLabel, depart, pct,
-           sayFree, sayStudy, left: restSpanText(nextMin - now) };
+           sayFree, sayStudy, sayPraise, left: restSpanText(nextMin - now) };
 }
 /* v68 — 휴식 화면 칩 줄 오른쪽의 [🍎 과일 주기 (N)] [🌟 스페셜 (N)] 묶음.
    v69 — **밤 휴식 화면(band-night)에서만** 보여 준다. 낮·새벽에는 점선 구분선까지 통째로 빠지고
@@ -6131,6 +6452,24 @@ function restStudyShouldShow(band){
   if(!afterAllDone()) return false;        // 오후 루틴을 끝내기 전(아침 뒤 낮 대기)에는 두지 않는다
   return studyLeftCount() > 0;
 }
+/* v90 — 알약이 없을 때 말풍선에 앉힐 기본 대사. 낮(band-day)에서만 고른다. */
+function restStudyBaseHTML(el){
+  if(!el || !/band-day/.test(el.className)) return '';
+  if(afterAllDone() && !isRestToday() && studyLeftCount() === 0){
+    /* 패널을 그린 뒤에 마지막 공부를 끝낸 날 — 그때는 3안 문구를 미리 만들어 두지 않았을 수 있다 */
+    if(!el._sayPraise){
+      try{ el._sayPraise = restPraiseHTML(restPlan().nextTime); }catch(e){ el._sayPraise = ''; }
+    }
+    return el._sayPraise || el._sayFree || '';
+  }
+  return el._sayFree || '';
+}
+/* v90 — 3안 칭찬 대사 (사용자 선택 2026-11-26: "3안 · 성취감 칭찬")
+   오후 루틴과 오늘의 공부를 모두 끝낸 낮 휴식 화면에서만 쓴다. 문구는 사용자가 고른 그대로다. */
+function restPraiseHTML(nextTime){
+  return `우와, 오후 루틴에 <em>오늘의 공부</em>까지 전부 해냈네!<br>`
+       + `할 일 끝낸 멋진 트레이너, <em>${nextTime}</em>까지 마음껏 쉬고 놀아!`;
+}
 function restStudySayHTML(head, nextTime, n){
   /* v89 — 사용자 요청(2026-11-26 "지금은 자유시간이야 멘트 빼"):
      공부가 남은 날의 말풍선에서 '지금은 자유 시간이야 —' 를 뺐다. 세 줄 그대로
@@ -6164,9 +6503,17 @@ function restStudySync(panel){
     fitRestPanel();
     return;
   }
-  if(!show && btn){                        // 0개가 되었거나 공부 쉬는 날 — 조용히 평범한 대사로
-    if(el._sayFree) rs.innerHTML = el._sayFree;
-    fitRestPanel();
+  /* v90 — 알약을 빼야 할 때(0개·쉬는 날)는 그 순간에 맞는 기본 대사로 돌린다:
+     오후 루틴+공부를 모두 끝낸 날은 3안 칭찬, 그 밖에는 v89 자유 시간 대사.
+     알약이 없어도 상태가 바뀌었으면(공부 쉬는 날로 전환 등) 글만 조용히 바꾼다. */
+  if(!show){
+    const base = restStudyBaseHTML(el);
+    if(btn){
+      if(base) rs.innerHTML = base;
+      fitRestPanel();
+      return;
+    }
+    if(base && rs.innerHTML !== base){ rs.innerHTML = base; fitRestPanel(); }
     return;
   }
   if(!btn) return;
@@ -6307,6 +6654,7 @@ function buildRestPanel(wrap){
   /* v88 — 공부 알약을 넣었다 빼는 두 가지 대사 (+ tick 동기화에서 다시 쓰는 원본) */
   el._sayFree = plan.sayFree || '';
   el._sayStudy = plan.sayStudy || '';
+  el._sayPraise = plan.sayPraise || '';      // v90 — 3안 칭찬 대사
   /* v88 — [📚 오늘의 공부 N개 남았어!] — 말풍선 안 알약을 누르면 '오늘의 공부' 탭으로.
      말풍선을 다시 그려도(다시 넣고/되돌리고) 살아 있도록 패널에 한 번만 건다. */
   el.addEventListener('click', e => {
@@ -9911,6 +10259,7 @@ function switchPanelTab(name, opts){
   if(name === 'say'){ renderAffirmSettings(); renderMissionSettings(); }
   if(name === 'time'){ renderPanelStatus(); renderPanelMode(); renderEarlyState(); }
   if(name === 'reward'){ renderFruitSettings(); }        // 🍎 v48 — 열 때마다 지금 보유량으로 맞춘다
+  if(name === 'data'){ renderCalSettings(); }            // 📅 v90 — 캘린더 연결 상태·주소
   const body = document.getElementById('setBody');
   if(body && !(opts && opts.silent)) body.scrollTop = 0;
 }
@@ -10972,6 +11321,22 @@ renderFruitBadge();     // 🍎 v47 — 상단 파트너 카드의 보유 과일
 /* ---------- 구글 시트 동기화 — 처음 한 번, 탭에 들어올 때마다, 30초마다 ---------- */
 renderSheetChip();
 setTimeout(()=> sheetFetch('init'), 200);
+/* ---------- v90 — 📅 오늘의 일정: 저장해 둔 하루치를 먼저 그리고, 5분이 지났으면 새로 받는다 ---------- */
+schedToday = schedCacheRead();
+if(schedToday) schedStatus = 'cache';
+renderSched(schedToday ? schedToday.res : null);
+renderCalSettings();
+setTimeout(()=>{
+  if(!schedToday || Date.now() - schedToday.at > CAL_REFRESH_MS) schedFetch('init');   // 5분 캐시
+}, 600);
+setInterval(()=>{
+  if(document.hidden || !calUrl) return;
+  if(Date.now() - (schedToday ? schedToday.at : 0) > CAL_REFRESH_MS) schedFetch('poll');
+}, 60 * 1000);
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden || !calUrl) return;
+  if(Date.now() - (schedToday ? schedToday.at : 0) > CAL_REFRESH_MS) schedFetch('visible');
+});
 /* 30초마다 시트를 확인한다 — 탭·잠금 상태와 상관없이(화면이 꺼져 있을 때만 쉰다).
    시트 '웹제어' 로 원격 ON/OFF 가 바로 먹으려면, 아이가 루틴 화면에 가만히 켜 둔
    상태에서도(그리고 OFF 잠금 화면에서도) 폴링이 계속 돌아야 한다. */
