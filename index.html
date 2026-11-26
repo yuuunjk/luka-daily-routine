@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v87 — 📚 오후 루틴을 끝낸 자유 시간 화면에 '오늘 남은 공부 N개'
+     (사용자 요청 2026-11-26: "그래 오후 루틴 끝나고 뜨는 화면에 오늘 남은 공부 n개를 띄우자")
+     · 오후 루틴을 다 끝내고 뜨는 낮 휴식 화면(band-day)에서, 오늘의 공부가 아직 남아 있으면
+       말풍선 아래에 차분한 안내 배지 [📚 오늘 남은 공부 N개 ›] 하나를 둔다.
+       누르면 '오늘의 공부' 탭으로 바로 간다(벌칙·경고 느낌 없이 초록 톤 한 줄).
+     · 표시 조건 — ① 낮 휴식 화면일 것 ② 오늘 오후 루틴을 다 끝냈을 것 ③ 공부 쉬는 날(restDates)이 아닐 것
+       ④ 남은 공부가 1개 이상일 것. 넷 중 하나라도 아니면 배지는 조용히 숨는다.
+       · 공부를 다 끝내 0개가 되면 '✅ 오늘 공부 완료' 같은 말도 없이 그냥 사라진다(깔끔하게).
+       · 기상 전(새벽)·취침 뒤(밤) 휴식 화면은 밤 분위기를 지키려고 배지를 두지 않는다.
+       · 개수는 tick(250ms)마다 다시 세어 글자만 고친다 — 공부 탭에서 체크하고 돌아오면 바로 맞는다.
+     · 보상·타이머·과일·시트 연동·XP 규칙은 v86 그대로 손대지 않았다.
+     · 설명서 '하루 루틴 → 새 포켓몬!' 카드에 이 배지 한 줄을 더했다.
+     · v86 까지의 루틴·공부·도감·미션·소리 동작은 그대로다. -->
 <!-- v86 — 🍅 '오늘의 공부' 상단 독립 타이머 버튼 (사용자 요청 2026-11-26:
      "타이머 막상 넣고 보니 애매하네... 오늘의 공부 페이지 안에 타이머 팝업 버튼을 따로 만들고
       (필요할 때 눌러서 쓸 수 있게), 공부 항목은 그냥 내용만 나와서 체크 할 수 있게 해. 시안 줘."
@@ -1349,6 +1362,26 @@
   .rest2 .rchip2.ahead:active{transform:translateY(1px);box-shadow:inset 0 0 0 2px #b6e6d3;}
   .rest2 .rchip2.ahead:focus-visible{outline:3px solid #7fb1ff;outline-offset:2px;}
   .rest2.band-prewake .rchip2.ahead, .rest2.band-night .rchip2.ahead{display:none;}   /* 당길 다음 모험이 없다 */
+  /* ===== v87 — 📚 오늘 남은 공부 N개 =====
+     오후 루틴을 끝낸 낮 자유 시간에만, 말풍선과 칩 줄 사이에 한 줄로 앉는 안내 배지.
+     누르면 '오늘의 공부' 탭으로 간다. 경고가 아니라 초대하는 톤 — 연한 잎색 + 부드러운 그림자. */
+  .rest2 .rstudy{align-self:flex-start;display:inline-flex;align-items:center;
+    gap:clamp(4px,calc(var(--rh) * .022),9px);border:0;border-radius:999px;
+    font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap;
+    font-size:clamp(11px,calc(var(--rh) * .046),17px);font-weight:900;letter-spacing:-.3px;line-height:1.2;
+    color:#41692f;background:linear-gradient(180deg,#fbfdf6 0%,#eaf6dd 100%);
+    padding:clamp(4px,calc(var(--rh) * .022),9px) clamp(10px,calc(var(--rh) * .04),17px);
+    box-shadow:inset 0 0 0 2px #d8ebc4, 0 2px 0 #cfe6b9, 0 6px 12px rgba(90,120,60,.12);
+    transition:transform .12s ease, box-shadow .12s ease, opacity .2s ease;}
+  .rest2 .rstudy .e{font-size:1.1em;line-height:1;}
+  .rest2 .rstudy b{font-variant-numeric:tabular-nums;color:#2f5a1e;}
+  .rest2 .rstudy .go{font-size:1.3em;line-height:1;color:#86ab6c;margin-left:1px;}
+  .rest2 .rstudy:active{transform:translateY(1px);
+    box-shadow:inset 0 0 0 2px #d8ebc4, 0 1px 0 #cfe6b9, 0 2px 6px rgba(90,120,60,.12);}
+  .rest2 .rstudy:focus-visible{outline:3px solid #7fb1ff;outline-offset:2px;}
+  /* [hidden] 만으로는 위 display:inline-flex 가 이겨서 안 숨는다 — 규칙을 하나 더 둔다 */
+  .rest2 .rstudy[hidden]{display:none;}
+  @media (max-aspect-ratio:5/4){ .rest2 .rstudy{align-self:center;} }
   .pastbar{flex:0 0 auto;display:none;align-items:center;gap:10px;flex-wrap:wrap;
     padding:7px 14px;border-radius:16px;
     background:linear-gradient(180deg,#f6f1ff 0%,#e9ddff 100%);
@@ -3517,6 +3550,7 @@
             <li>🗓️ 공휴일은 아침 루틴(07:00~12:00) 하나로 <b>경험치 +100</b> · 포켓몬 1마리</li>
             <li>놓친 루틴은 쉬는 화면의 <b>[🕘 지난 모험 도전]</b>으로 마저 할 수 있어요 (부모님 확인)</li>
             <li>다음 루틴을 미리 하고 싶으면 쉬는 화면의 <b>[⏩ 다음 모험 미리 하기]</b>로 당겨서 할 수 있어요 (부모님 확인)</li>
+            <li>오후 루틴을 끝내면 쉬는 화면에 <b>📚 오늘 남은 공부 N개</b>가 떠요 — 누르면 공부 탭으로 바로 가요</li>
           </ul>
           <div class="note">체크를 풀면 그 루틴에서 받은 경험치도 같이 돌아가요</div>
         </section>
@@ -6041,6 +6075,54 @@ function restGiveSync(panel){
     if(b.getAttribute('aria-label') !== aria) b.setAttribute('aria-label', aria);
   });
 }
+/* v87 — 📚 오늘 남은 공부 N개 (오후 루틴을 끝낸 낮 자유 시간 안내)
+   · studyLeftCount — 오늘의 공부 중 아직 안 끝낸 항목 수(읽기 전용). 오늘 공부를 쉬는 날이면 0.
+     renderStudy 목록과 같은 규칙으로, 시트에서 온 plan[todayIdx()] 중 빈 칸이 아닌 항목만 센다.
+   · restStudyShouldShow — 낮 휴식(band-day) + 오늘 오후 루틴 완료 + 공부가 남아 있을 때만.
+     새벽·밤 휴식 화면의 밤 분위기는 건드리지 않는다.
+   · restStudyHTML — band-day 패널에만 DOM 을 두고, 지금 보일 때만 hidden 을 푼다.
+   · restStudySync — tick 마다 개수·보임 여부만 다시 맞춘다(DOM 을 새로 그리지 않는다). */
+function studyLeftCount(){
+  if(isRestToday()) return 0;
+  const items = state.study.plan[todayIdx()] || [];
+  const done = state.study.done[todayKey()] || [];
+  let n = 0;
+  for(let i = 0; i < items.length; i++){
+    const t = items[i];
+    if(t && t.trim() && !done[i]) n++;
+  }
+  return n;
+}
+function restStudyShouldShow(band){
+  if(band !== 'day') return false;         // 새벽·밤 휴식 화면에는 두지 않는다
+  if(!afterAllDone()) return false;        // 오후 루틴을 끝내기 전(아침 뒤 낮 대기)에는 두지 않는다
+  return studyLeftCount() > 0;
+}
+function restStudyHTML(band){
+  if(band !== 'day') return '';
+  const n = studyLeftCount();
+  const show = restStudyShouldShow(band);
+  return `<button class="rstudy" type="button" data-study-go="1"${show ? '' : ' hidden'}`
+    + ` aria-label="오늘 남은 공부 ${n}개 — 누르면 오늘의 공부 탭으로 가요">`
+    + `<span class="e">📚</span>오늘 남은 공부 <b>${n}개</b><span class="go" aria-hidden="true">›</span></button>`;
+}
+function restStudySync(panel){
+  const el = panel || document.getElementById('restPanel');
+  if(!el) return;
+  const btn = el.querySelector('[data-study-go]');
+  if(!btn) return;
+  const band = /band-day/.test(el.className) ? 'day' : '';
+  const show = restStudyShouldShow(band);
+  const n = studyLeftCount();
+  const nb = btn.querySelector('b');
+  if(nb && nb.textContent !== `${n}개`) nb.textContent = `${n}개`;
+  const aria = `오늘 남은 공부 ${n}개 — 누르면 오늘의 공부 탭으로 가요`;
+  if(btn.getAttribute('aria-label') !== aria) btn.setAttribute('aria-label', aria);
+  if(btn.hidden !== !show){                // 보임/숨김이 바뀌면 높이가 달라진다 — 다시 앉힌다
+    btn.hidden = !show;
+    fitRestPanel();
+  }
+}
 /* 안 될 때(0개·자는 중) — 패널이 살짝 흔들리고 안내 토스트만 뜬다 */
 function restNope(panel){
   panel.classList.remove('rf-nope');
@@ -6161,6 +6243,7 @@ function buildRestPanel(wrap){
         <span class="rkick">${kick}</span>
         <div class="rsay">${plan.say}</div>
       </div>
+      ${restStudyHTML(plan.band)}
       <div class="rchips">
         ${pastChipHTML(plan.band)}
         <span class="rchip2">${plan.chipLead}<b class="cd">${plan.left}</b></span>
@@ -6179,6 +6262,9 @@ function buildRestPanel(wrap){
   /* v79 — [⏩ 다음 모험 미리 하기] — 부모 비번을 받은 뒤 오늘의 다음 모험을 당겨서 연다 */
   const abtn = el.querySelector('[data-ahead]');
   if(abtn) abtn.addEventListener('click', e => { e.stopPropagation(); askAheadAdventure(); });
+  /* v87 — [📚 오늘 남은 공부 N개] — 누르면 '오늘의 공부' 탭으로 바로 간다 */
+  const sbtn = el.querySelector('[data-study-go]');
+  if(sbtn) sbtn.addEventListener('click', e => { e.stopPropagation(); showTab('study'); });
   const img = el.querySelector('.rart');
   /* v70 — 새벽은 몬스터볼 그림 고정(pkImg 사슬을 태우지 않는다). 낮·밤은 그대로 */
   if(plan.band !== 'prewake') pkImg(img, pk.id, 'art');   // 공식 일러스트 → CDN → 내장 스프라이트 → 몬스터볼
@@ -6198,6 +6284,7 @@ function updateRestLeft(plan){
     if(cd.textContent !== t) cd.textContent = t;
   }
   restGiveSync(el);          // v68 — 과일 개수·잠금 모양도 tick 마다 맞춰 둔다
+  restStudySync(el);         // v87 — 📚 오늘 남은 공부 N개 (개수·보임 여부)
 }
 window.addEventListener('resize', ()=> fitRestPanel());
 /* v72 — 휴식 화면은 'rest' 키 하나를 오래 쓰므로, 밤→새벽처럼 시간대(band)만 바뀌면
