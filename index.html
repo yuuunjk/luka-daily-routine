@@ -3433,7 +3433,7 @@
           <span class="sheet-sync" id="sheetSync">
             <!-- v86 — 상단 칩 줄은 셋만: 🍅 타이머 · 🛋️ 휴식 · 📊 시트 연동됨(시각).
                  [🔄 시트 새로고침] 은 없앴다 — 시트는 저절로 다시 받아 오니 누를 일이 없다. -->
-            <button class="sheet-btn pomo-btn" id="pomoBtn" type="button" title="필요할 때 공부 시간을 재요 — 공부 항목과 따로예요">🍅 타이머</button>
+            <button class="sheet-btn pomo-btn" id="pomoBtn" type="button" title="필요할 때 공부 시간을 재요 — 공부 항목과 따로예요">⏳ 타이머</button>
             <button class="sheet-btn rest-btn" id="restBtn" type="button" title="부모님 비밀번호를 누르면 오늘 하루 공부를 쉽니다">🛋️ 휴식</button>
             <span id="sheetTx">📊 시트 연결 중…</span>
           </span>
@@ -3534,7 +3534,7 @@
           <h3><span class="ic">📚</span>오늘의 공부 &amp; 타이머</h3>
           <ul>
             <li>공부 하나 끝낼 때마다 <b>🍎 과일 1개</b> — 카드를 누르면 바로 체크돼요</li>
-            <li><b>🍅 타이머</b>는 상단 버튼으로 필요할 때만 — <b>5·10·15·20·25·30분</b> (<b>− ＋</b> 로 5분씩)</li>
+            <li><b>⏳ 타이머</b>는 상단 버튼으로 필요할 때만 — <b>5·10·15·20·25·30분</b> (<b>− ＋</b> 로 5분씩)</li>
             <li><b>⏸ 일시정지</b> · <b>[나중에 다시 도전!]</b> = 타이머 처음으로</li>
             <li>시간이 끝나면 <b>[✓ 끝!]</b> 또는 <b>＋5분 더</b> — 타이머는 공부 체크와 따로예요</li>
             <li>공부를 <b>다</b> 끝내면 <b>🌟 스페셜 과일 1개</b></li>
@@ -3677,7 +3677,7 @@
      바깥을 눌러도 닫히지 않는다 — 닫는 길은 [나중에 다시 도전!] 과 [✓ 끝!] 뿐이다. -->
 <div class="overlay pmov" id="pomoOv" aria-hidden="true" data-keep-panel="1">
   <div class="pmcard staged" id="pmCard" role="dialog" aria-modal="true" aria-label="공부 타이머">
-    <div class="pmtop"><span>🍅</span><span>뽀모도로</span><span class="tag" id="pmTag">공부 타이머</span></div>
+    <div class="pmtop"><span>⏳</span><span>타이머</span><span class="tag" id="pmTag">공부 시간</span></div>
     <div class="pmringwrap">
       <svg class="pmring" viewBox="0 0 200 200" aria-hidden="true">
         <circle class="trk" cx="100" cy="100" r="86"></circle>
@@ -8873,7 +8873,7 @@ function pmChip(){
   if(!b) return;
   const live = pomo.total > 0;
   b.classList.toggle('live', live);
-  b.textContent = live ? `🍅 ${(pomo.done || pomo.remain <= 0) ? '끝!' : stFmt(pomo.remain)}` : '🍅 타이머';
+  b.textContent = live ? `⏳ ${(pomo.done || pomo.remain <= 0) ? '끝!' : stFmt(pomo.remain)}` : '⏳ 타이머';
 }
 function pomoStart(mins){
   const m = pomoSaveMins(mins);
@@ -9024,7 +9024,7 @@ function pmRender(){
   card.classList.toggle('paused', paused);
   card.classList.toggle('finished', fin);
   const tag = pmEl('pmTag');
-  if(tag) tag.textContent = !live ? '공부 타이머' : (fin ? '시간 끝!' : (paused ? '잠깐 쉬는 중' : '공부 중'));
+  if(tag) tag.textContent = !live ? '공부 시간' : (fin ? '시간 끝!' : (paused ? '잠깐 쉬는 중' : '공부 중'));
   const time = pmEl('pmTime'), unit = pmEl('pmUnit'), arc = pmEl('pmArc');
   if(!live){
     if(time) time.textContent = `${pmPick}분`;
