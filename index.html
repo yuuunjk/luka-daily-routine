@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v92 — 🍚 아침 '식사에 집중했어요' 칩 — 왼쪽 정렬 + 한 단계 작게
+     (사용자 요청 2026-11-27: "식사에 집중했어요 글씨 줄이고 왼쪽으로 옮겨")
+     · 아침 루틴 화면 위쪽 칩 줄(.mealbar)을 오른쪽 끝(flex-end)에서 **왼쪽(flex-start)** 으로 옮기고
+       왼쪽 여백을 0으로 맞춰 **1번 아침 식사 카드의 왼쪽 선과 같은 자리**에서 시작한다.
+     · 칩 안의 글씨(15 → 13px)·체크 상자(26 → 22px)·⚡+1 배지(12.5 → 11px)·패딩/간격을 한 단계 줄여
+       화면에서 부담 없이 아담하게 보인다. 좁은 화면 단계(1160/1060/560)도 같은 비율로 함께 줄인다.
+     · '오늘의 공부 · 스스로 했어요' 칩은 .self-chip.meal 로만 골라 손대지 않았다 — 크기·자리 그대로다.
+     · 동작(누르면 ⚡ 강화 XP +1 · 하루 한 번 · 체크 해제 시 −1 · 아침 완료 판정과 무관)은 v91 그대로다. -->
 <!-- v91 — 🧴 잘 준비 '로션·립밤 바르기' + 🧥 오후 '외투 걸기' + 🍚 아침 '식사에 집중했어요' + 🧹 아침 '식탁 아래 정리'
      (사용자 요청 2026-11-27: "잘 준비 루틴에서 양치 다음에 로션, 립밤 바르기 넣어줘"
       + "오후 루틴에 옷 정리하기 전에 외투 걸기도 넣어"
@@ -1999,12 +2007,17 @@
   .self-chip.on .box{background:var(--green);border-color:var(--green-dark);color:#fff;}
   .self-chip .add{font-size:12.5px;font-weight:900;color:#a8791a;background:#fff7de;border-radius:6px;padding:2px 7px;}
   .self-chip.on .add{background:#e6f7dc;color:#3f7a2a;}
-  /* v91 — 🍚 아침 '식사에 집중했어요' 보너스 칩 — 아침 루틴 화면 위쪽 오른쪽에 조용히 한 개만 놓인다 */
-  .mealbar{flex:0 0 auto;display:flex;justify-content:flex-end;align-items:center;gap:9px;
-    padding:0 3px 7px;min-height:0;}
+  /* v91 — 🍚 아침 '식사에 집중했어요' 보너스 칩 — 아침 루틴 화면 위쪽 왼쪽에 조용히 한 개만 놓인다 */
+  /* v92 — 오른쪽 끝 → 왼쪽. 왼쪽 여백을 0으로 두어 1번 카드의 왼쪽 선과 같은 자리에서 시작한다. */
+  .mealbar{flex:0 0 auto;display:flex;justify-content:flex-start;align-items:center;gap:9px;
+    padding:0 0 7px;min-height:0;}
   .mealbar[hidden]{display:none;}
   .self-chip.meal{background:#fffdf4;border-color:#efdfae;}
   .self-chip.meal .add{color:#8a6410;}
+  /* v92 — 이 칩만 한 단계 더 작고 아담하게. '오늘의 공부 · 스스로 했어요' 칩(.self-chip)은 그대로다. */
+  .self-chip.meal{font-size:13px;gap:6px;padding:3px 9px 3px 3px;}
+  .self-chip.meal .box{width:22px;height:22px;border-radius:6px;font-size:13px;}
+  .self-chip.meal .add{font-size:11px;padding:1px 6px;}
   .self-prog{display:flex;align-items:center;gap:10px;min-width:0;}
   /* 게이지 칸 — 8칸을 다 채우면 ⚡강화권 1장. 설명 문구 없이 칸과 숫자만으로 읽힌다. */
   .gauge{display:flex;gap:4px;}
@@ -2882,6 +2895,9 @@
     .self-chip{font-size:14px;gap:6px;padding:3px 9px 3px 3px;}
     .self-chip .box{width:24px;height:24px;font-size:14px;}
     .self-chip .add{font-size:11.5px;padding:1px 6px;}
+    .self-chip.meal{font-size:12.5px;gap:6px;padding:3px 9px 3px 3px;}
+    .self-chip.meal .box{width:21px;height:21px;font-size:12.5px;}
+    .self-chip.meal .add{font-size:10.5px;padding:1px 6px;}
     .sheet-sync{gap:6px;}
   }
   @media (max-width:1060px){
@@ -2890,6 +2906,9 @@
     .self-chip{font-size:13.5px;}
     .self-chip .box{width:23px;height:23px;font-size:13px;}
     .self-chip .add{font-size:11px;}
+    .self-chip.meal{font-size:12px;gap:5px;padding:3px 8px 3px 3px;}
+    .self-chip.meal .box{width:20px;height:20px;font-size:12px;}
+    .self-chip.meal .add{font-size:10px;padding:1px 5px;}
     .sheet-sync{gap:5px;font-size:11px;}
     .sheet-sync #sheetTx{font-size:11px;padding:3px 9px;}
     .sheet-btn{font-size:11px;padding:4px 10px;}
@@ -2899,6 +2918,9 @@
     .self-chip{font-size:12.5px;gap:5px;padding:2px 8px 2px 3px;}
     .self-chip .box{width:21px;height:21px;font-size:12px;}
     .self-chip .add{font-size:10.5px;padding:1px 5px;}
+    .self-chip.meal{font-size:11px;gap:5px;padding:2px 8px 2px 3px;}
+    .self-chip.meal .box{width:19px;height:19px;font-size:11px;}
+    .self-chip.meal .add{font-size:9.5px;padding:1px 5px;}
   }
   @media (max-width:880px){
     .dex-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:132px;}
