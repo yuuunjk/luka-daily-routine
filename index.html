@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v89 — 📚 남은 공부 말풍선에서 '지금은 자유 시간이야 —' 멘트 제거
+     (사용자 요청 2026-11-26: "지금은 자유시간이야 멘트 빼")
+     · 오후 루틴을 끝낸 낮 휴식 화면(band-day)에서 공부가 남아 있을 때 파트너가 하는 말이
+       세 줄로 정리된다 — '루카야, 오늘 오후 루틴도 정말 잘했어!' / [📚 오늘의 공부 N개 남았어!] /
+       '끝내고 이따 오후 9시에 다시 모험하자!' (v88 의 앞머리 '지금은 자유 시간이야 —' 만 뺐다)
+     · 공부를 모두 끝냈거나(0개) 공부 쉬는 날에 돌아가는 평범한 자유 시간 대사
+       ('지금은 자유 시간이야 — 신나게 놀거나 오늘의 공부도 해 보고, …')는 v88 그대로다.
+     · 알약 클릭 → 오늘의 공부 탭 · 실시간 개수 갱신 · 새벽/밤 숨김 · 보상·타이머·시트 연동은
+       v88 그대로 손대지 않았다. v88 까지의 루틴·공부·도감·미션·소리 동작도 그대로다. -->
 <!-- v88 — 📚 오늘의 남은 공부를 파트너 말풍선 안에서 강조
      (사용자 요청 2026-11-26: "오늘의 남은 공부가 피카츄 말에 있으면 좋겠어 잘 보이게")
      · v87 에서 말풍선 **아래**에 따로 두었던 [📚 오늘 남은 공부 N개] 한 줄 배지를 없앴다.
@@ -1381,7 +1390,8 @@
      글자 크기는 말풍선(.rsay)에 맞춘 em 단위 — 화면이 작으면 글자와 함께 줄어든다.
      경고가 아니라 초대하는 톤 — 따뜻한 노랑 강조 + 살짝 떠 있는 그림자. 누르면 공부 탭. */
   .rest2 .rsay .rst{display:inline-flex;align-items:center;gap:.2em;vertical-align:baseline;
-    border:0;border-radius:.5em;margin:.08em .18em .1em .28em;padding:.1em .5em .16em;
+    /* v89 — 알약이 말풍선에서 한 줄을 차지하게 되면서, 왼쪽 여백은 없애 글줄과 똑같이 맞춘다 */
+    border:0;border-radius:.5em;margin:.06em .18em .12em 0;padding:.1em .5em .16em;
     font-family:inherit;font-size:.94em;font-weight:900;letter-spacing:-.4px;line-height:1.24;
     color:#6b4605;background:linear-gradient(180deg,#fff8d2 0%,#ffd84e 100%);
     box-shadow:0 0 0 .08em #eab221, 0 .1em 0 #cf9715, 0 .28em .5em rgba(150,110,20,.26);
@@ -6122,7 +6132,11 @@ function restStudyShouldShow(band){
   return studyLeftCount() > 0;
 }
 function restStudySayHTML(head, nextTime, n){
-  return `${head}<br>지금은 자유 시간이야 —`
+  /* v89 — 사용자 요청(2026-11-26 "지금은 자유시간이야 멘트 빼"):
+     공부가 남은 날의 말풍선에서 '지금은 자유 시간이야 —' 를 뺐다. 세 줄 그대로
+     '오늘 오후 루틴도 정말 잘했어!' → '📚 오늘의 공부 N개 남았어!' → '끝내고 이따 …에 다시 모험하자!'
+     공부를 다 끝냈거나 쉬는 날에 돌아가는 평범한 자유 시간 대사(sayFree)는 v88 그대로 둔다. */
+  return `${head}<br>`
     + `<button class="rst" type="button" data-study-go="1"`
     + ` aria-label="오늘의 공부 ${n}개 남았어 — 누르면 오늘의 공부 탭으로 가요">`
     + `<span class="e" aria-hidden="true">📚</span>오늘의 공부 <b>${n}개</b> 남았어!</button>`
