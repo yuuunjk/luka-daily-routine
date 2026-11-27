@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v94 — 🗂️ 루틴 구역 도형 박스 · 💬 비루틴 말풍선 꼬리/이름표 수정 · 📅 헤더 날씨 왼쪽 오늘 일정·준비물 칸
+     (사용자 요청 2026-11-27: "그리고 아침루틴도 오늘의 공부처럼 루틴부분에 도형으로 구역이 나뉘어져 있으면 좋겠어.
+       식사에 집중했어요까지 구역 안에 넣는 거지."
+      + "그리고 비루틴화면에서 파트너 포켓몬 말풍선이 깨져서 보여. 가로, 세로형 모두 말풍선이 깨져 보이지 않도록 수정해."
+      + "우측 상단 헤더 날씨 왼쪽에 간단하게 오늘의 일정과 준비물 안내 되는 칸이 있으면 좋겠어" + "v94에 다 같이 넣어.")
+     · 루틴 구역 — #routineBox 하나가 [🍚 식사에 집중했어요] 칩부터 루틴 카드 그리드(#tasks)까지 감싼다.
+       '오늘의 공부'(.study-main)와 같은 모양(둥근 20px·그림자·여백), 색만 한 단계 깊은 크림(#f7f1e2) —
+       카드와 같은 #fffdf7 로 두면 카드 경계가 사라져 4+3 묶음이 안 보였다.
+     · 휴식 화면(#tasks.has-rest)은 그 자체가 카드(.rest2)라 박스에 is-rest 를 붙여 테두리를 걷는다.
+     · 말풍선 꼬리 — 45° 회전 네모(왼쪽·아래 테두리만)를 테두리 삼각형+속 삼각형 두 겹으로 바꿨다.
+       입의 테두리 3px 를 속 삼각형이 덮어 선이 한 줄로 이어지고 두께도 고르다. 세로 화면에서는
+       꼬리를 숨기는 대신 **위를 향해** 붙인다(파트너가 말풍선 위에 있다).
+     · 말을 건 이름표(.rkick) — 말풍선 모서리를 비스듬히 덮어 모서리가 잘리고 이름표 아래 테두리가
+       말풍선 안쪽에 가로줄로 남았다. 이제 아래 끝을 테두리 위에 정확히 앉히고 테두리 색도 같게,
+       둥근 모서리 밖에서 시작한다.
+     · 📅 헤더 일정 칸(#hdrSched) — 날씨 카드 바로 왼쪽. 오늘 일정이 있을 때만 보이고
+       (미연결·오류·0건이면 hidden), 가장 가까운 일정 하나 + 🎒 준비물 + 건수, title 에 전체 목록.
+       세로 화면에서는 날씨 카드 위에 한 줄로(왼쪽에 둘 폭이 없다), 폰 폭 560px 이하에서는 숨간다. -->
 <!-- v93 — 입력칸 예시 문구 더 흐리게 · 🧪 테스트 탭 맨 위 '☀️ 아침 브리핑 팝업' · 📅 캘린더 연동 진단 · [☀️ 모험을 떠나자!]
      (사용자 요청 2026-11-27: "그럼 예시안내문구는 훨씬 더 흐린 색으로 만들어"
       + "테스트 탭에서 아침 브리핑 팝업부터 시작 버튼을 만들어"
@@ -742,6 +760,51 @@
     padding-top:.1em; min-width:0; font-size:.86em; font-weight:800; color:#22384d; line-height:1.25;}
   header.sky .w-tiprow b{flex:0 0 auto; color:#1f6fd4; font-weight:900; white-space:nowrap;}
   header.sky .w-tiprow .w-tip{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+  /* ===== v94 — 📅 오늘 일정 · 🎒 준비물 칸 (날씨 카드 바로 왼쪽) =====
+     일정이 있을 때만 보인다(미연결·오류·0건이면 hidden → 헤더는 예전 그대로).
+     .wxcol 이 [일정 칸 + 날씨] 를 한 덩어리로 묶어, 일정 칸이 없을 때의
+     날씨 폭(flex 1 1 30em / max 36em)은 예전과 똑같이 유지된다. */
+  header.sky .wxcol{display:flex; align-items:stretch; gap:.4em; min-width:0;
+    flex:1 1 30em; max-width:36em; align-self:stretch;}
+  header.sky .wxcol > .weather{flex:1 1 auto; min-width:0; max-width:none;}
+  header.sky .wxcol.has-sched{max-width:calc(36em + 8.6em);}   /* 일정 칸이 설 만큼만 넓힌다 */
+  header.sky .hdrsched{
+    flex:0 0 auto; width:clamp(88px,9.2vw,124px); min-width:0; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:center; gap:.1em;
+    background:#fff; border:2px solid #2b3445; border-radius:.8em; padding:.28em .46em;
+    box-shadow:0 .2em .45em rgba(20,60,90,.2); color:#152436; line-height:1.2;
+  }
+  header.sky .hdrsched[hidden]{display:none;}
+  header.sky .hdrsched .hs-top{display:flex; align-items:center; gap:.24em; min-width:0;
+    font-size:.66em; font-weight:900; color:#70838f; white-space:nowrap;}
+  header.sky .hdrsched .hs-e{flex:0 0 auto; font-size:1.06em;}
+  header.sky .hdrsched .hs-l{min-width:0; overflow:hidden; text-overflow:ellipsis;}
+  header.sky .hdrsched .hs-n{flex:0 0 auto; margin-left:auto; font-size:.96em; font-weight:900;
+    color:#1f6fd4; background:#e8f2ff; border-radius:999px; padding:.04em .42em;}
+  header.sky .hdrsched .hs-n::after{content:'건'; font-size:.9em;}
+  header.sky .hdrsched .hs-n.n0{display:none;}
+  header.sky .hdrsched .hs-main{font-size:.9em; font-weight:900; color:#152436;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  header.sky .hdrsched .hs-prep{font-size:.72em; font-weight:800; color:#3f6d95;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  header.sky .hdrsched .hs-prep:empty{display:none;}
+  /* 세로 화면 — 일정 칸은 날씨 카드 **왼쪽**에 둘 폭이 없어 바로 **위**에 한 줄로 놓인다.
+     글자 크기는 그대로라 하늘·날씨 카드 폭은 예전 그대로이고, 헤더만 그 줄만큼 높아진다. */
+  @media (max-aspect-ratio:5/4){
+    header.sky .wxcol,header.sky .wxcol.has-sched{flex-direction:column; gap:.26em; max-width:36em;}
+    header.sky .hdrsched{width:auto; flex-direction:row; align-items:center; gap:.4em;
+      padding:.2em .55em; border-radius:.62em;}
+    header.sky .hdrsched .hs-l{display:none;}
+    header.sky .hdrsched .hs-top{font-size:.78em;}
+    header.sky .hdrsched .hs-n{margin-left:0;}
+    header.sky .hdrsched .hs-main{flex:0 1 auto; min-width:0; font-size:1.12em;}
+    header.sky .hdrsched .hs-prep{flex:1 1 auto; min-width:0; margin-left:.1em; font-size:.9em;}
+  }
+  /* 폰 폭(560px 이하)에서는 헤더 줄에 이미 자리가 없다 — 일정 칸은 숨긴다 */
+  @media (max-width:560px){
+    header.sky .hdrsched{display:none;}
+  }
   header.sky .w-fallback{font-size:.7em; color:#94a3ae; font-weight:900;}
 
   /* --- 시계 오른쪽: (다음 목표 | 파트너) 위 줄 + ⚡ 강화 XP 아래 줄 ---
@@ -1093,18 +1156,38 @@
   /* 오른쪽 — 말풍선 + 다음 모험 칩 */
   .rest2 .rright{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;
     gap:clamp(6px,calc(var(--rh) * .04),15px);}
-  .rest2 .rbubble{position:relative;background:var(--bub);border:3px solid var(--bubline);
+  .rest2 .rbubble{--tw:clamp(13px,calc(var(--rh) * .052),22px);   /* v94 — 꼬리 길이 */
+                  --th:clamp(10px,calc(var(--rh) * .038),16px);   /* v94 — 꼬리 반높이 */
+                  --tb:clamp(13px,calc(var(--rh) * .072),28px);   /* v94 — 꼬리 아래 여백 */
+    position:relative;background:var(--bub);border:3px solid var(--bubline);
     border-radius:clamp(16px,calc(var(--rh) * .08),30px);
     padding:clamp(9px,calc(var(--rh) * .052),20px) clamp(13px,2.2vw,30px) clamp(10px,calc(var(--rh) * .058),22px);
     box-shadow:0 clamp(3px,calc(var(--rh) * .018),7px) 0 var(--bubdrop), 0 14px 26px rgba(60,70,110,.16);
     animation:restPop .45s ease-out both;}
-  .rest2 .rbubble::before{content:'';position:absolute;left:calc(clamp(16px,calc(var(--rh) * .05),26px) * -1 + 2px);
-    bottom:clamp(14px,calc(var(--rh) * .075),30px);width:22px;height:22px;background:var(--bub);
-    border-left:3px solid var(--bubline);border-bottom:3px solid var(--bubline);
-    transform:rotate(45deg);border-bottom-left-radius:8px;}
-  .rest2 .rkick{position:absolute;top:calc(clamp(9px,calc(var(--rh) * .045),17px) * -1);left:clamp(12px,calc(var(--rh) * .06),26px);
-    display:inline-flex;align-items:center;gap:5px;max-width:calc(100% - 40px);
-    background:#fff3d6;border:2px solid #f0dfae;border-radius:999px;
+  /* v94 — 말풍선 꼬리.
+     예전에는 45° 돌린 네모(background:var(--bub) + 왼쪽·아래 테두리만)를 붙였는데,
+     테두리가 두 변에만 있어 입(테두리와 만나는 자리)에서 선이 끊기고, 둥근 모서리 때문에
+     꼬리 끝이 '깨진 부리'처럼 보였다. 이제 **테두리 삼각형 + 속 삼각형** 두 겹으로 그린다:
+       ::before = 테두리 색 삼각형(바깥), ::after = 말풍선 색 삼각형(안쪽, 테두리 위를 덮어 입을 연다)
+      입의 테두리 3px 를 속 삼각형이 덮으므로 선이 한 줄로 이어지고 두께도 3px 로 고르다. */
+  .rest2 .rbubble::before,.rest2 .rbubble::after{content:'';position:absolute;width:0;height:0;
+    border-style:solid;border-color:transparent;}
+  .rest2 .rbubble::before{
+    left:calc(-1 * var(--tw) - 3px);bottom:var(--tb);
+    /* 오른쪽(입)은 1px 더 넓혀 말풍선 테두리와 픽셀이 겹치게 — 사이에 배경색 1px 이 비지 않는다 */
+    border-width:var(--th) calc(var(--tw) + 1px) var(--th) 0;border-right-color:var(--bubline);}
+  .rest2 .rbubble::after{
+    left:calc(-1 * var(--tw) + 4.7px);bottom:calc(var(--tb) + 3.7px);
+    border-width:calc(var(--th) - 3.7px) var(--tw) calc(var(--th) - 3.7px) 0;
+    border-right-color:var(--bub);}
+  /* v94 — 말을 건 이름표: 예전에는 말풍선 위쪽 모서리를 비스듬히 덮어 그 모서리가 잘리고,
+     이름표의 아래 테두리가 말풍선 **안쪽**에 가로줄로 남아 깨져 보였다.
+     이제 이름표의 아래 끝을 말풍선 테두리 위에 정확히 앉히고(테두리 색도 같게),
+     둥근 모서리 밖(오른쪽)에서 시작해 모서리 곡선을 가리지 않는다. */
+  .rest2 .rkick{position:absolute;top:auto;bottom:calc(100% + 1px);
+    left:calc(clamp(16px,calc(var(--rh) * .08),30px) + 10px);
+    display:inline-flex;align-items:center;gap:5px;max-width:calc(100% - 46px);
+    background:#fff3d6;border:2px solid var(--bubline);border-radius:999px;
     padding:2px clamp(9px,calc(var(--rh) * .03),13px);
     font-size:clamp(10px,calc(var(--rh) * .036),14px);font-weight:900;color:#9a7a2e;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1133,7 +1216,17 @@
     .rest2 .rstage{width:100%;height:min(58%,500px);justify-content:center;}
     .rest2 .rart{max-height:100%;max-width:100%;}
     .rest2 .rright{flex:0 0 auto;width:100%;height:auto;gap:clamp(6px,1.2vh,12px);}
-    .rest2 .rbubble::before{display:none;}
+    /* v94 — 세로 화면에서는 꼬리를 숨기지 않고 **위를 향해** 붙인다.
+       파트너가 말풍선 위에 서 있으니 꼬리는 위로 향하는 게 자연스럽고, 꼬리 없는
+       카드처럼 보이던 문제도 사라진다. 자리는 왼쪽 이름표를 피해 오른쪽(74%)에 둔다. */
+    .rest2 .rbubble::before{
+      left:74%;top:calc(-1 * var(--tw) - 3px);bottom:auto;transform:translateX(-50%);
+      border-width:0 var(--th) calc(var(--tw) + 1px) var(--th);
+      border-right-color:transparent;border-left-color:transparent;border-bottom-color:var(--bubline);}
+    .rest2 .rbubble::after{
+      left:74%;top:calc(1px - var(--tw));bottom:auto;transform:translateX(-50%);
+      border-width:0 calc(var(--th) - 2.6px) var(--tw) calc(var(--th) - 2.6px);
+      border-right-color:transparent;border-left-color:transparent;border-bottom-color:var(--bub);}
     .rest2 .rchips{padding-left:0;justify-content:center;}
     .rest2 .rmoon{top:8px;}
     .rest2 .rzzz{left:calc(50% + 16%);top:1%;}
@@ -1541,6 +1634,22 @@
   /* [🍎 좋아! 출발하자!] — 첫 잘 준비 카드가 조용히 한 번 빛난다 */
   #tasks .card.startpulse{animation:nqPulse 1.6s ease-out 2;}
   @keyframes nqPulse{0%{box-shadow:0 0 0 0 rgba(108,92,196,.5);}100%{box-shadow:0 0 0 15px rgba(108,92,196,0);}}
+
+  /* ===== v94 — 🗂️ 루틴 구역 도형 박스 =====
+     '오늘의 공부'(.study-main)와 같은 톤 — 같은 카드색·둥근 모서리·그림자·여백 — 으로
+     [🍚 식사에 집중했어요] 칩부터 루틴 카드 그리드까지를 한 구역으로 감싼다.
+     칩이 없는 오후·잘 준비에서는 카드 그리드만 감싼다(칩은 hidden 이라 gap·자리도 없다).
+     휴식 화면(#tasks.has-rest)은 그 자체가 카드(.rest2)라 박스를 두르지 않는다 — is-rest. */
+  .routinebox{
+    flex:1 1 auto;display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0;
+    /* '오늘의 공부' 카드와 같은 계열의 크림색이되, 한 단계 깊게 둔다 —
+       카드(.card)와 같은 #fffdf7 로 두면 카드 경계가 사라져 4+3 묶음이 안 보였다. */
+    background:#f7f1e2;border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:8px 12px 10px;
+  }
+  .routinebox > .tasks{padding-bottom:0;}   /* 박스 안에서는 카드 그림자 자리 여백이 필요 없다 */
+  .routinebox > .mealbar{padding:0;}      /* 칩과 카드 사이는 박스의 gap 8px 하나로 */
+  .routinebox.is-rest{background:none;box-shadow:none;padding:0;gap:0;}
 
   /* ===== Task cards ===== */
   .tasks{flex:1 1 auto;display:flex;gap:12px;min-height:0;padding-bottom:2px;}
@@ -3531,7 +3640,16 @@
           <div class="hxp-gauge" id="hxpGauge" aria-hidden="true"></div>
         </div>
       </div>
-      <!-- Weather -->
+      <!-- Weather + v94 오늘 일정·준비물 칸 -->
+      <div class="wxcol" id="wxCol">
+      <!-- v94 — 📅 오늘 일정 · 🎒 준비물 — 날씨 카드 **바로 왼쪽**의 작은 칸.
+           일정이 있을 때만 보이고(미연결·오류·0건이면 hidden) 헤더 레이아웃은 그대로다.
+           세로 화면에서는 날씨 카드 위에 한 줄로 놓인다(CSS .wxcol). -->
+      <div class="hdrsched" id="hdrSched" hidden aria-live="off">
+        <span class="hs-top"><span class="hs-e">📅</span><span class="hs-l">오늘 일정</span><b class="hs-n n0" id="hdrSchedN">0</b></span>
+        <span class="hs-main" id="hdrSchedMain"></span>
+        <span class="hs-prep" id="hdrSchedPrep"></span>
+      </div>
       <div class="weather" id="weather" role="link" tabindex="0" title="잠원동 구글 날씨 열기"
            onclick="openGoogleWeather(event)"
            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openGoogleWeather();}">
@@ -3554,6 +3672,7 @@
           <div class="w-hours" id="wHours"></div>
         </div>
         <div class="w-tiprow"><b>나갈 때</b><span class="w-tip" id="wTip">🧥 오늘 코디 확인 중…</span></div>
+      </div>
       </div>
 
 
@@ -3602,17 +3721,25 @@
     <button class="pb-back" id="pastBack" type="button">↩ 휴식 화면으로 돌아가기</button>
   </div>
 
-  <!-- ======= v91 — 🍚 아침 식사 보너스 (아침 루틴 화면에서만 보인다) =======
-       루틴 완료 판정과는 따로 — 체크해도 아침 루틴 카드는 그대로, 강화 XP +1 만 준다. -->
-  <div class="mealbar" id="mealBar" hidden>
-    <button class="self-chip meal" id="mealBtn" type="button" aria-pressed="false"
-            title="아침 식사에 집중했어요 — ⚡ 강화 XP +1 (아침 루틴 완료와 따로, 하루 한 번)">
-      <span class="box">✓</span><span>🍚 식사에 집중했어요</span><span class="add">⚡+1</span>
-    </button>
-  </div>
+  <!-- ======= v94 — 루틴 구역 도형 박스 =======
+       '오늘의 공부'(.study-main)와 같은 톤의 둥근 카드 하나가
+       [🍚 식사에 집중했어요] 칩부터 루틴 카드 그리드까지를 한 구역으로 감싼다.
+       칩이 없는 시간대(오후·잘 준비)에는 카드 그리드만 감싼다.
+       휴식 화면(#tasks.has-rest)은 그 자체가 카드라서 이 박스는 테두리 없이 물러난다. -->
+  <div class="routinebox" id="routineBox">
 
-  <!-- ======= TASKS ======= -->
-  <div class="tasks" id="tasks"></div>
+    <!-- ======= v91 — 🍚 아침 식사 보너스 (아침 루틴 화면에서만 보인다) =======
+         루틴 완료 판정과는 따로 — 체크해도 아침 루틴 카드는 그대로, 강화 XP +1 만 준다. -->
+    <div class="mealbar" id="mealBar" hidden>
+      <button class="self-chip meal" id="mealBtn" type="button" aria-pressed="false"
+              title="아침 식사에 집중했어요 — ⚡ 강화 XP +1 (아침 루틴 완료와 따로, 하루 한 번)">
+        <span class="box">✓</span><span>🍚 식사에 집중했어요</span><span class="add">⚡+1</span>
+      </button>
+    </div>
+
+    <!-- ======= TASKS ======= -->
+    <div class="tasks" id="tasks"></div>
+  </div>
 
   <!-- ======= TODAY'S STUDY ======= -->
   <div class="study" id="study">
@@ -6262,8 +6389,10 @@ function schedPrepText(e){
 }
 /* 일정 목록을 팝업 안 📅 띠에 그린다 — 일정 0건이면 한 줄 안내, 응답 없음·미연결이면 띠 숨김.
    v93 — 연결했는데 결과가 아직 없으면 '불러오는 중…'을 보여 주고,
-         테스트로 띄운 팝업이면 실패 이유도 한 줄로 알려 준다(아이 팝업은 조용히 숨김). */
+         테스트로 띄운 팝업이면 실패 이유도 한 줄로 알려 준다(아이 팝업은 조용히 숨김).
+   v94 — 헤더 날씨 왼쪽의 작은 일정 칸(#hdrSched)도 여기서 함께 그린다. */
 function renderSched(res){
+  try{ renderHdrSched(); }catch(e){}
   const box = wbEl('wbSched');
   if(!box) return;
   const list = wbEl('wbSchedList');
@@ -6311,6 +6440,46 @@ function renderSched(res){
         + `</div>`;
     }).join('');
   }
+}
+/* v94 — 📅 오늘 일정 · 🎒 준비물 — 날씨 카드 왼쪽의 작은 칸.
+   · 캘린더가 연결되어 있고 오늘 일정이 있을 때만 보인다(미연결·오류·0건이면 hidden).
+   · 한 칸에 다 담을 수 없어 **가장 가까운 다음 일정 하나**만 크게 보여 주고,
+     나머지는 건수(배지) + title(전체 목록)로 남긴다.
+   · 여기서는 읽기만 한다 — 누르면 열리는 팝업은 없다(아이 화면에서 실수로 열리지 않게). */
+function schedStartMin(e){
+  const m = String((e && e.start) || '').match(/(\d{1,2}):(\d{2})/);
+  return m ? (+m[1]) * 60 + (+m[2]) : null;
+}
+function renderHdrSched(){
+  const box = document.getElementById('hdrSched');
+  if(!box) return;
+  const col = document.getElementById('wxCol');
+  const res = schedToday ? schedToday.res : null;
+  const evs = (res && res.ok !== false && Array.isArray(res.events)) ? res.events : [];
+  const hide = () => { box.hidden = true; if(col) col.classList.remove('has-sched'); };
+  if(!evs.length){ hide(); return; }
+  const line = e => {
+    const time = e.allDay ? '종일' : (schedTimeKo(e.start) || String(e.startKo || ''));
+    const prep = schedPrepText(e);
+    return { time, title: String(e.title || ''), prep, text: `${time} ${String(e.title || '')}${prep ? ' · 🎒 ' + prep : ''}` };
+  };
+  const all = evs.map(line);
+  const nowM = (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
+  let k = evs.findIndex(e => !!e.allDay);
+  if(k < 0) k = evs.findIndex(e => { const m = schedStartMin(e); return m != null && m >= nowM; });
+  if(k < 0) k = 0;
+  const one = all[k];
+  const n = document.getElementById('hdrSchedN');
+  if(n){ n.textContent = String(evs.length); n.classList.toggle('n0', evs.length === 0); }
+  const main = document.getElementById('hdrSchedMain');
+  if(main) main.textContent = `${one.time} ${one.title}`.trim();
+  const prep = document.getElementById('hdrSchedPrep');
+  if(prep) prep.textContent = one.prep ? '🎒 ' + one.prep : '';
+  const full = all.map(x => x.text).join(' / ');
+  box.title = `오늘 일정 ${evs.length}건 — ${full}`;
+  box.setAttribute('aria-label', `오늘 일정 ${evs.length}건 — ${full}`);
+  box.hidden = false;
+  if(col) col.classList.add('has-sched');
 }
 /* 부모 설정 [💾 데이터·앱] 의 캘린더 줄 — 지금 상태·지난 확인 시각을 그대로 보여 준다.
    v93 — [연결 테스트] 결과(읽은 캘린더 이름·기본 캘린더 여부·오늘 일정 수·시간대/날짜)를 그대로 남긴다. */
@@ -6962,6 +7131,9 @@ function buildTasks(){
   const wrap = document.getElementById('tasks');
   wrap.innerHTML = '';
   wrap.classList.remove('has-rest');
+  /* v94 — 루틴 카드가 없어 휴식 화면이 #tasks 를 쓸 때는 구역 박스의 테두리를 걷는다 */
+  const rbox = document.getElementById('routineBox');
+  if(rbox) rbox.classList.toggle('is-rest', !(R && R.tasks && R.tasks.length));
   if(!R || !R.tasks.length){ buildRestPanel(wrap); return; }
   wrap.classList.toggle('six', R.tasks.length >= 6);   // v91 — 6칸 넘게 모이면 좁은 카드용 글자 크기로
   wrap.dataset.n = String(R.tasks.length);      // v74 — 좁은 화면에서 4장이면 2×2 로 접는다
@@ -10391,6 +10563,7 @@ function showTab(key){
   curTab = key;
   Object.keys(TAB_IDS).forEach(k => document.getElementById(TAB_IDS[k]).classList.toggle('active', k === key));
   document.getElementById('tasks').style.display = key === 'dash' ? '' : 'none';   // v66 — 휴식 화면은 #tasks.has-rest(block)로 보여 준다
+  document.getElementById('routineBox').style.display = key === 'dash' ? '' : 'none';   // v94 — 루틴 구역 박스도 함께
   document.getElementById('dex').classList.toggle('show', key === 'dex');
   document.getElementById('study').classList.toggle('show', key === 'study');
   document.getElementById('center').classList.toggle('show', key === 'center');
