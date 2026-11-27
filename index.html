@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v95 — 🌙 내일 미리보기 (잘 준비 루틴이 시작될 때 하루 한 번 · 첨부 시안 그대로)
+     (사용자 요청 2026-11-27: "저녁루틴 시작할 때 뜨는 팝업에 이런식으로 다음날 브리핑도 추가해")
+     · 잘 준비 화면(21:00~22:00)이 열린 저녁, 아직 하나도 체크하지 않았고 루틴 화면을 보고 있으면
+       하루 한 번 조용히 뜬다. 기록은 day().nightBriefDone — 날짜가 바뀌면 저절로 새로 뜨고,
+       🔄 오늘 할 일·경험치 리셋에서 함께 풀린다.
+     · 위는 밤하늘 보라 그라데이션 머리(🌙 내일 미리보기 | 11월 28일 토요일 + 🏖️ 내일은 쉬는 날 /
+       🏫 내일은 등교일 · 🌙 잘 준비 21:00 배지). 왼쪽에 파트너 카드 + ⚡ 오늘 목표(XP) 카드,
+       오른쪽에 말풍선 · 📌 내일 일정 · 🌤️ 내일 날씨, 맨 아래 '⏰ 잘 시간 21:40까지 …' 알약과
+       보라색 [🌙 잘 준비하자!]. 누르면 오늘 기록을 남기고 닫히며 첫 카드로 데려간다.
+     · 📌 내일 일정 — apps-script-calendar.gs 가 v95 부터 응답에 tomorrow 를 함께 준다.
+       예전 .gs 를 그대로 쓰는 경우에도 그 스크립트가 예전부터 받는 ?date=내일 로 한 번 더 불러
+       채우므로 다시 붙여넣지 않아도 보인다(둘 다 안 되면 📌 칸을 조용히 숨긴다).
+     · 🌤️ 내일 날씨 — Open-Meteo 예보를 forecast_days=2 로 받아 두 번째 칸(daily[1])을 그대로 쓴다.
+       '맑음 · 1° / 9°' + 비·눈이면 ☔ 우산 챙겨요, 아니면 '비 소식 없어요'.
+     · v67 9시 팝업과 같은 시각에 겹치지 않는다 — 내일 미리보기가 뜰 상황이면 9시 팝업·시작 차임이
+       양보하고, [잘 준비하자!] 를 누르면 오늘 9시 팝업도 함께 끝난다.
+     · 테스트: 🧪 탭 [🌙 내일 미리보기 팝업 띄우기] / [↩ 오늘 내일 미리보기 초기화].
+     · 루틴·공부·도감·미션·소리·시트 연동·아침 브리핑은 v94 그대로다. -->
 <!-- v94 — 🗂️ 루틴 구역 도형 박스 · 💬 비루틴 말풍선 꼬리/이름표 수정 · 📅 헤더 날씨 왼쪽 오늘 일정·준비물 칸
      (사용자 요청 2026-11-27: "그리고 아침루틴도 오늘의 공부처럼 루틴부분에 도형으로 구역이 나뉘어져 있으면 좋겠어.
        식사에 집중했어요까지 구역 안에 넣는 거지."
@@ -242,6 +260,7 @@
      ① 아침 루틴 시간(기상 WAKE 또는 '지금부터 아침 루틴 시작' ~ 출발 DEPART 전)에 루틴 화면을 보고 있으면
         오늘 하루 한 번 파트너가 날씨를 들고 먼저 인사한다. [☀️ 모험을 떠나자!] 를 누르면
         day().weatherBriefDone = true 로 오늘은 다시 뜨지 않는다(🔄 오늘 할 일·경험치 리셋에서 함께 풀린다).
+      v95 — 📅 헤더 일정 칸은 캘린더를 연결했으면 불러오는 중·0건·확인 안 됨도 보인다(미연결일 때만 숨김).
      ② 내용은 대시보드가 이미 받아 온 잠원동 실시간 날씨 그대로 — 현재·최저·최고 기온, 9·2·4·6시
         시간대별 비·눈과 강수확률, 미세먼지 PM10·PM2.5 등급, 옷차림·우산·마스크 조언, 지금 파트너
         포켓몬 그림·이름, 오늘 모드와 출발 시각 배지.
@@ -789,6 +808,10 @@
   header.sky .hdrsched .hs-prep{font-size:.72em; font-weight:800; color:#3f6d95;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   header.sky .hdrsched .hs-prep:empty{display:none;}
+  /* v95 — 연결했지만 아직 못 채운 칸(불러오는 중·확인 안 됨)은 한 단계 흐린 톤으로 조용히 */
+  header.sky .hdrsched.mute{background:#f6f9fc; border-color:#8fa3b3;}
+  header.sky .hdrsched.mute .hs-main{color:#70838f; font-weight:800;}
+  header.sky .hdrsched[data-state="empty"] .hs-n{color:#5a6b78; background:#eef3f7;}
   /* 세로 화면 — 일정 칸은 날씨 카드 **왼쪽**에 둘 폭이 없어 바로 **위**에 한 줄로 놓인다.
      글자 크기는 그대로라 하늘·날씨 카드 폭은 예전 그대로이고, 헤더만 그 줄만큼 높아진다. */
   @media (max-aspect-ratio:5/4){
@@ -1470,6 +1493,160 @@
   /* 아주 좁은 화면(휴대폰) — 일정은 한 줄에 하나씩 */
   @media (max-width:560px){
     .wbsched .sc-list{grid-template-columns:minmax(0,1fr);}
+  }
+
+  /* ===== v95 — 🌙 내일 미리보기 (잘 준비 루틴이 시작될 때 하루 한 번) =====
+     첨부 시안 그대로 — 위는 밤하늘 보라 그라데이션 머리, 아래는 크림 카드.
+     왼쪽에 파트너 카드 + 오늘 목표(XP) 카드, 오른쪽에 말풍선 · 📌 내일 일정 · 🌤️ 내일 날씨,
+     맨 아래에 '⏰ 잘 시간 …' 알약과 보라색 [🌙 잘 준비하자!] 버튼.
+     · 가로(1280×800·1024×600): 왼쪽 236px + 오른쪽
+     · 세로(≤900px): 파트너 카드와 목표 카드를 한 줄로 나란히, 아래로 말풍선·일정·날씨
+     · 낮은 화면(≤700px 높이): 여백·그림·글자를 줄여 스크롤 없이 들어간다 */
+  .nxov.show{display:flex;align-items:center;justify-content:center;padding:16px;
+    background:radial-gradient(120% 90% at 50% 44%, rgba(30,20,54,.52) 0%, rgba(18,12,36,.72) 70%, rgba(10,8,22,.82) 100%);
+    backdrop-filter:blur(2.4px) saturate(.92);}
+  .nxov.test{z-index:58;}                      /* 부모 테스트 — 설정창(55)보다 위 */
+  .nxcard{position:relative;width:min(1040px, calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;
+    border:3px solid #d8c4ff;border-radius:30px;padding:0;
+    background:linear-gradient(180deg,#fdfaff 0%,#fbf6ea 60%,#fff7e4 100%);
+    box-shadow:0 26px 60px rgba(10,8,26,.58), 0 0 0 6px rgba(255,255,255,.14), inset 0 0 0 3px rgba(255,255,255,.9);
+    animation:wbpop .38s cubic-bezier(.3,1.4,.6,1);}
+  .nxhd{position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:13px 22px 14px;overflow:hidden;border-radius:26px 26px 0 0;
+    background:linear-gradient(100deg,#3a2358 0%,#553070 44%,#793d72 76%,#8d4568 100%);}
+  /* 밤하늘 — 작은 별 몇 개와 달빛 한 줄 (그림 파일 없이) */
+  .nxhd::before{content:'';position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(1.6px 1.6px at 8% 26%, rgba(255,255,255,.9), rgba(255,255,255,0) 60%),
+      radial-gradient(1.4px 1.4px at 19% 70%, rgba(255,255,255,.75), rgba(255,255,255,0) 60%),
+      radial-gradient(1.8px 1.8px at 33% 34%, rgba(255,255,255,.85), rgba(255,255,255,0) 60%),
+      radial-gradient(1.3px 1.3px at 47% 76%, rgba(255,255,255,.6), rgba(255,255,255,0) 60%),
+      radial-gradient(1.7px 1.7px at 61% 28%, rgba(255,255,255,.8), rgba(255,255,255,0) 60%),
+      radial-gradient(1.4px 1.4px at 72% 64%, rgba(255,255,255,.65), rgba(255,255,255,0) 60%),
+      radial-gradient(1.9px 1.9px at 88% 36%, rgba(255,255,255,.7), rgba(255,255,255,0) 60%),
+      radial-gradient(70% 130% at 8% -30%, rgba(255,236,180,.28), rgba(255,236,180,0) 70%);}
+  .nxhd .ttl{position:relative;z-index:1;display:flex;align-items:center;gap:7px;
+    font-size:clamp(17px,2.9vh,24px);font-weight:900;color:#fff;letter-spacing:-.5px;white-space:nowrap;}
+  .nxhd .sep{position:relative;z-index:1;width:1.5px;height:clamp(14px,2.2vh,19px);border-radius:2px;
+    background:rgba(255,255,255,.42);}
+  .nxhd .date{position:relative;z-index:1;font-size:clamp(12px,1.9vh,16px);font-weight:900;color:#eadcff;
+    white-space:nowrap;letter-spacing:-.3px;}
+  .nxhd .right{position:relative;z-index:1;margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .nxmode,.nxdep{font-size:clamp(11px,1.7vh,14px);font-weight:900;border-radius:999px;padding:3px 11px;white-space:nowrap;}
+  .nxmode{color:#7d4326;background:#ffeadb;border:2px solid #ffd6bd;}
+  .nxdep{color:#4b2f7a;background:#efe7ff;border:2px solid #dccdff;}
+  .nxbody{display:grid;grid-template-columns:236px minmax(0,1fr);gap:16px;padding:14px 22px 0;}
+  .nxleft{display:flex;flex-direction:column;gap:8px;min-width:0;}
+  .nxpp{background:#fff;border:2.5px solid #f0e2bd;border-radius:22px;padding:9px 11px 10px;
+    box-shadow:0 8px 18px rgba(120,100,60,.10);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;min-width:0;}
+  .nxartwrap{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;}
+  .nxartwrap .glow{position:absolute;left:50%;bottom:2%;transform:translateX(-50%);width:min(94%,186px);aspect-ratio:1;
+    border-radius:50%;background:radial-gradient(circle,rgba(226,214,255,.9) 0%,rgba(255,244,214,.35) 55%,rgba(255,244,214,0) 72%);pointer-events:none;}
+  .nxart{position:relative;z-index:1;height:clamp(92px,19vh,146px);width:auto;max-width:100%;object-fit:contain;
+    filter:drop-shadow(0 10px 14px rgba(70,50,110,.26));}
+  .nxwho{display:flex;align-items:center;gap:6px;margin-top:2px;min-width:0;justify-content:center;}
+  .nxwho .ic{font-size:clamp(13px,1.8vh,17px);line-height:1;}
+  .nxwho b{font-size:clamp(14px,1.9vh,18px);font-weight:900;color:var(--ink);white-space:nowrap;}
+  .nxwho i{font-style:normal;font-size:clamp(9.5px,1.25vh,12px);font-weight:900;color:#6b4e00;
+    background:#fff0c2;border:2px solid #ffdf8e;border-radius:999px;padding:1px 7px;white-space:nowrap;}
+  .nxgoal{background:#fff;border:2.5px solid #f0e2bd;border-radius:20px;padding:8px 12px 9px;
+    box-shadow:0 8px 18px rgba(120,100,60,.10);min-width:0;}
+  .nxgoal .lb{display:block;font-size:clamp(10.5px,1.5vh,13px);font-weight:900;color:#8a7a66;
+    text-align:center;white-space:nowrap;letter-spacing:-.2px;}
+  .nxbar{position:relative;height:12px;margin-top:5px;border-radius:999px;overflow:hidden;
+    background:#f3ecda;border:2px solid #e9dcc0;}
+  .nxbar span{display:block;height:100%;width:0;border-radius:999px;
+    background:linear-gradient(90deg,#ffd84f,#ffb02e);transition:width .35s ease;}
+  .nxnum{display:block;margin-top:3px;text-align:center;font-size:clamp(11px,1.6vh,14px);font-weight:900;
+    color:#7a5b00;letter-spacing:-.3px;white-space:nowrap;}
+  .nxgoal.done .lb,.nxgoal.done .nxnum{color:#2f8a3a;}
+  .nxsay{min-width:0;display:flex;flex-direction:column;gap:9px;}
+  .nxbub{background:#fff;border:3px solid #f0e2bd;border-radius:20px;padding:11px 16px;
+    box-shadow:0 8px 18px rgba(120,100,60,.10);color:#3b2f20;word-break:keep-all;}
+  .nxbub .big{display:block;font-size:clamp(15px,2.7vh,23px);font-weight:900;line-height:1.34;letter-spacing:-.4px;}
+  .nxbub .small{display:block;font-size:clamp(11px,1.8vh,15px);color:#8a7a66;font-weight:900;margin-top:3px;line-height:1.35;}
+  .nxbub .small:empty{display:none;}
+  /* 📌 내일 일정 — 연보라 띠. 제목 한 줄(길면 …) · 준비물 한 줄 */
+  .nxsched{background:#f6f1ff;border:2.5px solid #e3d7ff;border-radius:18px;padding:8px 12px 9px;
+    box-shadow:0 6px 12px rgba(120,100,180,.08);}
+  .nxsched .ns-head{display:flex;align-items:center;gap:8px;}
+  .nxsched .ns-lb{font-size:clamp(10.5px,1.5vh,13px);font-weight:900;color:#6b4e9e;letter-spacing:-.2px;}
+  .nxsched .ns-cnt[hidden]{display:none;}
+  .nxsched .ns-cnt{font-size:clamp(9.5px,1.3vh,11.5px);font-weight:900;color:#5b3f8f;
+    background:#fff;border:2px solid #dccdff;border-radius:999px;padding:0 7px;line-height:1.5;}
+  .nxsched .ns-list{margin-top:6px;display:flex;flex-direction:column;gap:6px;}
+  .nxsched.empty .ns-list{display:none;}
+  .nsi{display:flex;align-items:center;gap:8px;min-width:0;background:#fff;
+    border:2px solid #ece2ff;border-radius:13px;padding:3px 9px;}
+  .nsi .tm{flex:0 0 auto;font-size:clamp(10.5px,1.5vh,13px);font-weight:900;color:#4b2f9a;
+    background:#efe6ff;border:2px solid #dccdff;border-radius:999px;padding:0 8px;
+    letter-spacing:-.3px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .nsi .tm.allday{color:#3f7a2a;background:#eaf6df;border-color:#cfe8bd;}
+  .nsi .bd{min-width:0;display:flex;flex-direction:column;gap:0;}
+  .nsi .tt{font-size:clamp(12.5px,1.85vh,16px);font-weight:900;color:#3b2f20;letter-spacing:-.4px;
+    line-height:1.28;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .nsi .pp{font-size:clamp(10px,1.45vh,12.5px);font-weight:900;color:#8a7a66;line-height:1.28;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .nsi .pp:empty{display:none;}
+  .nxsched .ns-none{display:none;margin-top:5px;font-size:clamp(10.5px,1.55vh,13.5px);font-weight:900;
+    color:#9a8ac0;letter-spacing:-.2px;}
+  .nxsched.empty .ns-none{display:block;}
+  .nxsched.off{display:none;}
+  /* 🌤️ 내일 날씨 — 하늘색 띠 + 오른쪽 비 배지 */
+  .nxwx{display:flex;align-items:center;gap:8px;background:#eef7ff;border:2.5px solid #cfe6ff;
+    border-radius:16px;padding:7px 12px;box-shadow:0 6px 12px rgba(60,120,180,.08);min-width:0;}
+  .nxwx .wx-ic{font-size:clamp(15px,2.2vh,21px);line-height:1;}
+  .nxwx .wx-lb{font-size:clamp(10.5px,1.5vh,13px);font-weight:900;color:#5a7c9c;white-space:nowrap;}
+  .nxwx .val{font-size:clamp(12.5px,1.85vh,16.5px);font-weight:900;color:#1f4763;letter-spacing:-.3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .nxwx .badge{margin-left:auto;flex:0 0 auto;font-size:clamp(10px,1.45vh,12.5px);font-weight:900;
+    border-radius:999px;padding:1px 10px;white-space:nowrap;color:#2f8a3a;background:#fff;border:2px solid #cfe8c6;}
+  .nxwx .badge.wet{color:#1f6fd4;border-color:#bcdcff;background:#fff;}
+  .nxwx .badge.na{color:#8a7a66;border-color:#e6dccb;background:#fff;}
+  .nxfoot{display:flex;align-items:center;gap:12px;padding:12px 22px 16px;flex-wrap:wrap;}
+  .nxnote{flex:1 1 260px;min-width:0;font-size:clamp(11px,1.65vh,14.5px);font-weight:900;color:#5b3f8f;
+    background:#f1e9ff;border:2px solid #ded0ff;border-radius:999px;padding:6px 15px;
+    word-break:keep-all;line-height:1.3;}
+  .nxbtn{flex:0 0 auto;margin-left:auto;min-width:min(300px,100%);height:clamp(46px,7.2vh,62px);border:none;
+    border-radius:20px;font-family:inherit;font-weight:900;font-size:clamp(16px,2.5vh,24px);letter-spacing:-.3px;
+    cursor:pointer;color:#fff;background:linear-gradient(180deg,#a98bff 0%,#7c4dff 100%);
+    box-shadow:0 6px 0 #5b32c9, 0 14px 26px rgba(90,50,200,.32);}
+  .nxbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #5b32c9;}
+  .nxtestclose{flex:0 0 auto;border:2px solid #e2d8f0;border-radius:14px;font-family:inherit;font-weight:900;
+    cursor:pointer;font-size:clamp(11px,1.6vh,14px);padding:8px 12px;color:#6a5a80;background:#efe9fa;}
+  .nxtestclose[hidden]{display:none;}
+  /* 세로 화면 — 파트너 카드와 목표 카드를 한 줄로 나란히, 그 아래 말풍선·일정·날씨 */
+  @media (max-width:900px){
+    .nxcard{border-radius:26px;}
+    .nxhd{padding:11px 15px 12px;border-radius:23px 23px 0 0;gap:8px;}
+    .nxhd .right{margin-left:0;width:100%;justify-content:flex-start;}
+    .nxbody{grid-template-columns:minmax(0,1fr);gap:9px;padding:11px 15px 0;}
+    .nxleft{flex-direction:row;align-items:stretch;gap:8px;}
+    .nxpp{flex:0 0 auto;flex-direction:row;gap:8px;padding:7px 10px;}
+    .nxartwrap{width:auto;flex:0 0 auto;}
+    .nxartwrap .glow{width:100%;}
+    .nxart{height:clamp(66px,11vh,96px);}
+    .nxwho{margin-top:0;justify-content:flex-start;}
+    .nxgoal{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;padding:7px 11px;}
+    .nxgoal .lb,.nxnum{text-align:left;}
+    .nxfoot{padding:10px 15px 14px;gap:8px;}
+    .nxnote{flex:1 1 100%;}
+    .nxbtn{min-width:100%;margin-left:0;}
+  }
+  /* 낮은 화면(1024×600 등) — 세로 여백·그림·글자를 줄여 스크롤 없이 들어가게 */
+  @media (max-height:700px) and (min-width:901px){
+    .nxhd{padding:10px 20px 11px;}
+    .nxbody{padding:10px 20px 0;gap:12px;}
+    .nxart{height:clamp(80px,18vh,112px);}
+    .nxbub{padding:8px 14px;}
+    .nxbub .big{font-size:clamp(14px,2.4vh,19px);}
+    .nxsched{padding:6px 10px 7px;}
+    .nxsched .ns-list{margin-top:4px;gap:4px;}
+    .nsi{padding:2px 8px;}
+    .nxwx{padding:5px 10px;}
+    .nxfoot{padding:9px 20px 12px;}
+    .nxbtn{height:clamp(42px,6.6vh,54px);}
   }
 
   /* ===== v69 — ✨ 루틴 완료 확인 팝업 · 완료 축하 카드 =====
@@ -3643,7 +3820,7 @@
       <!-- Weather + v94 오늘 일정·준비물 칸 -->
       <div class="wxcol" id="wxCol">
       <!-- v94 — 📅 오늘 일정 · 🎒 준비물 — 날씨 카드 **바로 왼쪽**의 작은 칸.
-           일정이 있을 때만 보이고(미연결·오류·0건이면 hidden) 헤더 레이아웃은 그대로다.
+           v95 — 캘린더를 연결했으면 불러오는 중·0건·확인 안 됨도 이 칸에 그대로 보인다(미연결일 때만 숨김).
            세로 화면에서는 날씨 카드 위에 한 줄로 놓인다(CSS .wxcol). -->
       <div class="hdrsched" id="hdrSched" hidden aria-live="off">
         <span class="hs-top"><span class="hs-e">📅</span><span class="hs-l">오늘 일정</span><b class="hs-n n0" id="hdrSchedN">0</b></span>
@@ -4273,6 +4450,66 @@
   </div>
 </div>
 
+<!-- v95 — 🌙 내일 미리보기 (첨부 시안 그대로 · 잘 준비 루틴이 시작될 때 하루 한 번).
+     위는 밤하늘 보라 머리, 왼쪽에 파트너 + 오늘 목표(XP), 오른쪽에 말풍선 · 내일 일정 · 내일 날씨,
+     맨 아래에 '⏰ 잘 시간 …' 알약과 [🌙 잘 준비하자!] 버튼. -->
+<div class="overlay nxov" id="nexBrief" aria-hidden="true" data-keep-panel="1">
+  <div class="nxcard" role="dialog" aria-modal="true" aria-label="내일 미리보기">
+    <div class="nxhd">
+      <span class="ttl">🌙 내일 미리보기</span>
+      <span class="sep" aria-hidden="true"></span>
+      <span class="date" id="nxDate"></span>
+      <div class="right">
+        <span class="nxmode" id="nxMode">🏫 내일은 등교일</span>
+        <span class="nxdep" id="nxDep">🌙 잘 준비 21:00</span>
+      </div>
+    </div>
+    <div class="nxbody">
+      <div class="nxleft">
+        <div class="nxpp">
+          <div class="nxartwrap">
+            <span class="glow" aria-hidden="true"></span>
+            <img class="nxart" id="nxArt" data-pk="art" alt="파트너 포켓몬">
+          </div>
+          <div class="nxwho"><span class="ic" id="nxIcon" aria-hidden="true">⚡</span><b id="nxName">피카츄</b><i>내 파트너</i></div>
+        </div>
+        <div class="nxgoal" id="nxGoal">
+          <span class="lb" id="nxGoalLb">⚡ 오늘 목표까지</span>
+          <div class="nxbar"><span id="nxGoalFill"></span></div>
+          <span class="nxnum" id="nxGoalNum">0 / 100 EXP</span>
+        </div>
+      </div>
+      <div class="nxsay">
+        <div class="nxbub">
+          <span class="big" id="nxBig">오늘 하루도 수고했어! 내일 날씨 확인하고 잘 준비하자 🌙</span>
+          <span class="small" id="nxSub"></span>
+        </div>
+        <!-- 📌 내일 일정 — 캘린더를 연결했을 때만 보인다(.off). 연결했는데 0건이면 한 줄 안내 -->
+        <div class="nxsched off" id="nxSched">
+          <div class="ns-head">
+            <span class="ns-lb">📌 내일 일정</span>
+            <span class="ns-cnt" id="nxSchedCnt" hidden></span>
+          </div>
+          <div class="ns-list" id="nxSchedList"></div>
+          <div class="ns-none" id="nxSchedNone">내일은 등록된 일정이 없어요</div>
+        </div>
+        <!-- 🌤️ 내일 날씨 — 대시보드가 받아 온 Open-Meteo 내일 예보 -->
+        <div class="nxwx">
+          <span class="wx-ic" id="nxWxIco" aria-hidden="true">🌤️</span>
+          <span class="wx-lb">내일 날씨</span>
+          <b class="val" id="nxWxVal">확인 중…</b>
+          <span class="badge" id="nxWxBadge">확인 중</span>
+        </div>
+      </div>
+    </div>
+    <div class="nxfoot">
+      <span class="nxnote" id="nxNote">⏰ 잘 시간 21:40까지 남았어요 · 챙기고 일찍 자자!</span>
+      <button class="nxtestclose" id="nxTestClose" type="button" hidden>✕ 테스트 닫기</button>
+      <button class="nxbtn" id="nxConfirm" type="button">🌙 잘 준비하자!</button>
+    </div>
+  </div>
+</div>
+
 <!-- 부모 확인 (PIN) -->
 <div class="overlay pinoverlay" id="pinOverlay">
   <div class="modal pinmodal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
@@ -4383,6 +4620,14 @@
         <button class="pbtn" id="testNightAskReset" type="button">↩ 팝업 초기화</button>
       </div>
       <span class="phint">밤 9시~9시 39분에 루틴 화면을 보고 있고 잘 준비를 아직 하나도 체크하지 않았을 때 파트너가 조용히 말을 걸어요. '띄우기'는 지금 한 번 보여 주고, '초기화'는 오늘 팝업 기록(미룸 포함)을 지워 다시 뜰 수 있게 해요.</span>
+
+      <!-- v95 — 🌙 내일 미리보기 (잘 준비 루틴이 시작될 때 하루 한 번) -->
+      <div class="psec">🌙 내일 미리보기 팝업</div>
+      <div class="pgrid">
+        <button class="pbtn" id="testNxBrief" type="button">🌙 내일 미리보기 팝업 띄우기</button>
+        <button class="pbtn" id="testNxBriefReset" type="button">↩ 오늘 내일 미리보기 초기화</button>
+      </div>
+      <span class="phint">잘 준비(밤 9시) 루틴 화면이 열리면 하루 한 번 자동으로 떠요. 내일 일정은 [💾 데이터·앱]의 캘린더를 연결했을 때만 나오고, 내일 날씨는 지금 받아 둔 Open-Meteo 예보로 보여 줘요. '띄우기'는 지금 한 번 보여 주고(오늘 기록은 건드리지 않음), '초기화'는 오늘 봤던 기록을 지워 다시 뜰 수 있게 해요.</span>
 
     </div>
 
@@ -5364,6 +5609,8 @@ function freshDay(){
     nightFruit:'none',
     /* v75 — ☀️ 오늘 아침 날씨 브리핑 팝업을 이미 보고 [모험을 떠나자!] 를 눌렀는지 */
     weatherBriefDone:false,
+    /* v95 — 🌙 내일 미리보기(잘 준비 시작 브리핑)를 이미 보고 [잘 준비하자!] 를 눌렀는지 */
+    nightBriefDone:false,
   };
 }
 /* 예전 모양({tasks:[5]} 또는 루틴별 칸) → 모드별 slots */
@@ -5399,6 +5646,7 @@ function migrateDay(d){
                    until:Math.max(0, Number(na.until) || 0) };
   out.nightFruit = (d.nightFruit === 'held' || d.nightFruit === 'eaten') ? d.nightFruit : 'none';
   out.weatherBriefDone = !!d.weatherBriefDone;   // v75 — 아침 날씨 브리핑 팝업(하루 한 번)
+  out.nightBriefDone = !!d.nightBriefDone;       // v95 — 저녁 내일 미리보기 팝업(하루 한 번)
   return out;
 }
 function day(){
@@ -5859,7 +6107,7 @@ function checkNightStart(now){
   /* v71 — D1: 바로 뒤 checkNightAsk 가 파트너 팝업을 띄울 상황이면 차임·토스트를 양보한다.
      팝업은 원래 '소리 없이 조용히' 뜨는 설계라, 둘이 0.25초 안에 겹치면 시끄럽고 같은 말이 두 번 된다.
      아이가 다른 탭에 있어 팝업이 못 뜰 때만 예전처럼 차임과 토스트로 알린다. */
-  if(nqCanShow(now)) return;
+  if(nqCanShow(now) || nxCanShow(now)) return;   // v95 — 내일 미리보기가 조용히 뜨는 날도 차임은 양보
   playMissionSfx(chime);               // 미션 MP3, 막히면 잔잔한 차임
   toast('🌙 오후 9시! 잘 준비 시작해요!');
 }
@@ -5942,6 +6190,7 @@ function nqCanShow(now){
   if(!nqWindow(now)) return false;
   if(nightAllDone()) return false;
   if(aheadKey === 'night') return false;                           // v79 — 미리 열어 둔 잘 준비 화면이면 묻지 않는다
+  if(nxBlocksNightAsk(now)) return false;                          // v95 — 🌙 내일 미리보기가 뜰 상황이면 양보
   if(rday('night').tasks.some(Boolean)) return false;              // 이미 시작했으면 조용히 물러난다
   return true;
 }
@@ -6442,9 +6691,12 @@ function renderSched(res){
   }
 }
 /* v94 — 📅 오늘 일정 · 🎒 준비물 — 날씨 카드 왼쪽의 작은 칸.
-   · 캘린더가 연결되어 있고 오늘 일정이 있을 때만 보인다(미연결·오류·0건이면 hidden).
-   · 한 칸에 다 담을 수 없어 **가장 가까운 다음 일정 하나**만 크게 보여 주고,
-     나머지는 건수(배지) + title(전체 목록)로 남긴다.
+   v95 — 태블릿에서 "아예 안 보인다"는 신고로 보임 조건을 바꿨다:
+     · 캘린더를 **연결하지 않았을 때만** 숨긴다(예전에는 0건·불러오기 전·오류에도 통째로 숨었다).
+     · 연결했는데 아직 결과가 없으면 '불러오는 중…', 0건이면 '📅 오늘 일정 0건 / 오늘은 없어요',
+       응답이 실패했고 캐시도 없으면 '확인 안 됨' — 칸은 그대로 남는다.
+     · 일정이 있으면 **가장 가까운 다음 일정 하나**만 크게 보여 주고,
+       나머지는 건수(배지) + title(전체 목록)로 남긴다.
    · 여기서는 읽기만 한다 — 누르면 열리는 팝업은 없다(아이 화면에서 실수로 열리지 않게). */
 function schedStartMin(e){
   const m = String((e && e.start) || '').match(/(\d{1,2}):(\d{2})/);
@@ -6454,10 +6706,36 @@ function renderHdrSched(){
   const box = document.getElementById('hdrSched');
   if(!box) return;
   const col = document.getElementById('wxCol');
+  const hide = () => { box.hidden = true; box.dataset.state = ''; if(col) col.classList.remove('has-sched'); };
+  if(!calUrl){ hide(); return; }              // 미연결일 때만 숨긴다
+  const n = document.getElementById('hdrSchedN');
+  const main = document.getElementById('hdrSchedMain');
+  const prep = document.getElementById('hdrSchedPrep');
+  /* state: ok | empty | loading | error — 테스트·스타일이 이 값을 본다. badge: null 이면 배지 숨김 */
+  const paint = (state, badge, mainTx, prepTx, title) => {
+    box.dataset.state = state;
+    box.classList.toggle('mute', state === 'loading' || state === 'error');
+    if(n){
+      n.textContent = (badge == null) ? '0' : String(badge);
+      n.classList.toggle('n0', badge == null);
+      n.hidden = false;
+    }
+    if(main) main.textContent = mainTx == null ? '' : String(mainTx);
+    if(prep) prep.textContent = prepTx == null ? '' : String(prepTx);
+    box.title = title || '';
+    box.setAttribute('aria-label', title || mainTx || '오늘 일정');
+    box.hidden = false;
+    if(col) col.classList.add('has-sched');
+  };
   const res = schedToday ? schedToday.res : null;
-  const evs = (res && res.ok !== false && Array.isArray(res.events)) ? res.events : [];
-  const hide = () => { box.hidden = true; if(col) col.classList.remove('has-sched'); };
-  if(!evs.length){ hide(); return; }
+  const evs = (res && res.ok !== false && Array.isArray(res.events)) ? res.events : null;
+  if(!evs){
+    if(schedStatus === 'loading' || schedStatus === 'idle' || schedStatus === 'cache')
+      return paint('loading', null, '불러오는 중…', '', '오늘 일정을 캘린더에서 불러오는 중…');
+    return paint('error', null, '확인 안 됨', '', '오늘 일정을 받지 못했어요 — [💾 데이터·앱]의 [연결 테스트]로 확인해 주세요');
+  }
+  if(!evs.length)
+    return paint('empty', 0, '오늘은 없어요', '', '오늘 일정 0건 — 캘린더에 오늘 일정이 없어요');
   const line = e => {
     const time = e.allDay ? '종일' : (schedTimeKo(e.start) || String(e.startKo || ''));
     const prep = schedPrepText(e);
@@ -6469,17 +6747,9 @@ function renderHdrSched(){
   if(k < 0) k = evs.findIndex(e => { const m = schedStartMin(e); return m != null && m >= nowM; });
   if(k < 0) k = 0;
   const one = all[k];
-  const n = document.getElementById('hdrSchedN');
-  if(n){ n.textContent = String(evs.length); n.classList.toggle('n0', evs.length === 0); }
-  const main = document.getElementById('hdrSchedMain');
-  if(main) main.textContent = `${one.time} ${one.title}`.trim();
-  const prep = document.getElementById('hdrSchedPrep');
-  if(prep) prep.textContent = one.prep ? '🎒 ' + one.prep : '';
   const full = all.map(x => x.text).join(' / ');
-  box.title = `오늘 일정 ${evs.length}건 — ${full}`;
-  box.setAttribute('aria-label', `오늘 일정 ${evs.length}건 — ${full}`);
-  box.hidden = false;
-  if(col) col.classList.add('has-sched');
+  paint('ok', evs.length, `${one.time} ${one.title}`.trim(), one.prep ? '🎒 ' + one.prep : '',
+        `오늘 일정 ${evs.length}건 — ${full}`);
 }
 /* 부모 설정 [💾 데이터·앱] 의 캘린더 줄 — 지금 상태·지난 확인 시각을 그대로 보여 준다.
    v93 — [연결 테스트] 결과(읽은 캘린더 이름·기본 캘린더 여부·오늘 일정 수·시간대/날짜)를 그대로 남긴다. */
@@ -6661,6 +6931,320 @@ function calClearTap(){
   if(inp) inp.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); calSaveTap(); } });
 })();
 calUrlLoad();
+
+/* =========================================================
+   v95 — 🌙 내일 미리보기 (잘 준비 루틴이 시작될 때 하루 한 번)
+   · 사용자 요청(2026-11-27): "​저녁루틴 시작할 때 뜨는 팝업에 이런식으로 다음날 브리핑도 추가해"
+     — 첨부 시안(밤하늘 머리 + 파트너·XP · 내일 일정 · 내일 날씨 · [🌙 잘 준비하자!]) 그대로.
+   · 잘 준비 화면(21:00~22:00)이 열려 있고 아직 하나도 체크하지 않았을 때, 루틴 화면을 보고 있으면
+     하루 한 번 조용히 뜬다. [🌙 잘 준비하자!] → day().nightBriefDone = true 로 오늘은 다시 안 뜨고,
+     이어서 뜨던 v67 '9시 팝업'도 함께 끝낸다(nightAsk.done = true — 같은 순간에 두 창이 겹치지 않게).
+   · 내일 일정은 부모님이 연결한 캘린더 웹앱(dashboard/apps-script-calendar.gs)에서 받는다.
+     v95 부터 .gs 가 응답에 tomorrow 를 함께 주고, **예전 .gs 를 그대로 쓰는 경우에도**
+     그 스크립트가 예전부터 받는 ?date=YYYY-MM-DD 로 내일을 한 번 더 불러 채운다(에러 없이 조용히).
+     미연결·오류면 📌 칸 자체를 숨긴다. 주소는 지금처럼 이 기기 localStorage 에만 둔다.
+   · 내일 날씨는 대시보드가 이미 받아 오는 Open-Meteo 예보(forecast_days=2 의 [1])를 그대로 쓴다.
+   · 테스트: 🧪 탭의 [🌙 내일 미리보기 팝업 띄우기] / [↩ 오늘 내일 미리보기 초기화].
+   ========================================================= */
+let nxTestHold = false;
+/* 테스트로 한 번 보고 닫은 뒤 10분 동안은 자동으로 또 띄우지 않는다 (wb 와 같은 규칙) */
+let nxTestQuietUntil = 0;
+let nxPaintKey = -1;                 // 마지막으로 그린 날씨 값의 시각 — 떠 있는 사이 새 값이 오면 다시 칠한다
+let nxOpenAt = 0;
+let nxSched = null;                  // { day:'YYYY-MM-DD', at:ms, res:{ ok, date, count, events } } — 내일 일정
+let nxSchedStatus = 'idle';          // idle | loading | live | cache | error | off
+let nxSchedAt = 0;                   // 마지막 요청 시작 시각 (연속 호출 막기)
+let nxReqSeq = 0;
+let nxWxGaveUp = false;              // 날씨가 12초 안에 안 오면 '아직 몰라요'로 한 번만 바꾼다
+const NX_CAL_CACHE_KEY = 'lukaCal.tomorrow.v1';
+function nxEl(id){ return document.getElementById(id); }
+function nxShown(){ const ov = nxEl('nexBrief'); return !!(ov && ov.classList.contains('show')); }
+function nxTxt(id, v){ const el = nxEl(id); if(el) el.textContent = (v == null ? '' : String(v)); }
+/* 내일 날짜 — 정오로 맞춰 더하고 날짜만 뽑는다(자정·서머타임 경계에서도 정확히 하루) */
+function nxDayDate(d){
+  const t = new Date((d || getNow()).getTime());
+  t.setHours(12, 0, 0, 0);
+  t.setDate(t.getDate() + 1);
+  return t;
+}
+function nxTomorrowKey(){ return todayKey(nxDayDate()); }
+/* 잘 준비 루틴 시간대(21:00~22:00) — 이 안에서 잘 준비 화면이 열려 있을 때만 */
+function nxWindow(now){
+  if(now == null) now = nowMinutes();
+  return now >= NIGHT_START && now < NIGHT_END;
+}
+/* 다른 창(파트너·도감·포켓몬·배틀·비밀번호·확인·축하·9시·아침 브리핑)이 떠 있으면 양보한다 */
+function nxOverlayBusy(){
+  return ['partnerOverlay','pokeOverlay','catchOverlay','btOverlay','pinOverlay','askDone','doneCard',
+          'nightAsk','wxBrief','pomoOv']
+    .some(id=>{ const el = nxEl(id); return !!(el && el.classList.contains('show')); });
+}
+function nxCanShow(now){
+  if(day().nightBriefDone) return false;
+  if(!state.appEnabled) return false;
+  if(curTab !== 'dash') return false;                              // 루틴 화면일 때만
+  if(document.body.classList.contains('app-off')) return false;
+  const p = nxEl('panel'); if(p && p.classList.contains('show')) return false;
+  if(nxOverlayBusy()) return false;
+  if(!nxWindow(now)) return false;
+  if(routineNow() !== 'night') return false;                       // 잘 준비 루틴 화면일 때만
+  return true;
+}
+/* v67 9시 팝업 — 내일 미리보기가 뜰 상황이면 양보한다(같은 순간에 두 창이 겹치지 않게) */
+function nxBlocksNightAsk(now){
+  if(!state.appEnabled || curTab !== 'dash') return false;
+  if(nxShown()) return true;
+  return !day().nightBriefDone && nxWindow(now) && routineNow() === 'night';
+}
+function nxSkyWord(c){
+  return c === 0 ? '맑음' : c <= 2 ? '구름 조금' : c === 3 ? '흐림' : c <= 48 ? '안개 낀'
+       : c <= 57 ? '이슬비' : c <= 67 ? '비' : c <= 77 ? '눈' : c <= 82 ? '소나기'
+       : c <= 86 ? '눈' : c >= 95 ? '천둥번개' : '구름 조금';
+}
+/* 내일 모드 배지 — 방학 중이면 방학, 주말이면 쉬는 날, 그 밖은 등교일 */
+function nxModeBadge(tmr){
+  const dow = (tmr || nxDayDate()).getDay();
+  if(modeId === 'vacation') return '🏖️ 내일은 방학';
+  if(dow === 0 || dow === 6) return '🏖️ 내일은 쉬는 날';
+  return '🏫 내일은 등교일';
+}
+function nxSchedEvents(){
+  const res = nxSched && nxSched.res;
+  if(!res || res.ok === false || !Array.isArray(res.events)) return null;
+  return res.events;
+}
+/* 말풍선 — 내일 일정이 있으면 '미리 챙기고 일찍 자자', 없으면 '오늘 수고했어' 따뜻한 밤 톤 */
+function nxLines(){
+  const evs = nxSchedEvents();
+  if(evs && evs.length){
+    return { main: '내일 일정이 있어! 미리 챙기고 일찍 자자 🌙',
+             sub: `내일 일정 ${evs.length}개 · 미리 챙겨 두면 아침이 편해요` };
+  }
+  if(evs){
+    return { main: '오늘 하루도 수고했어! 내일 날씨 확인하고 잘 준비하자 🌙',
+             sub: '내일은 등록된 일정이 없어 — 마음 편히 푹 자자 🌙' };
+  }
+  return { main: '오늘 하루도 수고했어! 내일 날씨 확인하고 잘 준비하자 🌙',
+           sub: '푹 자고 내일 아침에 또 만나!' };
+}
+/* 🌤️ 내일 날씨 — Open-Meteo 2일 예보의 두 번째 칸(wx.nx). 비·눈이면 우산 안내 */
+function nxPaintWx(){
+  const w = wxNow;
+  const nx = (w && w.wx) ? w.wx.nx : null;
+  const badge = nxEl('nxWxBadge');
+  if(!nx || (nx.tmax == null && nx.tmin == null && nx.code == null)){
+    nxTxt('nxWxIco', '🌤️');
+    nxTxt('nxWxVal', (Date.now() - nxOpenAt > 12000) ? '내일 날씨는 아직 몰라요' : '확인 중…');
+    if(badge){ badge.className = 'badge na'; badge.textContent = (Date.now() - nxOpenAt > 12000) ? '내일 아침에 다시 확인' : '확인 중'; }
+    return;
+  }
+  const code = (nx.code != null) ? nx.code : 3;
+  nxTxt('nxWxIco', WCODE(code)[0]);
+  const t = (nx.tmin != null && nx.tmax != null) ? `${Math.round(nx.tmin)}° / ${Math.round(nx.tmax)}°`
+          : (nx.tmax != null) ? `${Math.round(nx.tmax)}°`
+          : (nx.tmin != null) ? `${Math.round(nx.tmin)}°` : '';
+  nxTxt('nxWxVal', [nxSkyWord(code), t].filter(Boolean).join(' · '));
+  const snow = (code >= 71 && code <= 77) || code === 85 || code === 86;
+  const wet = isWetCode(code) || snow || (nx.pmax != null && nx.pmax >= 50);
+  if(badge){
+    badge.className = 'badge' + (wet ? ' wet' : '');
+    badge.textContent = wet ? (snow ? '❄️ 눈 챙겨요' : '☔ 우산 챙겨요')
+                     : (nx.pmax != null && nx.pmax >= 30) ? `☂️ 비 올 수 있어요 ${Math.round(nx.pmax)}%`
+                     : '비 소식 없어요';
+  }
+}
+/* ⏰ 잘 시간(21:40)까지 남은 시간 — tick 마다 다시 쓴다 */
+function nxTickNote(){
+  const now = nowMinutes();
+  const bed = wbHHMM(NIGHT_BED);
+  const left = NIGHT_BED - now;
+  let tx;
+  if(left > 0) tx = `⏰ 잘 시간 ${bed}까지 ${restSpanText(left)} 남았어요 · 챙기고 일찍 자자!`;
+  else if(now < NIGHT_END) tx = `⏰ 잘 시간 ${bed}이 지났어요 · 마저 챙기고 얼른 자자!`;
+  else tx = `⏰ 잘 시간 ${bed}이 지났어요 · 내일 아침에 또 만나 🌙`;
+  const el = nxEl('nxNote');
+  if(el && el.textContent !== tx) el.textContent = tx;   // 250ms 마다 같은 글자를 다시 쓰지 않는다
+}
+/* 📌 내일 일정 — 시각 배지 + 제목 + 🎒 준비물. 연결 안 했으면(.off) 칸을 숨긴다 */
+function renderNxSched(){
+  const box = nxEl('nxSched');
+  if(!box) return;
+  const list = nxEl('nxSchedList'), cnt = nxEl('nxSchedCnt'), none = nxEl('nxSchedNone');
+  if(!calUrl){
+    box.classList.add('off'); box.classList.remove('empty');
+    if(list) list.innerHTML = '';
+    if(cnt){ cnt.textContent = ''; cnt.hidden = true; }
+    return;
+  }
+  box.classList.remove('off');
+  const evs = nxSchedEvents();
+  if(!evs){
+    box.classList.add('empty');
+    if(list) list.innerHTML = '';
+    if(cnt){ cnt.textContent = ''; cnt.hidden = true; }
+    if(none) none.textContent = (nxSchedStatus === 'loading' || nxSchedStatus === 'idle' || nxSchedStatus === 'cache')
+      ? '내일 일정을 불러오는 중…' : '내일 일정을 확인하지 못했어요';
+    return;
+  }
+  box.classList.toggle('empty', evs.length === 0);
+  if(cnt){ cnt.textContent = evs.length ? `${evs.length}개` : ''; cnt.hidden = evs.length === 0; }
+  if(none) none.textContent = '내일은 등록된 일정이 없어요';
+  if(list){
+    list.innerHTML = evs.slice(0, 3).map(e => {
+      const allDay = !!e.allDay;
+      const time = allDay ? '종일' : (schedTimeKo(e.start) || String(e.startKo || ''));
+      const prep = schedPrepText(e);
+      return `<div class="nsi">`
+        +   `<span class="tm${allDay ? ' allday' : ''}">${schedEsc(time)}</span>`
+        +   `<div class="bd">`
+        +     `<b class="tt">${schedEsc(e.title)}</b>`
+        +     `<span class="pp">${prep ? '🎒 ' + schedEsc(prep) : ''}</span>`
+        +   `</div>`
+        + `</div>`;
+    }).join('');
+  }
+}
+function nxSchedCacheRead(){
+  try{
+    const c = JSON.parse(localStorage.getItem(NX_CAL_CACHE_KEY) || 'null');
+    if(c && c.day === nxTomorrowKey() && c.res && c.res.ok !== false) return c;
+  }catch(e){}
+  return null;
+}
+function nxSchedCacheWrite(c){ try{ localStorage.setItem(NX_CAL_CACHE_KEY, JSON.stringify(c)); }catch(e){} }
+/* 새 .gs 는 오늘 응답에 tomorrow 를 함께 준다 — 있으면 한 번 더 부르지 않는다 */
+function nxSchedFromToday(){
+  const res = (schedToday && schedToday.res) ? schedToday.res : null;
+  const t = res && res.tomorrow;
+  if(!t || !Array.isArray(t.events)) return null;
+  return { day: t.date || nxTomorrowKey(), at: (schedToday && schedToday.at) || Date.now(), res: t };
+}
+function nxSchedFetch(force){
+  if(!calUrl){ nxSchedStatus = 'off'; renderNxSched(); return; }
+  const day = nxTomorrowKey();
+  const fromToday = nxSchedFromToday();
+  if(fromToday){
+    if(!nxSched || nxSched.day !== day || (nxSched.at || 0) < fromToday.at){
+      nxSched = fromToday; nxSchedCacheWrite(nxSched); nxSchedStatus = 'live';
+      renderNxSched();
+      if(nxShown()) nxPaint();          // 말풍선 문구·일정 수까지 함께 새로 (그리기 전에 찾았을 수 있다)
+    }
+    return;
+  }
+  if(!force && nxSched && nxSched.day === day && Date.now() - (nxSched.at || 0) < CAL_REFRESH_MS) return;
+  if(Date.now() - nxSchedAt < 3000) return;
+  nxSchedAt = Date.now();
+  const my = ++nxReqSeq;
+  nxSchedStatus = 'loading';
+  renderNxSched();
+  /* 예전 .gs(tomorrow 없음)를 그대로 쓰는 경우에도, 그 스크립트가 예전부터 받는
+     ?date=YYYY-MM-DD 로 내일을 한 번 더 불러 채운다 — 에러 없이 조용히. */
+  calJsonp({ action:'calendar', date: day }, (ok, res) => {
+    if(my !== nxReqSeq) return;
+    if(ok && res && res.ok !== false){
+      nxSched = { day, at: Date.now(), res };
+      nxSchedCacheWrite(nxSched);
+      nxSchedStatus = 'live';
+    }else{
+      nxSchedStatus = nxSched ? 'cache' : 'error';
+    }
+    renderNxSched();
+    if(nxShown()) nxPaint();          // 말풍선 문구·일정 수를 그 자리에서 새로
+  });
+}
+function nxPaint(){
+  const ov = nxEl('nexBrief'); if(!ov) return;
+  nxPaintKey = wxNow ? (wxNow.at || 0) : 0;
+  const tmr = nxDayDate();
+  nxTxt('nxDate', `${tmr.getMonth()+1}월 ${tmr.getDate()}일 ${DAYS[tmr.getDay()]}`);
+  nxTxt('nxMode', nxModeBadge(tmr));
+  nxTxt('nxDep', `🌙 잘 준비 ${wbHHMM(NIGHT_START)}`);
+  const pk = partnerPk();
+  const art = nxEl('nxArt');
+  if(pk && art){
+    pkImg(art, pk.id, 'art');
+    art.alt = pk.name;
+    nxTxt('nxName', pk.name);
+    nxTxt('nxIcon', cheerTypeIcon(pk) || '⚡');
+  }
+  /* ⚡ 오늘 목표 — 포켓몬 1마리(100 XP)까지 남은 만큼 */
+  const xp = Math.max(0, Math.floor(Number(state.xp) || 0));
+  const pct = Math.max(0, Math.min(100, xp));
+  const fill = nxEl('nxGoalFill'); if(fill) fill.style.width = pct + '%';
+  const gbox = nxEl('nxGoal'); if(gbox) gbox.classList.toggle('done', xp >= 100);
+  nxTxt('nxGoalLb', xp >= 100 ? '⚡ 오늘 목표 달성!' : '⚡ 오늘 목표까지');
+  nxTxt('nxGoalNum', xp >= 100 ? `달성! ${xp} EXP 🎉` : `${xp} / 100 EXP`);
+  const L = nxLines();
+  const big = nxEl('nxBig'); if(big) big.innerHTML = L.main;
+  nxTxt('nxSub', L.sub || '');
+  nxPaintWx();
+  renderNxSched();
+  nxTickNote();
+}
+function nxOpen(test){
+  const ov = nxEl('nexBrief'); if(!ov) return;
+  nxOpenAt = Date.now();
+  nxWxGaveUp = false;
+  const tc = nxEl('nxTestClose'); if(tc) tc.hidden = !test;
+  ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');   // 먼저 띄워야 fetch 쪽이 다시 철할 수 있다
+  nxPaint();
+  nxSchedFetch(false);
+  if(!test && !wxNow) fetchWeather();     // 아직 날씨가 없으면 한 번 더 청한다(도착하면 다시 칠한다)
+}
+function nxClose(){
+  const ov = nxEl('nexBrief');
+  if(nxTestHold) nxTestQuietUntil = Date.now() + 10*60*1000;
+  nxTestHold = false;
+  if(ov){ ov.classList.remove('show', 'test'); ov.setAttribute('aria-hidden', 'true'); }
+  const tc = nxEl('nxTestClose'); if(tc) tc.hidden = true;
+}
+function nxTestModeSet(on){
+  nxTestHold = !!on;
+  const ov = nxEl('nexBrief'); if(ov) ov.classList.toggle('test', !!on);
+  const tc = nxEl('nxTestClose'); if(tc) tc.hidden = !on;
+}
+function nxConfirmTap(){
+  const test = nxTestHold;
+  if(!test){
+    const d = day();
+    d.nightBriefDone = true;
+    const st = nqRec(); st.done = true; st.until = 0;      // 이어서 '9시 팝업'이 또 뜨지 않게
+    save();
+  }
+  nxClose(); blip();
+  toast(test ? '🌙 내일 미리보기 — 테스트를 닫았어요' : '🌙 좋아, 잘 준비하자!');
+  if(!test){
+    const c = document.getElementById('card0');
+    if(c){
+      try{ c.scrollIntoView({ block:'center', behavior:'smooth' }); }catch(e){ try{ c.scrollIntoView(); }catch(e2){} }
+      c.classList.remove('startpulse'); void c.offsetWidth; c.classList.add('startpulse');
+      setTimeout(()=> c.classList.remove('startpulse'), 3600);
+    }
+  }
+}
+/* tick(250ms)마다 — 잘 준비 화면이 열린 저녁에 오늘 아직 안 봤으면 한 번 띄운다 */
+function checkNightBrief(now){
+  if(!nxTestHold && Date.now() < nxTestQuietUntil) return;   // 테스트를 막 닫은 참 — 자동으로 또 띄우지 않는다
+  if(nxTestHold){ if(!nxShown()) nxTestModeSet(false); return; }
+  if(day().nightBriefDone){ if(nxShown()) nxClose(); return; }
+  if(nxShown()){
+    nxTickNote();
+    if(!nxCanShow(now)){ nxClose(); return; }
+    if(nxPaintKey !== (wxNow ? (wxNow.at || 0) : 0)) nxPaint();   // 떠 있는 사이 날씨가 도착하면 다시 칠한다
+    else if(!wxNow && !nxWxGaveUp && Date.now() - nxOpenAt > 12000){ nxWxGaveUp = true; nxPaintWx(); }
+    return;
+  }
+  if(nxCanShow(now)) nxOpen(false);
+}
+(function bindNightBrief(){
+  const ok = nxEl('nxConfirm'), tc = nxEl('nxTestClose'), ov = nxEl('nexBrief');
+  if(ok) ok.addEventListener('click', nxConfirmTap);
+  const testClose = ()=>{ nxClose(); blip(); toast('🌙 테스트 팝업을 닫았어요'); };
+  if(tc) tc.addEventListener('click', testClose);
+  /* 평상시에는 바깥을 눌러도 닫지 않는다 — [🌙 잘 준비하자!] 로 오늘 기록을 남긴다 */
+  if(ov) ov.addEventListener('click', e=>{ if(e.target === ov && nxTestHold) testClose(); });
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && nxShown() && nxTestHold) testClose(); });
+})();
 
 /* ---------- tasks ---------- */
 function allDone(){
@@ -8921,7 +9505,8 @@ const WX_URL_BASE = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&long
   `&current=temperature_2m,weather_code` +
   `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code` +
   `&hourly=temperature_2m,precipitation_probability,weather_code,precipitation` +
-  `&timezone=Asia%2FSeoul&forecast_days=1`;
+  /* v95 — 잘 준비 팝업의 🌤️ 내일 날씨가 같은 응답의 두 번째 칸(daily[1])을 그대로 쓴다 */
+  `&timezone=Asia%2FSeoul&forecast_days=2`;
 
 /* Open-Meteo 응답(기상청 모델·전지구 모델 공통 형태) → 화면용 값 */
 function parseOpenMeteo(w, srcName){
@@ -8938,12 +9523,30 @@ function parseOpenMeteo(w, srcName){
       code: (hr.weather_code && hr.weather_code[i] != null) ? hr.weather_code[i] : (cur.weather_code != null ? cur.weather_code : 3) };
   }).filter(Boolean);
   if(!rows.length) throw new Error('open-meteo no hourly');
+  /* v95 — 🌙 내일 미리보기의 🌤️ 내일 날씨 — daily 의 두 번째 칸(내일). 오늘 값은 그대로 [0] 만 쓴다.
+     날씨 코드가 daily 에 없으면 내일 정오의 hourly 코드로 채우고, 그래도 없으면 nx = null
+     (팝업은 '확인 중'으로 두었다가 12초 뒤 '아직 몰라요'로 조용히 바꾸다). */
+  const nxKey = dl.time && dl.time[1];
+  let nx = null;
+  if(nxKey){
+    const pick = arr => (Array.isArray(arr) && arr[1] != null && isFinite(Number(arr[1]))) ? Number(arr[1]) : null;
+    let ncode = pick(dl.weather_code);
+    if(ncode == null && hr.time && hr.weather_code){
+      const i12 = hr.time.indexOf(`${nxKey}T12:00`);
+      if(i12 >= 0 && hr.weather_code[i12] != null) ncode = hr.weather_code[i12];
+    }
+    const ntmax = pick(dl.temperature_2m_max), ntmin = pick(dl.temperature_2m_min);
+    if(ncode != null || ntmax != null || ntmin != null){
+      nx = { date: nxKey, code: ncode, tmax: ntmax, tmin: ntmin,
+             pmax: pick(dl.precipitation_probability_max) };
+    }
+  }
   return { tcur: cur.temperature_2m,
     code: cur.weather_code != null ? cur.weather_code : rows[0].code,
     tmax: (dl.temperature_2m_max && dl.temperature_2m_max[0] != null) ? dl.temperature_2m_max[0] : null,
     tmin: (dl.temperature_2m_min && dl.temperature_2m_min[0] != null) ? dl.temperature_2m_min[0] : null,
     pmax: (dl.precipitation_probability_max && dl.precipitation_probability_max[0] != null) ? dl.precipitation_probability_max[0] : null,
-    rows, srcName };
+    rows, nx, srcName };
 }
 /* 기상청 모델은 강수확률을 주지 않을 수 있다 → 그때만 전지구 모델에서 확률만 가져온다 */
 async function wxProbabilityOnly(){
@@ -9025,9 +9628,18 @@ async function wxFromWttr(){
     return { h, t: Number(x.tempC), p: x.chanceofrain != null ? Number(x.chanceofrain) : null, code: wwo(x.weatherCode) };
   }).filter(Boolean);
   const pmax = hrs.reduce((m,x) => Math.max(m, Number(x.chanceofrain) || 0), 0);
+  /* v95 — 보조 소스에서도 내일 한 칸(wttr 은 weather[1])을 함께 건진다 */
+  const d2 = (j.weather || [])[1];
+  const nx = d2 ? {
+    code: (() => { const h = (d2.hourly || []).find(x => Number(x.time) === 1200) || (d2.hourly || [])[0];
+                   return h && h.weatherCode != null ? wwo(h.weatherCode) : 3; })(),
+    tmax: d2.maxtempC != null ? Number(d2.maxtempC) : null,
+    tmin: d2.mintempC != null ? Number(d2.mintempC) : null,
+    pmax: (d2.hourly || []).reduce((m,x) => Math.max(m, Number(x.chanceofrain) || 0), 0)
+  } : null;
   return { tcur: Number(cc.temp_C), code: wwo(cc.weatherCode),
            tmax: Number(day.maxtempC), tmin: Number(day.mintempC),
-           pmax, rows, srcName: 'wttr.in' };
+           pmax, rows, nx, srcName: 'wttr.in' };
 }
 
 /* 3) met.no — 보조 소스 2 */
@@ -9054,10 +9666,23 @@ async function wxFromMetno(){
   let cur = ts[0];
   ts.forEach(x => { if(new Date(x.time).getTime() <= nowMs) cur = x; });
   const sym = (cur.data.next_1_hours && cur.data.next_1_hours.summary.symbol_code) || '';
+  /* v95 — 보조 소스에서도 내일 한 칸 — 같은 날짜 키 방식으로 내일 시계열만 모은다 */
+  let nx = null;
+  const tmrK = new Date(nowK.getTime() + 24*3600*1000);
+  const tom = ts.filter(x => key(kst(x.time)) === key(tmrK));
+  if(tom.length){
+    const tt = tom.map(x => x && x.data && x.data.instant && x.data.instant.details.air_temperature).filter(v => v != null);
+    const h12 = tom.find(x => kst(x.time).getUTCHours() === 12) || tom[0];
+    const sym2 = (h12.data.next_6_hours && h12.data.next_6_hours.summary.symbol_code) ||
+                 (h12.data.next_1_hours && h12.data.next_1_hours.summary.symbol_code) || '';
+    nx = { code: symbolToWmo(sym2),
+           tmax: tt.length ? Math.max.apply(null, tt) : null,
+           tmin: tt.length ? Math.min.apply(null, tt) : null, pmax: null };
+  }
   return { tcur: cur.data.instant.details.air_temperature, code: symbolToWmo(sym),
            tmax: temps.length ? Math.max.apply(null, temps) : null,
            tmin: temps.length ? Math.min.apply(null, temps) : null,
-           pmax: null, rows, srcName: 'met.no' };
+           pmax: null, rows, nx, srcName: 'met.no' };
 }
 
 /* 여러 소스를 차례로 시도 */
@@ -9132,6 +9757,7 @@ async function fetchWeather(manual){
     cacheWeather(wx, air);
     wxNow = { wx, air: air || null, at: Date.now() };   // v75 — 아침 날씨 팝업도 같은 값을 쓴다
     if(typeof wbShown === 'function' && wbShown()) wbPaint();
+    if(typeof nxShown === 'function' && nxShown()) nxPaint();   // v95 — 모자 띄운 내일 미리보기도 다시 칠한다
     wxLastOk = getNow();
     wxSource = wx.srcName;
     wxModel = wx.model || '';
@@ -11327,11 +11953,13 @@ document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   d.nightAsk = { done:false, snoozed:0, until:0 };   // v67 — 오늘 잘 준비 팝업도 처음으로
   d.nightFruit = 'none';                            // v67 — 잘 준비 과일도 처음으로
   d.weatherBriefDone = false;                       // v75 — 오늘 아침 날씨 팝업도 처음으로
+  d.nightBriefDone = false;                         // v95 — 오늘 내일 미리보기 팝업도 처음으로
   revertNightCount({ silent:true });   // 오늘 취침 완료로 올린 별 하나도 함께 되돌린다
   save();
   /* v69 — 리셋하면 끝냈던 루틴도 그 시간대에 다시 열린다(팝업·축하 카드는 닫는다) */
   pendingDone = null; adClose(); dnClose();
   wbClose(); wbTestQuietUntil = 0;      // v75 — 열려 있던 아침 날씨 팝업도 닫고 다시 뜰 수 있게
+  nxClose(); nxTestQuietUntil = 0;      // v95 — 열려 있던 내일 미리보기 팝업도 닫고 다시 뜰 수 있게
   pastKey = null;                      // v72 — 열어 둔 지난 모험도 닫는다
   aheadKey = null;                     // v79 — 미리 열어 둔 다음 모험도 닫는다
   curRKey = null; syncRoutine(); renderProgress();
@@ -11394,6 +12022,16 @@ document.getElementById('nqTestClose').addEventListener('click', ()=>{
 document.getElementById('testNightAskReset').addEventListener('click', parentOnly(()=>{
   const st = nqRec(); st.done = false; st.snoozed = 0; st.until = 0; save();
   nqClose(); nqSyncChip(); toast('↩ 잘 준비 팝업 기록을 지웠어요');
+}));
+/* v95 — 🌙 내일 미리보기 테스트 (설정창 위에 띄우고 [✕ 테스트 닫기] 로 닫는다) */
+document.getElementById('testNxBrief').addEventListener('click', parentOnly(()=>{
+  day().nightBriefDone = false; save();      // 테스트 중에는 today 기록을 막지 않는다
+  nxTestModeSet(true); nxOpen(true);
+  toast('🌙 내일 미리보기 팝업 — 테스트');
+}));
+document.getElementById('testNxBriefReset').addEventListener('click', parentOnly(()=>{
+  day().nightBriefDone = false; nxSchedAt = 0; nxTestQuietUntil = 0; nxClose(); save();
+  toast('↩ 내일 미리보기 팝업 기록을 지웠어요');
 }));
 /* v75 — ☀️ 아침 날씨 브리핑 팝업 테스트 (설정창 위에 띄우고 [✕ 테스트 닫기] 로 닫는다) */
 document.getElementById('testWxBrief').addEventListener('click', parentOnly(()=>{
@@ -11758,6 +12396,7 @@ function tick(){
   /* 아침 마감 알림 — 방과후·공휴일 모드는 마감 뒤 대기·휴식 화면으로 넘어가지만 알림은 그대로 울린다 */
   if(now < DEPART + 15) checkDepartAlert(now);
   checkNightStart(now);              // 21:00 취침 시작음·안내 (하루 한 번)
+  checkNightBrief(now);              // v95 — 🌙 내일 미리보기 (잘 준비 시작, 하루 한 번)
   checkNightAsk(now);                // v67 — 21:00~21:39 잘 준비 시작 팝업 (3분 미룸 포함)
   checkWeatherBrief(now);            // v75 — 아침 날씨 브리핑 팝업 (기상~출발 전, 하루 한 번)
 }
@@ -11799,9 +12438,14 @@ schedToday = schedCacheRead();
 if(schedToday) schedStatus = 'cache';
 renderSched(schedToday ? schedToday.res : null);
 renderCalSettings();
-setTimeout(()=>{
-  if(!schedToday || Date.now() - schedToday.at > CAL_REFRESH_MS) schedFetch('init');   // 5분 캐시
-}, 600);
+renderHdrSched();      // v95 — 캐시가 없어도 '불러오는 중…' 칸을 켜자마자 그린다
+/* v95 — 🌙 내일 미리보기의 📌 내일 일정도 저장해 둔 하루치를 먼저 읽는다 */
+nxSched = nxSchedCacheRead();
+nxSchedStatus = nxSched ? 'cache' : 'idle';
+renderNxSched();
+/* v95 — 아침 브리핑을 열지 않아도 헤더 칸이 채워지도록, 앱을 켜자마자 바로 한 번 청한다
+   (예전에는 600ms 뒤, 그것도 캐시가 없을 때만이었다). 5분 캐시는 그대로다. */
+if(!schedToday || Date.now() - schedToday.at > CAL_REFRESH_MS) schedFetch('init');
 setInterval(()=>{
   if(document.hidden || !calUrl) return;
   if(Date.now() - (schedToday ? schedToday.at : 0) > CAL_REFRESH_MS) schedFetch('poll');
@@ -11842,6 +12486,7 @@ ensurePikachuAudio();   // v81 — 피카츄 음원도 시작할 때 미리 준�
   document.getElementById('wTip').textContent = tip;
   document.getElementById('wHours').innerHTML = hoursHtml(wx.rows);
   wxNow = { wx, air: air || null, at: c.t };   // v75 — 저장한 날씨도 아침 브리핑이 바로 쓴다
+  if(typeof nxShown === 'function' && nxShown()) nxPaint();   // v95 — 내일 미리보기의 내일 날씨도
   wxLastOk = new Date(c.t);
   wxSource = wx.srcName || 'open-meteo';
   wxModel = wx.model || '';
