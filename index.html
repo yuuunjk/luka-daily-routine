@@ -4,6 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v98 — 🐛 방과후 모드 아침 루틴을 '켤' 수 있게 + 오늘의 공부 시작 목표 시간 · 비루틴 강조 · 시간 바 슬림
+     (사용자 요청 2026-11-28 "방과후 모드에서 설정에서 아침8시로 설정해도 아침루틴을 못 켜. 수정해." · 추가 요청 2건)
+     · ① 방과후 모드(wake 08:00 · morningEnd 08:45)의 아침 루틴은 시계가 08:00~08:45 안에 있을 때만 열린다.
+       그런데 부모가 손으로 아침 루틴을 켜는 길이 막혀 있었다:
+         - `earlyStartWhy()` 가 `nowMinutes() >= M.wake` 인 동안 늘 '이미 아침 루틴이 열려 있어요'를 돌려줘서,
+           08:00 을 지난 뒤(방과후 모드는 하루 종일)에는 [☀️ 지금부터 아침 루틴 시작]이 아무것도 열지 않고
+           화면은 휴식 그대로였다 — 실제로는 아침 루틴이 열려 있지 않은데도.
+         - `routineKeyAt()` 은 `state.earlyMorningDay`(조기 시작)를 **기상 전**에만 봐서, 08:45 가 지나거나
+           아침 칸을 이미 다 채운 뒤에는 조기 시작을 켜도 아침 루틴 카드가 다시 열리지 않았다.
+         - 그래서 시계가 08:45 를 지난 방과후 날에는 부모가 아침 루틴을 다시 볼 수도, '켤' 수도 없었다
+           (미리보기 08:00 은 그대로 동작 — 새 날 기준으로는 07:59 대기 / 08:00 아침 루틴).
+       → 조기 시작을 **오늘 하루 유지되는 아침 루틴 열기**로 바꿨다. 켜면 시계와 상관없이(밤 9시 전까지)
+         아침 루틴 카드가 열리고, 아침 칸을 다 채우면 저절로 휴식 화면으로 돌아간다. 자정이 지나면 풀린다.
+         진행 바는 그때 '아침 루틴 진행 중 · N개 남았어요!'로 보여 준다('방과후 갈 시간!'으로 덮지 않는다).
+         테스트 시간 08:00 미리보기가 이미 끝낸 아침이라 휴식 화면으로 뜰 때는, 그 사실과 함께
+         [☀️ 지금부터 아침 루틴 시작]으로 다시 열 수 있다는 안내를 토스트로 남긴다.
+     · ② 오늘의 공부 카드 오른쪽에 🎯 시작 목표 시간 알약 — 누르면 시/분을 고르는 작은 팝업.
+       설정 전 '⏰ 목표 시간', 설정 뒤 '오후 4시 30분'(0분은 '4시 00분'). 카드 완료 체크와 따로 동작한다
+       (stopPropagation). 날짜별 저장(state.study.goal, 20일치 보관).
+     · ③ 비루틴 말풍선의 '오늘의 공부 N개'에도 형광 강조(em.st, 따뜻한 노랑).
+     · ④ 가운데 시간 바 카드(.strip) 상하 여백·높이를 살짝 줄여 본문이 넓어 보이게(달리는 파트너는 그대로 읽힘).
+     · 검사는 dashboard/check-v98.py (+ v97·v96·v95·v94 회귀). -->
 <!-- v97-3 — 시안 3차 수정 (사용자 요청 2026-11-28 · 시안 4차까지 확정 → v97 로 배포)
      · ① 헤더 일정 칸(#hdrSched) — 제목을 '📅 일정' 하나로 줄이고, 그 아래 **'오늘 N개' / '내일 N개'를 한 줄씩**
        두어 가로에서는 3줄(📅 일정 / 오늘 N개 / 내일 N개)로 읽힌다. 세로에서는 '📅 일정  오늘 N개 · 내일 N개  ›'
@@ -878,7 +900,7 @@
      여백이 같다(1152×864 처럼 세로가 길어 글자가 큰 화면에서도 잘리지 않는다).
      6em = 안내 글자(약 5em) + 좌우 여백(1em), +22px = 양옆 숨 쉴 틈.
      세로 화면(@media)은 width:auto 라 영향 없다. */
-  header.sky{--schedw:clamp(88px, calc(6em + 22px), 112px);}
+  header.sky{--schedw:clamp(88px, calc(5.2em + 21px), 100px);}   /* v98 — 108px → 약 96px (한 단계 더 슬램) */
   header.sky .wxcol.has-sched{max-width:calc(36em + var(--schedw) + .4em);}   /* 일정 카드가 설 만큼만 넓힌다 */
   header.sky .hdrsched{
     /* v97-2 — 옆 카드(파트너·다음 목표/강화 XP·날씨)와 **높이를 꼭 맞춘다**(align-self: stretch).
@@ -891,7 +913,7 @@
     appearance:none; -webkit-appearance:none;   /* v97 — 삼성 인터넷 등에서도 단추 기본 생김새를 쓰지 않는다 */
     /* v97-4 — 테두리는 옆 카드(파트너·XP·날씨)와 똑같은 진한 남색 2px (모든 스카이 테마·상태 공통) */
     background:linear-gradient(180deg,#ffffff 0%,#eef7ff 100%); border:2px solid #2b3445;
-    border-radius:.8em; padding:.42em .5em .5em;
+    border-radius:.8em; padding:.42em .52em .5em;   /* v98 — 좌우 여백 7.2px → 7.5px급, 폭은 --schedw 가 줄인다 */
     /* v97 — 아래에 파란 두께를 줘 '누를 수 있는 단추'로 보이게(앱의 다른 단추와 같은 결) */
     box-shadow:0 .18em 0 #a5c9e4, 0 .3em .55em rgba(20,60,90,.2), inset 0 0 0 2px #fff;
     color:#123b5c; line-height:1.16;
@@ -1342,6 +1364,9 @@
   .rest2 .rsay em{font-style:normal;color:#2f7a2a;background:linear-gradient(transparent 56%,#d6f2c2 56%);padding:0 1px;}
   .rest2.band-prewake .rsay em{color:#3a5aa8;background:linear-gradient(transparent 56%,#d8e4ff 56%);}
   .rest2.band-night .rsay em{color:#7a5aa8;background:linear-gradient(transparent 56%,#e6dcff 56%);}
+  /* v98 — '오늘의 공부 N개' 강조 (사용자 요청 2026-11-28) — 다음 모험 시각(연둣빛 em)과 구분되는 따뜻한 노랑 */
+  .rest2 .rsay em.st{color:#8a5410;background:linear-gradient(transparent 56%,#ffe9a0 56%);}
+  .rest2.band-prewake .rsay em.st,.rest2.band-night .rsay em.st{color:#8a5410;background:linear-gradient(transparent 56%,#ffe9a0 56%);}
   .rest2 .rchips{display:flex;flex-wrap:wrap;gap:clamp(4px,calc(var(--rh) * .02),8px);padding-left:6px;}
   .rest2 .rchip2{display:inline-flex;align-items:center;gap:clamp(3px,calc(var(--rh) * .016),7px);
     font-size:clamp(10px,calc(var(--rh) * .042),17px);font-weight:900;color:#3f6d95;background:#eaf4ff;
@@ -1953,11 +1978,11 @@
   /* ===== Progress strip ===== */
   .strip{
     flex:0 0 auto; background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
-    display:flex; align-items:center; gap:14px; padding:6px 18px;
+    display:flex; align-items:center; gap:14px; padding:3px 18px;   /* v98 — 상하 여백 6 → 3 (살짝 슬림) */
     /* v39 — 시간 바 위를 달리는 파트너 포켓몬을 2배로 키웠다(48→96 등).
        바 위아래로 잘리지 않고 위(마음 스킬 배너)·아래(과제 카드)와도 붙지 않게
        띠 높이를 포켓몬 크기에 맞춰 늘린다: --run + 20px (위·아래 숨 쉴 여백) */
-    --run:158px; min-height:calc(var(--run) + 12px);   /* v42 — 달리는 파트너를 1.4배 더 크게 */
+    --run:146px; min-height:calc(var(--run) + 8px);   /* v42 — 달리는 파트너를 1.4배 더 크게 · v98 158+12 → 146+8 */
   }
   .pblock{flex:0 0 auto;min-width:196px;margin-right:18px;display:flex;flex-direction:column;gap:0;}   /* 달리는 피카츄가 왼쪽 글씨를 가리지 않게 */
   .pblock .plabel{font-size:15px;font-weight:900;color:#5b4a34;letter-spacing:.2px;white-space:nowrap;line-height:1.25;}
@@ -2208,29 +2233,19 @@
     color:#5a3f10; font-weight:900; white-space:nowrap; text-overflow:ellipsis;
     font-size:clamp(17px,2.1vw,27px); line-height:1.2; letter-spacing:-.01em;
   }
-  /* v97-2 — 배너 오른쪽 끝 체크박스 3개 (예전 .affirm-star 자리).
-     한 줄에 그대로 서고(줄바꿈·잘림 없음) 아이 손가락으로 누르기 좋은 크기.
-     v97-3 — 체크했을 때 색을 초록에서 배너와 같은 따뜻한 노랑/앰버로 바꿨다(사용자 요청).
-     진한 앰버(#fbbf24 → #f59e0b)로 채워 흰색 ✓ 가 또렷하게 대비된다. */
-  .affirm .affirm-mind{flex:0 0 auto; display:flex; align-items:center; gap:clamp(4px,.55vw,8px);}
-  .affirm .mindbox{position:relative; display:block; flex:0 0 auto; cursor:pointer; line-height:0;}
-  .affirm .mindbox input{position:absolute; left:0; top:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer;}
-  .affirm .mindbox .mb{
-    display:flex; align-items:center; justify-content:center;
-    width:clamp(24px,3.4vh,30px); height:clamp(24px,3.4vh,30px);
-    border:2px solid #e2cd92; border-radius:clamp(6px,.8vh,8px); background:#fffdf6;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(150,110,20,.16);
-    font-size:clamp(14px,2.2vh,19px); font-weight:900; color:transparent; line-height:1;
-    transition:background .15s,border-color .15s,color .15s,transform .12s;
-  }
-  .affirm .mindbox .mb::after{content:'✓';}
-  .affirm .mindbox input:checked + .mb{
-    background:linear-gradient(180deg,#fbbf24,#f59e0b); border-color:#d98a06; color:#fff;
-    text-shadow:0 1px 1px rgba(150,90,10,.45);
-    box-shadow:0 2px 6px rgba(200,130,20,.4), inset 0 1px 0 rgba(255,255,255,.4);
-  }
-  .affirm .mindbox:active .mb{transform:scale(.94);}
-  .affirm .mindbox input:focus-visible + .mb{outline:3px solid #7bb7ff; outline-offset:2px;}
+  /* v98 — 배너 오른쪽 끝 '하이퍼볼(울트라볼)' 3개 (사용자 요청 2026-11-28).
+     v97-2 체크박스 세 칸을 그대로 아이콘 버튼으로 바꿨다. 동작은 그대로
+     (3개 다 채우면 그날 1회 ⚡ 강화 XP +1, 하나 풀면 회수, 배너 안 안내 문구 없음).
+     체크 전 = 흑백·흐린 톤(grayscale + opacity), 체크 후 = 선명한 컬러(검정·노랑·흰색) + 살짝 빛남. */
+  .affirm .affirm-mind{flex:0 0 auto; display:flex; align-items:center; gap:clamp(3px,.5vw,7px);}
+  .affirm .mindball{flex:0 0 auto; display:block; width:clamp(26px,3.7vh,32px); height:clamp(26px,3.7vh,32px);
+    padding:0; border:0; background:none; line-height:0; cursor:pointer; -webkit-tap-highlight-color:transparent;
+    filter:grayscale(1) contrast(.9) brightness(.98) opacity(.42);
+    transition:filter .18s ease, transform .12s ease;}
+  .affirm .mindball svg{width:100%; height:100%; display:block;}
+  .affirm .mindball:active{transform:scale(.92);}
+  .affirm .mindball[aria-pressed="true"]{filter:drop-shadow(0 2px 4px rgba(120,90,0,.45)) saturate(1.05);}
+  .affirm .mindball:focus-visible{outline:3px solid #7bb7ff; outline-offset:2px; border-radius:50%;}
 
   /* ===== Pokédex ===== */
   .dex{flex:1;display:none;flex-direction:column;min-height:0;overflow:hidden;}
@@ -2679,6 +2694,45 @@
     border:none;background:none;padding:0;font-family:inherit;cursor:pointer;text-align:left;color:inherit;}
   .smain:active .sbox{transform:scale(.94);}
   .smain:focus-visible{outline:3px solid #7ecb5f;outline-offset:2px;border-radius:12px;}
+  /* ===== v98 — 🎯 오늘의 공부 '시작 목표 시간' 알약 (사용자 요청 2026-11-28) =====
+     카드 오른쪽 작은 알약. 누르면 시/분을 고르는 작은 팝업(#goalPop)이 열린다.
+     알약은 카드 완료 체크와 별개다(stopPropagation). 설정 전에는 흐린 '⏰ 목표 시간',
+     설정 뒤에는 '오후 4시 30분' — 아이가 읽기 쉬운 12시간제(0분은 '4시 00분'). */
+  .sgoal{flex:0 0 auto;display:inline-flex;align-items:center;gap:3px;height:30px;padding:0 9px;
+    border:2px solid #e6dccb;background:#fffdf7;border-radius:999px;color:#a89a80;
+    font-family:inherit;font-weight:900;font-size:12.5px;line-height:1;cursor:pointer;
+    white-space:nowrap;letter-spacing:-.01em;font-variant-numeric:tabular-nums;
+    transition:background .15s,border-color .15s,color .15s,transform .1s;}
+  .sgoal:active{transform:scale(.96);}
+  .sgoal .e{font-style:normal;font-size:13px;line-height:1;}
+  .sgoal.set{background:#fff7de;border-color:#f2c53d;color:#8a5c00;}
+  .sgoal.set .e{color:#b07d00;}
+  .srow.done .sgoal{opacity:.72;}
+  /* 🎯 시작 목표 시간 고르기 팝업 — 태블릿에서 터치로 쉽게 */
+  .goalov.show{display:flex;align-items:center;justify-content:center;padding:14px;z-index:56;}
+  .goalcard{width:min(430px, calc(100vw - 24px));max-height:calc(100vh - 28px);overflow:auto;
+    display:flex;flex-direction:column;gap:7px;background:#fffdf7;border-radius:22px;
+    box-shadow:0 12px 40px rgba(0,0,0,.3);padding:14px 16px 15px;}
+  .goalcard .ghead{display:flex;align-items:baseline;gap:6px;}
+  .goalcard .gttl{font-size:17px;font-weight:900;color:#54452f;line-height:1.3;}
+  .goalcard .gttp b{color:#8a5c00;}
+  .goalcard .glab{font-size:11.5px;font-weight:900;color:#a8884a;margin-top:1px;}
+  .goalcard .grow{display:flex;gap:7px;}
+  .goalcard .ggrid{display:grid;gap:5px;}
+  .goalcard .ggrid.h{grid-template-columns:repeat(6,1fr);}
+  .goalcard .ggrid.m{grid-template-columns:repeat(6,1fr);}
+  .goalcard .gbtn{display:flex;align-items:center;justify-content:center;height:36px;border:2px solid #ece2cc;
+    background:#fff;border-radius:11px;color:#6b5730;font-family:inherit;font-weight:900;font-size:14px;
+    line-height:1;cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums;
+    transition:background .12s,border-color .12s,transform .08s;}
+  .goalcard .gbtn:active{transform:scale(.96);}
+  .goalcard .gbtn.on{background:#fff2c4;border-color:#f2c53d;color:#7a4d00;box-shadow:0 0 0 3px #fff7de;}
+  .goalcard .grow .gbtn{flex:1 1 0;height:34px;font-size:13.5px;}
+  .goalcard .gf{display:flex;gap:7px;margin-top:3px;}
+  .goalcard .gf .gbtn{flex:1 1 0;height:40px;font-size:15px;}
+  .goalcard .gbtn.save{background:var(--green);border-color:var(--green-dark);color:#fff;}
+  .goalcard .gbtn.clear{background:#fff4f2;border-color:#f3cdc4;color:#a5442a;}
+  .goalcard .gbtn.cancel{background:#f4f1e8;border-color:#e4ddca;color:#6b5f48;}
   .tbtn2{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 10px;
     border:2px solid #e6d9b0;background:#fff;border-radius:10px;color:#7a5b00;font-family:inherit;
     font-weight:900;font-size:13px;line-height:1;cursor:pointer;white-space:nowrap;
@@ -2980,6 +3034,16 @@
   /* 카드마다 테마색 — 제목 아이콘을 보고 어느 보상인지 바로 알아보게 */
   .g-routine{border-color:#cfe7bf;background:linear-gradient(180deg,#fdfef7,#f4fbe9);}
   .g-routine li b{color:#3f7a2a;}
+  /* v98 — 모드별 루틴 시간표 카드 (가로 4칸 · 사용자 요청 2026-11-28) */
+  .gcard.g-modes{grid-column:1 / -1;border-color:#cfdfe7;background:linear-gradient(180deg,#fdfeff,#f1f8fb);}
+  .gmodes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+  .gmode{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.78);
+    border:2px solid #dde5ea;border-radius:11px;padding:3px 7px 4px;min-width:0;}
+  .gmode .gm-t{font-size:12px;font-weight:900;color:#3d5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gmode .gm-r{font-size:11.5px;font-weight:800;color:#5f5138;line-height:1.26;white-space:nowrap;
+    font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;}
+  .gmode .gm-r i{font-style:normal;margin-right:3px;}
+  .gmode .gm-r b{color:#1f5aa8;}
   .g-night{border-color:#d6d9f0;background:linear-gradient(180deg,#fdfdff,#f1f2fc);}
   .g-night li b{color:#4a4f9e;}
   .g-study{border-color:#cfe4f4;background:linear-gradient(180deg,#fdfeff,#f2f9ff);}
@@ -3000,6 +3064,10 @@
     .gformula{gap:4px;padding:4px 6px;}
     .gformula .gf{font-size:11.5px;padding:2px 8px;}
     .gformula .op{font-size:13px;}
+    .gmodes{gap:5px;}
+    .gmode{padding:2px 6px 3px;}
+    .gmode .gm-t{font-size:11px;}
+    .gmode .gm-r{font-size:10.5px;}
     .grows .gr{padding:3px 6px;gap:6px;}
     .grows .gr b{font-size:11.5px;}
     .grows .gr span{font-size:11.5px;}
@@ -3025,6 +3093,9 @@
   @media (max-width:880px){
     .guide-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(max-content,1fr);align-content:stretch;}
     .gcard.wide{grid-column:span 2;}
+    /* v98 — 모드별 시간표는 좁은 화면에서 두 칸을 다 쓰고, 안의 네 모드 타일은 2×2로 */
+    .gmode .gm-r{white-space:normal;}
+    .gmodes{grid-template-columns:repeat(2,minmax(0,1fr));}
     .gcard li{font-size:12.5px;}
   }
   /* 세로로 긴 화면(800×1280 등) — 공간이 넉넉하니 글자를 키워 카드를 채운다 */
@@ -3448,11 +3519,11 @@
     .w-tip{font-size:11px;padding:2px 6px;}
     .w-live{margin-left:auto;font-size:9.5px;padding:3px 7px;}
     .gear{width:38px;height:44px;font-size:17px;}
-    .strip{gap:8px;padding:6px 12px;}
+    .strip{gap:8px;padding:3px 12px;}   /* v98 — 상하 여백 6 → 3 */
     .strip .label{min-width:120px;}
     .strip .label .main{font-size:18px;}
     .wildbox .xpbar{width:76px;}
-    .strip{--run:124px;}   /* v42 — v39(88)의 1.4배 */
+    .strip{--run:118px;}   /* v42 — v39(88)의 1.4배 · v98 124 → 118 */
     .self-banner{padding:6px 12px;gap:10px;}
     .self-btn{font-size:17px;padding:6px 14px 6px 8px;}
     .self-btn .box{width:32px;height:32px;font-size:19px;}
@@ -3534,12 +3605,12 @@
     .w-temp{font-size:25px;}
     .w-tip{font-size:11px;min-height:28px;padding:3px 8px;}
     .gear{width:40px;height:46px;font-size:18px;}
-    .strip{gap:10px;padding:6px 14px;}
+    .strip{gap:10px;padding:3px 14px;}   /* v98 — 상하 여백 6 → 3 */
     .pblock{min-width:172px;}
     .pblock .plabel{font-size:14px;}
     .pblock .pmain{font-size:25px;}
     .track{height:26px;}
-    .strip{--run:134px;}   /* v42 — v39(96)의 1.4배 */
+    .strip{--run:124px;}   /* v42 — v39(96)의 1.4배 · v98 134 → 124 */
     .school{font-size:28px;top:-18px;}
     .wildbox img{width:40px;height:40px;}
     .wildbox .we{font-size:22px;}
@@ -3587,7 +3658,7 @@
     .pblock .pmain{font-size:21px;}
     .depart{font-size:10.5px;}
     .track{height:22px;}
-    .strip{--run:118px;}   /* v42 — v39(84)의 1.4배 */
+    .strip{--run:112px;}   /* v42 — v39(84)의 1.4배 · v98 118 → 112 */
     .card{padding:24px 8px 7px;border-radius:14px;}
     .tname{font-size:clamp(12px,2.4vh,16px);}
     .card img{width:72%;}
@@ -4139,13 +4210,13 @@
   <div class="affirm" id="affirm" role="note" aria-label="트레이너 LUKA의 마음 스킬">
     <span class="affirm-lab">🔥 트레이너 LUKA의 마음 스킬</span>
     <span class="affirm-tx" id="affirmTx"></span>
-    <!-- v97-2 — 마음 스킬 칸 오른쪽 끝 체크박스 3개 (예전 ✨ 장식 자리).
-         칸 안에는 이 세 칸만 둔다 — 안내 문구는 넣지 않는다(사용자 지시).
-         3개를 다 채우면 그날 한 번 ⚡ 강화 XP +1, 하나를 풀면 돌려준다. -->
+    <!-- v98 — 마음 스킬 칸 오른쪽 끝 하이퍼볼(울트라볼) 3개 (사용자 요청 2026-11-28).
+         체크 전 = 흑백·흐린 톤, 체크 후 = 선명한 컬러. 3개를 다 채우면 그날 한 번 ⚡ 강화 XP +1,
+         하나를 풀면 돌려준다(v97-2 규칙 그대로). 안내 문구는 넣지 않는다(설명서에만). -->
     <span class="affirm-mind" id="affirmMind" role="group" aria-label="마음 스킬 3번 소리 내어 읽기">
-      <label class="mindbox"><input type="checkbox" data-mind="0" aria-label="마음 스킬 1번째 읽었어요"><span class="mb" aria-hidden="true"></span></label>
-      <label class="mindbox"><input type="checkbox" data-mind="1" aria-label="마음 스킬 2번째 읽었어요"><span class="mb" aria-hidden="true"></span></label>
-      <label class="mindbox"><input type="checkbox" data-mind="2" aria-label="마음 스킬 3번째 읽었어요"><span class="mb" aria-hidden="true"></span></label>
+      <button class="mindball" type="button" data-mind="0" aria-pressed="false" aria-label="마음 스킬 1번째 읽었어요"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><defs><clipPath id="hbC0"><circle cx="20" cy="20" r="16.6"/></clipPath></defs><circle cx="20" cy="20" r="16.6" fill="#fbfaf4"/><g clip-path="url(#hbC0)"><rect x="2" y="2" width="36" height="15" fill="#232323"/><rect x="2" y="16.6" width="36" height="7.2" fill="#f6c400"/><rect x="2" y="23.8" width="36" height="16.6" fill="#fbfaf4"/><rect x="16.3" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="20.8" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="19.2" y="19.3" width="1.6" height="1.8" fill="#232323"/></g><circle cx="20" cy="20" r="16.6" fill="none" stroke="#1e1e1e" stroke-width="2.6"/><circle cx="20" cy="30.4" r="4.4" fill="#f4f3ea" stroke="#1e1e1e" stroke-width="1.7"/><circle cx="20" cy="30.4" r="1.9" fill="#ffffff"/><ellipse cx="13.6" cy="9.6" rx="5" ry="3" fill="#ffffff" opacity=".22"/></svg></button>
+      <button class="mindball" type="button" data-mind="1" aria-pressed="false" aria-label="마음 스킬 2번째 읽었어요"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><defs><clipPath id="hbC1"><circle cx="20" cy="20" r="16.6"/></clipPath></defs><circle cx="20" cy="20" r="16.6" fill="#fbfaf4"/><g clip-path="url(#hbC1)"><rect x="2" y="2" width="36" height="15" fill="#232323"/><rect x="2" y="16.6" width="36" height="7.2" fill="#f6c400"/><rect x="2" y="23.8" width="36" height="16.6" fill="#fbfaf4"/><rect x="16.3" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="20.8" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="19.2" y="19.3" width="1.6" height="1.8" fill="#232323"/></g><circle cx="20" cy="20" r="16.6" fill="none" stroke="#1e1e1e" stroke-width="2.6"/><circle cx="20" cy="30.4" r="4.4" fill="#f4f3ea" stroke="#1e1e1e" stroke-width="1.7"/><circle cx="20" cy="30.4" r="1.9" fill="#ffffff"/><ellipse cx="13.6" cy="9.6" rx="5" ry="3" fill="#ffffff" opacity=".22"/></svg></button>
+      <button class="mindball" type="button" data-mind="2" aria-pressed="false" aria-label="마음 스킬 3번째 읽었어요"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><defs><clipPath id="hbC2"><circle cx="20" cy="20" r="16.6"/></clipPath></defs><circle cx="20" cy="20" r="16.6" fill="#fbfaf4"/><g clip-path="url(#hbC2)"><rect x="2" y="2" width="36" height="15" fill="#232323"/><rect x="2" y="16.6" width="36" height="7.2" fill="#f6c400"/><rect x="2" y="23.8" width="36" height="16.6" fill="#fbfaf4"/><rect x="16.3" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="20.8" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="19.2" y="19.3" width="1.6" height="1.8" fill="#232323"/></g><circle cx="20" cy="20" r="16.6" fill="none" stroke="#1e1e1e" stroke-width="2.6"/><circle cx="20" cy="30.4" r="4.4" fill="#f4f3ea" stroke="#1e1e1e" stroke-width="1.7"/><circle cx="20" cy="30.4" r="1.9" fill="#ffffff"/><ellipse cx="13.6" cy="9.6" rx="5" ry="3" fill="#ffffff" opacity=".22"/></svg></button>
     </span>
   </div>
 
@@ -4302,7 +4373,7 @@
             <li>다음 루틴을 미리 하고 싶으면 쉬는 화면의 <b>[⏩ 다음 모험 미리 하기]</b>로 당겨서 할 수 있어요 (부모님 확인)</li>
             <li>오후 루틴을 끝내면 쉬는 화면의 파트너 말풍선 안에 <b>📚 오늘의 공부 N개 남았어!</b>가 나와요 — 누르면 공부 탭으로 바로 가요</li>
             <li>아침 루틴 화면 위쪽 <b>🍚 식사에 집중했어요 ⚡+1</b> — 밥 먹을 때 집중했으면 하루 한 번 눌러요 (루틴 완료와는 따로예요)</li>
-            <li>🔥 마음 스킬을 소리 내어 3번 읽고 체크박스 3개를 채우면 강화 XP +1!</li>
+            <li>🔥 마음 스킬을 소리 내어 3번 읽고 하이퍼볼 3개를 채우면 강화 XP +1!</li>
           </ul>
           <div class="note">체크를 풀면 그 루틴에서 받은 경험치도 같이 돌아가요</div>
         </section>
@@ -4314,6 +4385,40 @@
             <div class="gr"><b>21:41~21:59</b><span>🌟 스페셜 과일 <b>1개</b> · ⚡ 강화 XP <b>1칸</b></span></div>
           </div>
           <div class="note">밤 10시부터는 잘 자는 시간이에요 🌜</div>
+        </section>
+
+        <!-- v98 — 모드별 루틴 시간표 (사용자 요청 2026-11-28). 수치는 MODE_DEFS 그대로 —
+             등교 wake 07:00·morningEnd 08:35·after 16:00~18:00 · 방과후 08:00~08:45·after 10:20~14:00 ·
+             공휴일 07:00~12:00(오후 없음) · 방학 08:00~09:00·after 16:00~21:00 · 잘 준비는 모든 모드 21:00~21:40. -->
+        <section class="gcard g-modes" aria-label="모드별 루틴 시간표">
+          <h3><span class="ic">🗓️</span>오늘 모드별 루틴 시간표</h3>
+          <div class="gmodes">
+            <div class="gmode">
+              <span class="gm-t">🏫 등교</span>
+              <span class="gm-r"><i>☀️</i>아침 07:00~08:35</span>
+              <span class="gm-r"><i>🎒</i>오후 16:00~18:00</span>
+              <span class="gm-r"><i>🌙</i>잘 준비 21:00~21:40</span>
+            </div>
+            <div class="gmode">
+              <span class="gm-t">🎒 방과후</span>
+              <span class="gm-r"><i>☀️</i>아침 08:00~08:45</span>
+              <span class="gm-r"><i>🎒</i>정리 10:20~14:00</span>
+              <span class="gm-r"><i>🌙</i>잘 준비 21:00~21:40</span>
+            </div>
+            <div class="gmode">
+              <span class="gm-t">🗓️ 공휴일</span>
+              <span class="gm-r"><i>☀️</i>아침 07:00~12:00</span>
+              <span class="gm-r"><i>🎒</i>오후 없음 (+100)</span>
+              <span class="gm-r"><i>🌙</i>잘 준비 21:00~21:40</span>
+            </div>
+            <div class="gmode">
+              <span class="gm-t">🏖️ 방학</span>
+              <span class="gm-r"><i>☀️</i>아침 08:00~09:00</span>
+              <span class="gm-r"><i>🎒</i>오후 16:00~21:00</span>
+              <span class="gm-r"><i>🌙</i>잘 준비 21:00~21:40</span>
+            </div>
+          </div>
+          <div class="note">아침 시작 시각은 오늘 모드가 정해요 — 아침 시간이 지나도 부모님 설정의 <b>[☀️ 지금부터 아침 루틴 시작]</b>으로 오늘 하루 열 수 있어요</div>
         </section>
 
         <section class="gcard g-study" aria-label="오늘의 공부와 타이머">
@@ -4675,6 +4780,28 @@
       <button class="nqbtn later" id="nqLater" type="button">⏰ 3분만 더!</button>
       <!-- v72 — 부모 테스트로 띄웠을 때만 보이는 닫기 (아이 화면에는 늘 숨겨 둔다) -->
       <button class="nqbtn later testclose" id="nqTestClose" type="button" hidden>✕ 테스트 닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- v98 — 🎯 시작 목표 시간 고르기 팝업 (오늘의 공부 카드 오른쪽 알약을 누르면 열린다).
+     시(1~12) · 분(00~55, 5분 간격) · 오전/오후를 터치로 고르고 [저장] / [지우기].
+     카드 완료 체크와는 별개 — 알약 클릭은 stopPropagation 으로 카드 클릭을 막는다. -->
+<div class="overlay goalov" id="goalPop" aria-hidden="true" data-keep-panel="1">
+  <div class="goalcard" role="dialog" aria-modal="true" aria-label="시작 목표 시간 정하기">
+    <div class="ghead"><span class="gttl">🎯 <b id="goalTitle">공부</b> 시작 목표 시간</span></div>
+    <div class="grow">
+      <button class="gbtn" type="button" data-ap="am" aria-pressed="true">오전</button>
+      <button class="gbtn" type="button" data-ap="pm" aria-pressed="false">오후</button>
+    </div>
+    <div class="glab">시</div>
+    <div class="ggrid h" id="goalHours" role="group" aria-label="시 고르기"></div>
+    <div class="glab">분</div>
+    <div class="ggrid m" id="goalMins" role="group" aria-label="분 고르기"></div>
+    <div class="gf">
+      <button class="gbtn save" id="goalSave" type="button">저장</button>
+      <button class="gbtn clear" id="goalClear" type="button">지우기</button>
+      <button class="gbtn cancel" id="goalCancel" type="button">닫기</button>
     </div>
   </div>
 </div>
@@ -5220,6 +5347,15 @@ function routineKeyAt(min){
   const M = MODE_DEFS[modeId] || MODE_DEFS.school;
   if(m < M.wake && !earlyMorningOn()) return 'rest';                 // v66 — 기상 전(새벽 휴식)
   const morningEnd = (M.morningEnd != null) ? M.morningEnd : 16*60;
+  /* v98 — ☀️ '지금부터 아침 루틴 시작'(state.earlyMorningDay)은 **오늘 하루 유지되는 아침 루틴 열기**다.
+     · 기상 전은 물론, 방과후 모드처럼 아침 마감(08:45)을 지난 뒤에도 부모가 아침 루틴을 다시 열 수 있다
+       (예전에는 08:45 를 지나면 아침 카드가 다시 열리지 않았다).
+     · 아침 칸을 다 채웠거나(morningAllDone) 다음 루틴 시간(오후 루틴 시작)·밤 9시가 되면 아래 규칙대로 돌아간다. */
+  if(earlyMorningOn() && !morningAllDone() && m < NIGHT_START){
+    const aF = (M.afterTasks && M.afterFrom) ? M.afterFrom : 0;
+    const aT = (M.afterTasks && M.afterTo) ? M.afterTo : 0;
+    if(!(aF && aT && m >= aF && m < aT)) return 'morning';           // 오후 루틴 시간대만 양보한다
+  }
   if(m < morningEnd) return morningAllDone() ? 'rest' : 'morning';   // v69 — 아침을 다 끝냈으면 자유 시간
   if(m >= NIGHT_END) return 'rest';                                  // v69 — 밤 10시부터 취침 후 휴식 화면
   if(m >= NIGHT_START) return nightAllDone() ? 'rest' : 'night';     // 취침 완료 뒤·연장 도전(21:41~21:59)
@@ -5892,6 +6028,8 @@ function migrate(s){
   }
   if(!Array.isArray(s.study.nightDates)) s.study.nightDates = [];   // 9:40 전에 취침 루틴을 끝낸 날
   if(!Array.isArray(s.study.restDates)) s.study.restDates = [];
+  /* v98 — 오늘의 공부 '시작 목표 시간' (날짜별). 없으면 빈 칸으로 둔다 */
+  if(!s.study.goal || typeof s.study.goal !== 'object' || Array.isArray(s.study.goal)) s.study.goal = {};
   /* 🍅 v86 — 독립 타이머가 마지막으로 고른 분(1~60)만 기억한다. 밖의 값은 버리고, 과목별 v65 timerMins 는 지운다 */
   delete s.study.timerMins;
   {
@@ -6339,11 +6477,17 @@ function renderProgress(){
     label = R.countdown || '등교까지';
     if(now < WAKE && !earlyMorningOn()){ pct = 0; label = '기상 전이에요'; text = '곧 시작해요!'; }   // v66 — 기상 전은 여기까지 오지 않고 휴식 화면이다
     else if(now >= DEPART){
-      pct = 100; alert = true; label = '';        // 시간이 되면 위 작은 글씨는 지우고 큰 글씨만 남긴다
-      text = modeId === 'afterschool' ? '방과후 갈 시간!'
-           : modeId === 'vacation'     ? '아침 루틴 끝!'
-           : modeId === 'holiday'      ? '아침 루틴 끝!'
-           :                            '등교할 시간!';
+      if(earlyMorningOn()){                    /* v98 — 조기 시작(오늘 하루 아침 루틴 열기)으로 마감 뒤에 연 경우 */
+        pct = total ? done / total * 100 : 0;
+        label = '아침 루틴 진행 중';
+        text = (total && done >= total) ? '다 했어요! 잘했어요 🎉' : `${Math.max(0, total - done)}개 남았어요!`;
+      }else{
+        pct = 100; alert = true; label = '';        // 시간이 되면 위 작은 글씨는 지우고 큰 글씨만 남긴다
+        text = modeId === 'afterschool' ? '방과후 갈 시간!'
+             : modeId === 'vacation'     ? '아침 루틴 끝!'
+             : modeId === 'holiday'      ? '아침 루틴 끝!'
+             :                            '등교할 시간!';
+      }
     }
     else if(now < WAKE){
       /* v69 — 부모가 '지금부터 아침 루틴 시작'으로 기상 전에 열어 준 경우 */
@@ -7931,7 +8075,9 @@ function restDaySayHTML(nextTime, tomorrow){
        ① 칭찬  ② '오늘의 공부 N개 남은 거 기억하고 있어~'  ③ '이따/내일 ○○시에 다시 모험하자!' */
   const lead = tomorrow ? '내일' : '이따';
   if(n > 0){
-    return `${head}<br>오늘의 공부 <b>${n}개</b> 남은 거 기억하고 있어~<br>${lead} <em>${nextTime}</em>에 다시 모험하자!`;
+    /* v98 — 사용자 요청(2026-11-28): '오늘의 공부 N개'에도 형광 강조 — 다음 시각(em)과 같은 방식,
+       색만 따뜻한 노랑(em.st)으로 달리해 두 가지가 한눈에 들어오게 한다. */
+    return `${head}<br><em class="st">오늘의 공부 ${n}개</em> 남은 거 기억하고 있어~<br>${lead} <em>${nextTime}</em>에 다시 모험하자!`;
   }
   if(isRestToday()){
     return `${head}<br>오늘은 공부 쉬는 날이야~ ${lead} <em>${nextTime}</em>에 다시 모험하자!`;
@@ -10909,12 +11055,13 @@ function mindToggle(i){
   mindSync();
 }
 function renderMind(){
-  const boxes = document.querySelectorAll('#affirmMind input[data-mind]');
-  if(!boxes.length) return;
+  const balls = document.querySelectorAll('#affirmMind [data-mind]');
+  if(!balls.length) return;
   const m = mindState();
-  boxes.forEach((b, i)=>{
+  balls.forEach((b, i)=>{
     const on = !!m.c[i];
-    if(b.checked !== on) b.checked = on;
+    const val = on ? 'true' : 'false';
+    if(b.getAttribute('aria-pressed') !== val) b.setAttribute('aria-pressed', val);   /* v98 — 하이퍼볼 버튼 */
   });
 }
 
@@ -11183,6 +11330,131 @@ function stToggleDone(i){
       200);
   }
 }
+/* =========================================================
+   v98 — 🎯 오늘의 공부 '시작 목표 시간' (사용자 요청 2026-11-28)
+   · 루카가 스스로 그날의 시작 목표 시각를 정해 적는다. 오늘 날짜 기준으로만 저장한다
+     (state.study.goal = { '2026-11-28': { '0': 990 } } · 분 단위 · 20일치 보관).
+   · 알약은 카드 완료 체크와 별개 — 클릭에 stopPropagation 을 걸어 카드 체크가 함께 바뀌지 않는다.
+   · 표시는 앱의 다른 안내와 같은 12시간제 '오후 4시 30분' (0분은 '4시 00분').
+   ========================================================= */
+function studyGoalMap(){
+  const s = state.study;
+  if(!s.goal || typeof s.goal !== 'object') s.goal = {};
+  return s.goal;
+}
+function studyGoalGet(i){
+  const byDay = studyGoalMap()[todayKey()];
+  if(!byDay || typeof byDay !== 'object') return null;
+  const v = byDay[String(i)];
+  return (typeof v === 'number' && v >= 0 && v < 1440) ? Math.round(v) : null;
+}
+function studyGoalSet(i, min){
+  const map = studyGoalMap();
+  const k = todayKey();
+  let byDay = map[k];
+  if(!byDay || typeof byDay !== 'object') byDay = map[k] = {};
+  if(min == null) delete byDay[String(i)];
+  else byDay[String(i)] = ((Math.round(min) % 1440) + 1440) % 1440;
+  if(!Object.keys(byDay).length) delete map[k];
+  const keys = Object.keys(map).sort();          // 지난 날짜는 20일치만 남긴다
+  if(keys.length > 20) keys.slice(0, keys.length - 20).forEach(x => { delete map[x]; });
+  save();
+}
+function studyGoalText(min){
+  const m = ((Math.round(min) % 1440) + 1440) % 1440;
+  const h = Math.floor(m / 60), mm = m % 60;
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h < 12 ? '오전' : '오후'} ${h12}시 ${String(mm).padStart(2, '0')}분`;
+}
+let goalEdit = null;                       // 팝업에서 지금 고르고 있는 값 { i, ap, h, m }
+function studyNameOf(i){
+  const t = (state.study.plan[todayIdx()] || [])[i];
+  return (t && String(t).trim()) || '공부';
+}
+function goalRenderChoices(){
+  if(!goalEdit) return;
+  document.querySelectorAll('#goalPop [data-ap]').forEach(b => {
+    const on = b.dataset.ap === goalEdit.ap;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  const hg = document.getElementById('goalHours');
+  if(hg){
+    hg.innerHTML = '';
+    for(let h = 1; h <= 12; h++){
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'gbtn' + (h === goalEdit.h ? ' on' : '');
+      b.dataset.h = String(h); b.textContent = String(h);
+      b.setAttribute('aria-pressed', h === goalEdit.h ? 'true' : 'false');
+      b.setAttribute('aria-label', `오전오후 ${h}시`);
+      hg.appendChild(b);
+    }
+  }
+  const mg = document.getElementById('goalMins');
+  if(mg){
+    mg.innerHTML = '';
+    for(let m = 0; m < 60; m += 5){
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'gbtn' + (m === goalEdit.m ? ' on' : '');
+      b.dataset.m = String(m); b.textContent = String(m).padStart(2, '0');
+      b.setAttribute('aria-pressed', m === goalEdit.m ? 'true' : 'false');
+      b.setAttribute('aria-label', `${m}분`);
+      mg.appendChild(b);
+    }
+  }
+}
+function goalClose(){
+  const ov = document.getElementById('goalPop');
+  if(ov){ ov.classList.remove('show'); ov.setAttribute('aria-hidden', 'true'); }
+  goalEdit = null;
+}
+function goalOpen(i){
+  const cur = studyGoalGet(i);
+  const now = getNow();
+  const def = (cur == null) ? Math.min(23 * 60 + 55, (now.getHours() + 1) * 60) : cur;
+  goalEdit = { i, ap: def < 12 * 60 ? 'am' : 'pm',
+               h: (Math.floor(def / 60) % 12) || 12, m: def % 5 === 0 ? def % 60 : def % 60 - (def % 5) };
+  const t = document.getElementById('goalTitle');
+  if(t) t.textContent = studyNameOf(i);
+  goalRenderChoices();
+  const ov = document.getElementById('goalPop');
+  if(ov){ ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false'); }
+  blip();
+}
+function goalValue(){                      // 지금 고른 값 → 분(0~1439)
+  if(!goalEdit) return null;
+  const h24 = (goalEdit.h % 12) + (goalEdit.ap === 'pm' ? 12 : 0);
+  return ((h24 * 60 + goalEdit.m) % 1440 + 1440) % 1440;
+}
+function goalSaveNow(){
+  if(!goalEdit) return;
+  const i = goalEdit.i, v = goalValue();
+  studyGoalSet(i, v);
+  goalClose();
+  renderStudy();
+  toast(`🎯 ${studyNameOf(i)} 시작 목표 ${studyGoalText(v)}`);
+}
+function goalClearNow(){
+  if(!goalEdit) return;
+  const i = goalEdit.i;
+  studyGoalSet(i, null);
+  goalClose();
+  renderStudy();
+  toast('🎯 시작 목표 시간을 지웠어요');
+}
+document.getElementById('goalPop').addEventListener('click', e => {
+  if(e.target === e.currentTarget){ goalClose(); return; }      // 바깥을 누르면 닫힌다
+  const ap = e.target.closest('[data-ap]');
+  if(ap && goalEdit){ goalEdit.ap = ap.dataset.ap; goalRenderChoices(); return; }
+  const hb = e.target.closest('[data-h]');
+  if(hb && goalEdit){ goalEdit.h = Number(hb.dataset.h); goalRenderChoices(); return; }
+  const mb = e.target.closest('[data-m]');
+  if(mb && goalEdit){ goalEdit.m = Number(mb.dataset.m); goalRenderChoices(); return; }
+});
+document.getElementById('goalSave').addEventListener('click', goalSaveNow);
+document.getElementById('goalClear').addEventListener('click', goalClearNow);
+document.getElementById('goalCancel').addEventListener('click', goalClose);
+
 function renderStudy(){
   const n = getNow();
   const d = n.getDay();
@@ -11229,12 +11501,18 @@ function renderStudy(){
     row.className = 'srow' + (done[i] ? ' done' : '');
     row.dataset.i = i;
     row.dataset.name = name;
-    /* v86 — 카드에는 체크박스 + 공부 내용뿐. 버튼 없이 카드 전체가 체크 영역이다. */
+    /* v86 — 카드에는 체크박스 + 공부 내용뿐. 버튼 없이 카드 전체가 체크 영역이다.
+       v98 — 오른쪽에 🎯 시작 목표 시간 알약을 붙였다(카드 체크와 별개로 동작). */
+    const gmin = studyGoalGet(i);
     row.innerHTML = `<div class="shead">
         <button class="smain" type="button" aria-pressed="${done[i] ? 'true' : 'false'}" title="${done[i] ? '완료를 풀어요' : '다 했으면 눌러서 완료!'}"><span class="sbox">✓</span><span class="stxt">${escapeHtml(txt)}</span></button>
+        <button class="sgoal${gmin == null ? '' : ' set'}" type="button" data-goal="${i}" aria-label="${escapeHtml(name)} 시작 목표 시간 ${gmin == null ? '정하기' : studyGoalText(gmin)}" title="시작 목표 시간 정하기"><span class="e">${gmin == null ? '⏰' : '🎯'}</span><span class="gt">${gmin == null ? '목표 시간' : studyGoalText(gmin)}</span></button>
       </div>`;
+    /* v98 — 알약은 완료 체크와 별개 — 카드 클릭(체크)으로 번지지 않게 막는다(stopPropagation). */
+    const gbtn = row.querySelector('.sgoal');
+    if(gbtn) gbtn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); goalOpen(i); });
     /* 체크 — 카드 어디를 눌러도 완료가 바뀐다. 과일·XP·축하 규칙은 v86 그대로. */
-    row.addEventListener('click', ()=> stToggleDone(i));
+    row.addEventListener('click', (e) => { if(e.target.closest('.sgoal')) return; stToggleDone(i); });
     grid.appendChild(row);
   });
   if(!shown){
@@ -11728,9 +12006,9 @@ Object.keys(TAB_IDS).forEach(k => document.getElementById(TAB_IDS[k]).addEventLi
 document.getElementById('selfBtn').addEventListener('click', selfToggle);
 /* v91 — 🍚 아침 식사 보너스 칩 */
 document.getElementById('mealBtn').addEventListener('click', mealToggle);
-/* v97-2 — 🔥 마음 스킬 체크박스 3개 (change 로 받아 마우스·키보드·손가락 모두 같은 길) */
-document.querySelectorAll('#affirmMind input[data-mind]').forEach(b=>{
-  b.addEventListener('change', ()=> mindToggle(b.dataset.mind));
+/* v98 — 🔥 마음 스킬 하이퍼볼 3개 (클릭 · 키보드 Enter/Space 모두 같은 길) */
+document.querySelectorAll('#affirmMind [data-mind]').forEach(b=>{
+  b.addEventListener('click', ()=> mindToggle(b.dataset.mind));
 });
 /* v86 — 상단 [🍅 타이머]: 필요할 때 여는 독립 타이머 팝업 */
 document.getElementById('pomoBtn').addEventListener('click', ()=> pmOpenTimer());
@@ -11915,10 +12193,8 @@ function renderPanelMode(){
    state.earlyMorningDay === todayKey() 인 날에만, 기상 시각(M.wake) 전에도 아침 루틴 화면을 연다.
    날짜가 바뀌면 todayKey 가 달라져 저절로 만료되므로 다음 날은 정상 기상 시각을 따른다. */
 function earlyStartWhy(){
-  if(morningAllDone()) return '오늘 아침 루틴을 이미 마쳤어요';
-  if(earlyMorningOn()) return '이미 아침 루틴이 열려 있어요';
-  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
-  if(nowMinutes() >= M.wake) return '이미 아침 루틴이 열려 있어요';
+  if(morningAllDone()) return '오늘 아침 루틴은 이미 다 마쳤어요';
+  if(earlyMorningOn()) return '이미 오늘 아침 루틴을 열어 두었어요';
   return '';
 }
 function renderEarlyState(){
@@ -11928,12 +12204,13 @@ function renderEarlyState(){
   const p = n => (n < 10 ? '0' : '') + n;
   const m = nowMinutes();
   const hh = `${p(Math.floor(m / 60))}:${p(Math.floor(m % 60))}`;
+  const mEnd = (M.morningEnd != null) ? M.morningEnd : 16*60;
   if(morningAllDone()){
-    el.textContent = '오늘 아침 루틴을 이미 다 마쳤어요 — 내일 아침에 다시 열려요.';
+    el.textContent = '오늘 아침 루틴은 이미 다 마쳤어요 — 내일 아침에 다시 열려요.';
   }else if(earlyMorningOn()){
-    el.textContent = `☀️ 오늘 조기 시작 켜짐 (${hh} 기준) — ${restClockText(M.wake)} 전에도 아침 루틴이 열려 있어요. 자정이 지나면 저절로 풀려요.`;
+    el.textContent = `☀️ 오늘 아침 루틴 열림 (${hh} 기준) — 시계와 상관없이 열려 있고, 아침 칸을 다 채우면 저절로 쉬는 화면으로 돌아가요. 자정이 지나면 풀려요.`;
   }else if(m >= M.wake){
-    el.textContent = `지금은 아침 루틴 시간대예요 (${restClockText(M.wake)}부터). 이 버튼은 기상 전에만 필요해요.`;
+    el.textContent = `지금 눌러도 아침 루틴이 열려요 — ${restClockText(M.wake)}~${restClockText(mEnd)} 아침 시간이 지났거나 아침 칸을 비워 두었어도 열 수 있어요. 자정이 지나면 풀려요.`;
   }else{
     el.textContent = `지금은 새벽 휴식 화면이에요 — 누르면 ${restClockText(M.wake)}를 기다리지 않고 바로 아침 루틴이 열려요.`;
   }
@@ -11949,9 +12226,10 @@ function earlyStartNow(){
   aheadKey = null;               // v79 — 미리 열어 둔 다음 모험도 닫는다                // v72 — 지난 모험을 열어 둔 채였면 닫는다
   syncRoutine();                 /* 기상 전이라도 routineKeyAt 이 'morning' 을 돌려준다 */
   renderProgress(); renderTasks();
+  renderEarlyState();             /* v98 — 설정 탭 안내도 바로 '오늘 아침 루틴 열림'으로 바뀌게 */
   renderSky();                   /* v69 — 누른 즉시 해 뜨는 아침 하늘로 */
   blip();
-  toast('☀️ 지금부터 아침 루틴을 시작해요!');
+  toast('☀️ 아침 루틴을 열었어요! (오늘 하루 유지돼요)');
   closePanel();                  /* 설정을 닫고 바로 아이 화면으로 */
   return true;
 }
@@ -12452,11 +12730,25 @@ function setPreview(v){
     const d = day();
     d.nightStarted = (h*60 + m + sec/60) >= NIGHT_START;
     save();
-    toast(`⏰ 미리보기 ${v}`);
+    /* v98 — 옮긴 시각의 루틴을 오늘 이미 다 해 둔 날에는 휴식 화면이 뜬다. 그때는 왜 카드가 없는지와
+       다시 여는 법을 함께 알려 준다(방과후 모드 08:00 미리보기에서 '아침 루틴이 안 열린다'로 보이던 것). */
+    const hint = previewDoneHint();
+    toast(hint ? `⏰ 미리보기 ${v} · ${hint}` : `⏰ 미리보기 ${v}`);
   }
   tick();
   renderStudy();
   return true;
+}
+/* v98 — 미리보기 시각의 루틴을 오늘 이미 다 끝내 휴식 화면이 뜰 때 돌려주는 안내 */
+function previewDoneHint(){
+  const m = nowMinutes();
+  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  const mEnd = (M.morningEnd != null) ? M.morningEnd : 16*60;
+  if(!earlyMorningOn() && m >= M.wake && m < mEnd && morningAllDone())
+    return '오늘 아침 루틴은 이미 다 했어요 · [☀️ 지금부터 아침 루틴 시작]으로 다시 열 수 있어요';
+  if(M.afterTasks && m >= (M.afterFrom || 16*60) && m < (M.afterTo || NIGHT_START) && afterAllDone())
+    return '오늘 오후 루틴은 이미 다 했어요 · [🕘 지난 모험 도전]으로 다시 볼 수 있어요';
+  return '';
 }
 document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   const d = day();
