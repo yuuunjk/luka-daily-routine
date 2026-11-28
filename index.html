@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUKA DAILY ROUTINE</title>
+<!-- v99 — 📅 요일별 기본 모드 · ⏰ 미리보기의 끝난 루틴 · 📅 헤더 일정 칸 슬림 · 🔥 하이퍼볼 재제작
+     (사용자 요청 2026-11-28 · 추가 요청 2차례)
+     · ① 요일별 기본 모드 — 평일(월~금) 🏫 등교 · 토요일 🎒 방과후 · 일요일 🗓️ 공휴일 이 그날의 기본값이다.
+       새 날이 시작될 때(초기 로드·자정 넘김) 그날 모드를 직접 고르지 않았다면 요일 기본값이 자동으로 켜진다.
+       부모님이 '오늘 모드' 버튼으로 다른 모드(예: 토요일에 공휴일)를 고르면 그날 하루만 그 선택을 지키고
+       (state.modeDay = 오늘), 다음 날이 되면 새 날의 요일 기본값으로 돌아간다.
+       직접 고른 날짜를 state.modeDay 에 함께 남기므로 새 저장 키 없이 기존 state 안에서 끝난다.
+       · 🌙 내일 모험 지도의 '내일 모드' 배지도 내일의 요일 기본값을 따른다
+         (평일 🏫 내일은 등교일 · 토요일 🎒 내일은 방과후 · 일요일 🗓️ 내일은 공휴일).
+       · 트레이너 가이드 모드별 시간표 카드와 설정 '오늘 모드' 칸에 요일 기본 안내 한 줄을 넣었다.
+     · ② 시간 미리보기(🧪 테스트 탭 시간 변경) 중에는 **모든 모드**에서 이미 다 끝낸 루틴도
+       그 화면(체크된 카드 포함)을 그대로 보여 준다 — routineKeyAt 의 keepDone(previewOn()).
+       실시간에서는 예전 그대로 다 끝낸 루틴 자리에 휴식 화면이 뜬다. v98 의 '이미 다 했어요 …' 안내는 없앴다.
+     · ③ 헤더 📅 일정 칸(#hdrSched)을 96 → 약 69px(68~76)로 더 줄이고, 긴 안내는 두 줄로 나눴다
+       ('캘린더 / 연결 필요', '일정이 / 없어요', '불러오는 / 중…', '확인 / 안 됨').
+       0건(오늘·내일 모두 0)은 '오늘 0개 / 내일 0개' 대신 두 줄 '일정이 없어요'로 칸을 아낀다.
+       좌우 여백 4.9px · '오늘 1개'/'내일 3개' 는 한 줄 그대로, 가로 헤더의 › 는 뺐다(글자 자리를 먹었다).
+     · ④ 🔥 마음 스킬 하이퍼볼(울트라볼) SVG 재제작 — 검정 상단 반구 · 굵은 노란 H 아치(윗둥근 선을 따라) ·
+       굵은 검정 가운데 띠 · 이중 원 흰 버튼 · 흰 하단 반구 · 검정 외곽. 체크 전은 흑백이되 문양이 읽히게(opacity .72).
+     · 검사는 dashboard/check-v99.py (+ v98·v96·v95·v94 회귀, shot-v97). -->
 <!-- v98 — 🐛 방과후 모드 아침 루틴을 '켤' 수 있게 + 오늘의 공부 시작 목표 시간 · 비루틴 강조 · 시간 바 슬림
      (사용자 요청 2026-11-28 "방과후 모드에서 설정에서 아침8시로 설정해도 아침루틴을 못 켜. 수정해." · 추가 요청 2건)
      · ① 방과후 모드(wake 08:00 · morningEnd 08:45)의 아침 루틴은 시계가 08:00~08:45 안에 있을 때만 열린다.
@@ -900,7 +920,7 @@
      여백이 같다(1152×864 처럼 세로가 길어 글자가 큰 화면에서도 잘리지 않는다).
      6em = 안내 글자(약 5em) + 좌우 여백(1em), +22px = 양옆 숨 쉴 틈.
      세로 화면(@media)은 width:auto 라 영향 없다. */
-  header.sky{--schedw:clamp(88px, calc(5.2em + 21px), 100px);}   /* v98 — 108px → 약 96px (한 단계 더 슬램) */
+  header.sky{--schedw:clamp(68px, calc(3.7em + 16px), 76px);}   /* v99 — 96px → 약 69~70px (더 슬림) */
   header.sky .wxcol.has-sched{max-width:calc(36em + var(--schedw) + .4em);}   /* 일정 카드가 설 만큼만 넓힌다 */
   header.sky .hdrsched{
     /* v97-2 — 옆 카드(파트너·다음 목표/강화 XP·날씨)와 **높이를 꼭 맞춘다**(align-self: stretch).
@@ -913,7 +933,7 @@
     appearance:none; -webkit-appearance:none;   /* v97 — 삼성 인터넷 등에서도 단추 기본 생김새를 쓰지 않는다 */
     /* v97-4 — 테두리는 옆 카드(파트너·XP·날씨)와 똑같은 진한 남색 2px (모든 스카이 테마·상태 공통) */
     background:linear-gradient(180deg,#ffffff 0%,#eef7ff 100%); border:2px solid #2b3445;
-    border-radius:.8em; padding:.42em .52em .5em;   /* v98 — 좌우 여백 7.2px → 7.5px급, 폭은 --schedw 가 줄인다 */
+    border-radius:.8em; padding:.34em .34em .4em;   /* v99 — 좌우 여백 7.5px → 5px급(72px 칸에 글자가 딱 붙게) */
     /* v97 — 아래에 파란 두께를 줘 '누를 수 있는 단추'로 보이게(앱의 다른 단추와 같은 결) */
     box-shadow:0 .18em 0 #a5c9e4, 0 .3em .55em rgba(20,60,90,.2), inset 0 0 0 2px #fff;
     color:#123b5c; line-height:1.16;
@@ -926,15 +946,19 @@
     font-size:.74em; font-weight:900; color:#15538f; white-space:nowrap; letter-spacing:-.3px;}
   header.sky .hdrsched .hs-e{line-height:1;}
   /* 2·3줄 — '오늘 N개' / '내일 N개' (한 줄씩, 잘리지 않게 nowrap) */
-  header.sky .hdrsched .hs-day{display:block; font-size:1.02em; font-weight:900; color:#0e3a5c;
-    white-space:nowrap; letter-spacing:-.5px; line-height:1.14; font-variant-numeric:tabular-nums;}
+  header.sky .hdrsched .hs-day{display:block; font-size:.92em; font-weight:900; color:#0e3a5c;
+    white-space:nowrap; letter-spacing:-.6px; line-height:1.14; font-variant-numeric:tabular-nums;}
   header.sky .hdrsched .hs-day.tmr{color:#245c8d;}
   header.sky .hdrsched .hs-day[hidden]{display:none;}
-  /* 제목 아래 한 줄 안내 — 불러오는 중 · 확인 안 됨 · 캘린더 연결 필요 */
-  header.sky .hdrsched .hs-note{display:block; font-size:.78em; font-weight:800; color:#5a7a94;
-    white-space:nowrap; letter-spacing:-.5px; line-height:1.14;}
+  /* 제목 아래 안내 — 불러오는 중 · 확인 안 됨 · 캘린더 연결 필요 · 일정이 없어요
+     v99 — 72px 칸에서는 한 줄에 다 들어가지 않으므로 듬에서 줄을 바꾼다
+     ('캘린더 / 연결 필요', '일정이 / 없어요'). 글자·좌우 여백은 그대로라 줄만 두 줄이 된다. */
+  header.sky .hdrsched .hs-note{display:block; width:100%; font-size:.78em; font-weight:800; color:#5a7a94;
+    white-space:normal; overflow-wrap:break-word; letter-spacing:-.5px; line-height:1.14; text-align:center;}
   header.sky .hdrsched .hs-note[hidden]{display:none;}
-  header.sky .hdrsched .hs-chev{position:absolute; right:.26em; bottom:.18em; line-height:1;
+  /* v99 — 가로 헤더의 슬림한 칸에서는 › 를 두지 않는다(글자 자리를 먹어 '내일 3개'와 겹쳤다).
+     세로 화면(한 줄 배치)에서는 아래 @media 가 다시 보여 준다. */
+  header.sky .hdrsched .hs-chev{display:none; position:absolute; right:.26em; bottom:.18em; line-height:1;
     font-size:.9em; font-weight:900; color:#1f6fd4;}
   /* 연결했지만 아직 못 채운 칸(불러오는 중·확인 안 됨·미연결)은 배경·글자만 한 단계 흐린 톤으로 조용히.
      테두리는 옆 카드와 같은 진한 남색 그대로 둔다(v97-4 — 테두리 색은 상태와 무관하게 하나). */
@@ -956,7 +980,7 @@
     /* 두 번째 숫자 앞에만 가운데점 — 한 줄에 나란히 서는 세로 화면 전용 */
     header.sky .hdrsched .hs-day + .hs-day::before{content:'·'; margin:0 .3em 0 0; color:#9ab4c8;}
     header.sky .hdrsched .hs-note{font-size:.86em;}
-    header.sky .hdrsched .hs-chev{position:static; margin-left:0; padding-left:.35em;}
+    header.sky .hdrsched .hs-chev{display:inline; position:static; margin-left:0; padding-left:.35em;}
   }
   /* 폰 폭(560px 이하)에서는 헤더 줄에 이미 자리가 없다 — 일정 칸은 숨긴다 */
   @media (max-width:560px){
@@ -2236,15 +2260,17 @@
   /* v98 — 배너 오른쪽 끝 '하이퍼볼(울트라볼)' 3개 (사용자 요청 2026-11-28).
      v97-2 체크박스 세 칸을 그대로 아이콘 버튼으로 바꿨다. 동작은 그대로
      (3개 다 채우면 그날 1회 ⚡ 강화 XP +1, 하나 풀면 회수, 배너 안 안내 문구 없음).
-     체크 전 = 흑백·흐린 톤(grayscale + opacity), 체크 후 = 선명한 컬러(검정·노랑·흰색) + 살짝 빛남. */
+     v99 — 모양을 공식 하이퍼볼 비율로 다시 그렸다(검정 상단 반구 + 노란 H 아치 띠 + 굵은 검정 가운데 띠
+     + 이중 원 흰 버튼 + 흰 하단 반구 + 검정 외곽). 체크 전 = 흑백이지만 문양이 또렷하게(흐릿하지 않게),
+     체크 후 = 선명한 컬러에 살짝 빛남. */
   .affirm .affirm-mind{flex:0 0 auto; display:flex; align-items:center; gap:clamp(3px,.5vw,7px);}
   .affirm .mindball{flex:0 0 auto; display:block; width:clamp(26px,3.7vh,32px); height:clamp(26px,3.7vh,32px);
     padding:0; border:0; background:none; line-height:0; cursor:pointer; -webkit-tap-highlight-color:transparent;
-    filter:grayscale(1) contrast(.9) brightness(.98) opacity(.42);
+    filter:grayscale(1) contrast(1.05) brightness(.9) opacity(.72);   /* v99 — 흑백이어도 문양이 읽힐 만큼만 */
     transition:filter .18s ease, transform .12s ease;}
   .affirm .mindball svg{width:100%; height:100%; display:block;}
   .affirm .mindball:active{transform:scale(.92);}
-  .affirm .mindball[aria-pressed="true"]{filter:drop-shadow(0 2px 4px rgba(120,90,0,.45)) saturate(1.05);}
+  .affirm .mindball[aria-pressed="true"]{filter:drop-shadow(0 2px 4px rgba(120,90,0,.45)) saturate(1.06);}
   .affirm .mindball:focus-visible{outline:3px solid #7bb7ff; outline-offset:2px; border-radius:50%;}
 
   /* ===== Pokédex ===== */
@@ -4219,9 +4245,9 @@
          체크 전 = 흑백·흐린 톤, 체크 후 = 선명한 컬러. 3개를 다 채우면 그날 한 번 ⚡ 강화 XP +1,
          하나를 풀면 돌려준다(v97-2 규칙 그대로). 안내 문구는 넣지 않는다(설명서에만). -->
     <span class="affirm-mind" id="affirmMind" role="group" aria-label="마음 스킬 3번 소리 내어 읽기">
-      <button class="mindball" type="button" data-mind="0" aria-pressed="false" aria-label="마음 스킬 1번째 읽었어요"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><defs><clipPath id="hbC0"><circle cx="20" cy="20" r="16.6"/></clipPath></defs><circle cx="20" cy="20" r="16.6" fill="#fbfaf4"/><g clip-path="url(#hbC0)"><rect x="2" y="2" width="36" height="15" fill="#232323"/><rect x="2" y="16.6" width="36" height="7.2" fill="#f6c400"/><rect x="2" y="23.8" width="36" height="16.6" fill="#fbfaf4"/><rect x="16.3" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="20.8" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="19.2" y="19.3" width="1.6" height="1.8" fill="#232323"/></g><circle cx="20" cy="20" r="16.6" fill="none" stroke="#1e1e1e" stroke-width="2.6"/><circle cx="20" cy="30.4" r="4.4" fill="#f4f3ea" stroke="#1e1e1e" stroke-width="1.7"/><circle cx="20" cy="30.4" r="1.9" fill="#ffffff"/><ellipse cx="13.6" cy="9.6" rx="5" ry="3" fill="#ffffff" opacity=".22"/></svg></button>
-      <button class="mindball" type="button" data-mind="1" aria-pressed="false" aria-label="마음 스킬 2번째 읽었어요"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><defs><clipPath id="hbC1"><circle cx="20" cy="20" r="16.6"/></clipPath></defs><circle cx="20" cy="20" r="16.6" fill="#fbfaf4"/><g clip-path="url(#hbC1)"><rect x="2" y="2" width="36" height="15" fill="#232323"/><rect x="2" y="16.6" width="36" height="7.2" fill="#f6c400"/><rect x="2" y="23.8" width="36" height="16.6" fill="#fbfaf4"/><rect x="16.3" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="20.8" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="19.2" y="19.3" width="1.6" height="1.8" fill="#232323"/></g><circle cx="20" cy="20" r="16.6" fill="none" stroke="#1e1e1e" stroke-width="2.6"/><circle cx="20" cy="30.4" r="4.4" fill="#f4f3ea" stroke="#1e1e1e" stroke-width="1.7"/><circle cx="20" cy="30.4" r="1.9" fill="#ffffff"/><ellipse cx="13.6" cy="9.6" rx="5" ry="3" fill="#ffffff" opacity=".22"/></svg></button>
-      <button class="mindball" type="button" data-mind="2" aria-pressed="false" aria-label="마음 스킬 3번째 읽었어요"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><defs><clipPath id="hbC2"><circle cx="20" cy="20" r="16.6"/></clipPath></defs><circle cx="20" cy="20" r="16.6" fill="#fbfaf4"/><g clip-path="url(#hbC2)"><rect x="2" y="2" width="36" height="15" fill="#232323"/><rect x="2" y="16.6" width="36" height="7.2" fill="#f6c400"/><rect x="2" y="23.8" width="36" height="16.6" fill="#fbfaf4"/><rect x="16.3" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="20.8" y="16.9" width="2.9" height="6.6" fill="#232323"/><rect x="19.2" y="19.3" width="1.6" height="1.8" fill="#232323"/></g><circle cx="20" cy="20" r="16.6" fill="none" stroke="#1e1e1e" stroke-width="2.6"/><circle cx="20" cy="30.4" r="4.4" fill="#f4f3ea" stroke="#1e1e1e" stroke-width="1.7"/><circle cx="20" cy="30.4" r="1.9" fill="#ffffff"/><ellipse cx="13.6" cy="9.6" rx="5" ry="3" fill="#ffffff" opacity=".22"/></svg></button>
+      <button class="mindball" type="button" data-mind="0" aria-pressed="false" aria-label="마음 스킬 1번째 읽었어요"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><defs><clipPath id="hbC0"><circle cx="32" cy="32" r="28.6"/></clipPath><linearGradient id="hbK0" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a54"/><stop offset=".5" stop-color="#131c2b"/><stop offset="1" stop-color="#080d14"/></linearGradient></defs><circle cx="32" cy="32" r="28.6" fill="#ffffff"/><g clip-path="url(#hbC0)"><rect x="3" y="3" width="58" height="29.4" fill="url(#hbK0)"/><path d="M17 32.6 V19 Q17 11.4 24.4 11.4 Q32 8.8 39.6 11.4 Q47 11.4 47 19 V32.6" fill="none" stroke="#facc15" stroke-width="7.6" stroke-linejoin="round" stroke-linecap="butt"/><rect x="3" y="29.2" width="58" height="5.8" fill="#080d14"/><ellipse cx="21.4" cy="14" rx="7.2" ry="3" fill="#ffffff" opacity=".12"/></g><circle cx="32" cy="32" r="8.7" fill="#f8fafc" stroke="#080d14" stroke-width="2.7"/><circle cx="32" cy="32" r="3.6" fill="#ffffff" stroke="#080d14" stroke-width="1.6"/><circle cx="32" cy="32" r="28.6" fill="none" stroke="#080d14" stroke-width="3"/></svg></button>
+      <button class="mindball" type="button" data-mind="1" aria-pressed="false" aria-label="마음 스킬 2번째 읽었어요"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><defs><clipPath id="hbC1"><circle cx="32" cy="32" r="28.6"/></clipPath><linearGradient id="hbK1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a54"/><stop offset=".5" stop-color="#131c2b"/><stop offset="1" stop-color="#080d14"/></linearGradient></defs><circle cx="32" cy="32" r="28.6" fill="#ffffff"/><g clip-path="url(#hbC1)"><rect x="3" y="3" width="58" height="29.4" fill="url(#hbK1)"/><path d="M17 32.6 V19 Q17 11.4 24.4 11.4 Q32 8.8 39.6 11.4 Q47 11.4 47 19 V32.6" fill="none" stroke="#facc15" stroke-width="7.6" stroke-linejoin="round" stroke-linecap="butt"/><rect x="3" y="29.2" width="58" height="5.8" fill="#080d14"/><ellipse cx="21.4" cy="14" rx="7.2" ry="3" fill="#ffffff" opacity=".12"/></g><circle cx="32" cy="32" r="8.7" fill="#f8fafc" stroke="#080d14" stroke-width="2.7"/><circle cx="32" cy="32" r="3.6" fill="#ffffff" stroke="#080d14" stroke-width="1.6"/><circle cx="32" cy="32" r="28.6" fill="none" stroke="#080d14" stroke-width="3"/></svg></button>
+      <button class="mindball" type="button" data-mind="2" aria-pressed="false" aria-label="마음 스킬 3번째 읽었어요"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><defs><clipPath id="hbC2"><circle cx="32" cy="32" r="28.6"/></clipPath><linearGradient id="hbK2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a54"/><stop offset=".5" stop-color="#131c2b"/><stop offset="1" stop-color="#080d14"/></linearGradient></defs><circle cx="32" cy="32" r="28.6" fill="#ffffff"/><g clip-path="url(#hbC2)"><rect x="3" y="3" width="58" height="29.4" fill="url(#hbK2)"/><path d="M17 32.6 V19 Q17 11.4 24.4 11.4 Q32 8.8 39.6 11.4 Q47 11.4 47 19 V32.6" fill="none" stroke="#facc15" stroke-width="7.6" stroke-linejoin="round" stroke-linecap="butt"/><rect x="3" y="29.2" width="58" height="5.8" fill="#080d14"/><ellipse cx="21.4" cy="14" rx="7.2" ry="3" fill="#ffffff" opacity=".12"/></g><circle cx="32" cy="32" r="8.7" fill="#f8fafc" stroke="#080d14" stroke-width="2.7"/><circle cx="32" cy="32" r="3.6" fill="#ffffff" stroke="#080d14" stroke-width="1.6"/><circle cx="32" cy="32" r="28.6" fill="none" stroke="#080d14" stroke-width="3"/></svg></button>
     </span>
   </div>
 
@@ -4423,6 +4449,7 @@
               <span class="gm-r"><i>🌙</i>잘 준비 21:00~21:40</span>
             </div>
           </div>
+          <div class="note">요일 기본 — 평일 <b>🏫 등교</b> · 토요일 <b>🎒 방과후</b> · 일요일 <b>🗓️ 공휴일</b>. 부모님이 다른 모드로 바꾸면 그날 하루만 그대로예요</div>
           <div class="note">아침 시작 시각은 오늘 모드가 정해요 — 아침 시간이 지나도 부모님 설정의 <b>[☀️ 지금부터 아침 루틴 시작]</b>으로 오늘 하루 열 수 있어요</div>
         </section>
 
@@ -5052,7 +5079,9 @@
         <button class="pbtn pmode" type="button" data-set-mode="holiday" aria-pressed="false">🗓️ 공휴일</button>
         <button class="pbtn pmode" type="button" data-set-mode="vacation" aria-pressed="false">🏖️ 방학</button>
       </div>
+      <span class="phint">요일 기본은 평일 🏫 등교 · 토요일 🎒 방과후 · 일요일 🗓️ 공휴일 — 여기서 바꾸면 오늘 하루만 그대로, 다음 날은 새 요일 기본값으로 돌아가요.</span>
       <span class="phint">테스트 시간은 화면을 미리 보는 값이에요. 아이가 한 기록·보상은 그대로 남습니다.</span>
+      <span class="phint">이미 다 끝낸 루틴도 미리보기 시간을 그 시간대로 돌리면 체크된 카드 그대로 보여요(모든 모드).</span>
 
       <!-- v69 — ☀️ 아침 루틴 조기 시작 (기상 시각 전에도 지금 바로 아침 루틴을 연다) -->
       <div class="psec">☀️ 아침 루틴 조기 시작</div>
@@ -5350,6 +5379,9 @@ function earlyMorningOn(){ return state.earlyMorningDay === todayKey(); }
 function routineKeyAt(min){
   const m = (min == null) ? nowMinutes() : min;
   const M = MODE_DEFS[modeId] || MODE_DEFS.school;
+  /* v99 — 시간 미리보기(🧪 테스트 탭 시간 변경) 중에는 이미 다 끝낸 루틴도 그 화면을 그대로 보여 준다
+     (체크된 카드 포함 — 모드 상관없이). 실시간에서는 예전 그대로 다 끝낸 루틴 자리에 휴식 화면이 뜬다. */
+  const keepDone = previewOn();
   if(m < M.wake && !earlyMorningOn()) return 'rest';                 // v66 — 기상 전(새벽 휴식)
   const morningEnd = (M.morningEnd != null) ? M.morningEnd : 16*60;
   /* v98 — ☀️ '지금부터 아침 루틴 시작'(state.earlyMorningDay)은 **오늘 하루 유지되는 아침 루틴 열기**다.
@@ -5361,14 +5393,14 @@ function routineKeyAt(min){
     const aT = (M.afterTasks && M.afterTo) ? M.afterTo : 0;
     if(!(aF && aT && m >= aF && m < aT)) return 'morning';           // 오후 루틴 시간대만 양보한다
   }
-  if(m < morningEnd) return morningAllDone() ? 'rest' : 'morning';   // v69 — 아침을 다 끝냈으면 자유 시간
+  if(m < morningEnd) return (morningAllDone() && !keepDone) ? 'rest' : 'morning';   // v69 — 아침을 다 끝냈으면 자유 시간 · v99 미리보기는 그대로
   if(m >= NIGHT_END) return 'rest';                                  // v69 — 밤 10시부터 취침 후 휴식 화면
-  if(m >= NIGHT_START) return nightAllDone() ? 'rest' : 'night';     // 취침 완료 뒤·연장 도전(21:41~21:59)
+  if(m >= NIGHT_START) return (nightAllDone() && !keepDone) ? 'rest' : 'night';     // 취침 완료 뒤·연장 도전(21:41~21:59) · v99
   if(M.afterTasks){
     const from = M.afterFrom || 16*60;
     const to = M.afterTo || 21*60;                  // v66-3 — 오후 루틴이 끝나는 시각
     if(m < from) return 'rest';                     // 오후 루틴 시작 전 — 자유 시간
-    if(m < to) return afterAllDone() ? 'rest' : 'after';              // v69 — 오후를 끝냈으면 자유 시간
+    if(m < to) return (afterAllDone() && !keepDone) ? 'rest' : 'after';   // v69 — 오후를 끝냈으면 자유 시간 · v99 미리보기는 그대로
     return 'rest';                                  // 오후 루틴이 끝나면 취침 전까지 자유 시간
   }
   return 'rest';                                   // 공휴일: 아침이 끝나면 저녁까지 휴식 화면
@@ -5906,10 +5938,35 @@ function emptyPlan(){
 
 const LS_KEY = 'lukaPokemonDashboard.v1';
 const todayKey = d => { d = d || getNow(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
+/* 시간 미리보기 오프셋 — getNow() 가 이만큼 앞당긴 시각을 돌려준다. todayKey() 가 초기 로드에서
+   바로 쓰므로(v99 요일 기본 모드) 선언을 위로 올렸다. */
+let simOffsetMs = 0;
+
+/* ---------- v99 — 요일별 기본 모드 (사용자 요청 2026-11-28) ----------
+   getDay() 0=일 … 6=토. 평일은 등교, 토요일은 방과후, 일요일은 공휴일이 그날의 기본값이다.
+   부모가 '오늘 모드'를 직접 고르면 state.modeDay 에 오늘 날짜가 남아 그날 하루만 그 선택을 지키고,
+   날짜가 바뀌면 state.modeDay 가 지난 날짜라 저절로 풀려 새 날의 요일 기본값으로 돌아간다. */
+const MODE_BY_WEEKDAY = ['holiday', 'school', 'school', 'school', 'school', 'school', 'afterschool'];
+function defaultModeForDate(d){
+  d = d || getNow();
+  const id = MODE_BY_WEEKDAY[d.getDay()];
+  return MODE_DEFS[id] ? id : 'school';
+}
+/* 오늘 날짜에 직접 고른 모드가 남아 있는가 */
+function modePickedToday(){
+  return !!(state.mode && MODE_DEFS[state.mode]) && state.modeDay === todayKey();
+}
+/* 지금 켜야 할 모드 — 오늘 직접 고른 것이 있으면 그것, 없으면 오늘 요일 기본값 */
+function resolveTodayMode(){
+  return modePickedToday() ? state.mode : defaultModeForDate();
+}
+/* v99 — 시간 미리보기(테스트 시간)가 켜져 있는가. 켜져 있으면 다 끝낸 루틴도 그 화면을 그대로 보여 준다 */
+function previewOn(){ return !!simOffsetMs; }
 
 /* ---------- state ---------- */
 let state = load();
-modeId = (MODE_DEFS[state.mode] ? state.mode : 'school');
+modeId = resolveTodayMode();
+let modeDaySeen = todayKey();      // v99 — 자정을 넘겼는지 알아보는 표식
 buildRoutineTable();
 function load(){
   try{
@@ -6057,6 +6114,8 @@ function migrate(s){
   /* 배틀 전용 비밀번호 (시트 '배틀비번' 열) — 없으면 null 로 두고 부모 비밀번호를 따른다 */
   if(s.battlePin != null && !/^\d{4}$/.test(String(s.battlePin))) s.battlePin = null;
   if(!MODE_DEFS[s.mode]) s.mode = 'school';   // 오늘 모드 (등교 / 방과후 / 공휴일 / 방학)
+  /* v99 — '오늘 모드'를 직접 고른 날짜 (그날 하루만 유지 · 날짜가 바뀌면 요일 기본값) */
+  if(typeof s.modeDay !== 'string') s.modeDay = '';
   /* 🟢 ON / 🔴 OFF — 부모님이 사용 시간을 끄고 켜는 스위치 (처음엔 ON) */
   if(typeof s.appEnabled !== 'boolean') s.appEnabled = true;
   /* 🕹️ 시트 '웹제어' 로 마지막으로 본 값 — 시트가 이 값에서 바뀔 때만 원격 반영한다.
@@ -6166,8 +6225,7 @@ function rday(key){
   return s;
 }
 
-/* simulated time (parent preview) */
-let simOffsetMs = 0;
+/* simulated time (parent preview) — simOffsetMs 는 위(todayKey 옆)에서 선언한다 */
 function getNow(){ return new Date(Date.now() + simOffsetMs); }
 function nowMinutes(){ const n = getNow(); return n.getHours()*60 + n.getMinutes() + n.getSeconds()/1000; }
 
@@ -7219,34 +7277,48 @@ function renderHdrSched(){
     box.hidden = false;
     if(col) col.classList.add('has-sched');
   };
-  const oneLine = (state, line, title) => {
-    put(tDay, ''); put(nDay, ''); put(note, line);
-    paint(state, title || line);
+  /* 안내 줄은 두 줄로 나눠 넣는다(v99) — 넓은 화면에서도 '캘린더 / 연결 필요' 처럼 읽히게.
+     textContent 는 예전과 꼭 같은 문장이 되도록 줄 끝에 공백을 하나 남긴다('캘린더 연결 필요'). */
+  const putNote = html => {
+    if(!note) return;
+    if(note.innerHTML !== html) note.innerHTML = html;
+    note.hidden = false;
+  };
+  const oneLine = (state, html, plain, title) => {
+    put(tDay, ''); put(nDay, '');
+    putNote(html);
+    paint(state, title || plain);
   };
   if(!calUrl)
-    return oneLine('off', '캘린더 연결 필요',
+    return oneLine('off', '캘린더 <br>연결 필요', '캘린더 연결 필요',
       '캘린더를 연결하면 오늘·내일 일정이 여기에 보여요 — 부모 설정 [💾 데이터·앱]에서 연결해 주세요');
   const tEvs = (schedToday && schedToday.res && schedToday.res.ok !== false && Array.isArray(schedToday.res.events))
     ? schedToday.res.events : null;
   const nEvs = nxSchedEvents();                        // null = 아직 모름
   if(!tEvs && !nEvs){
     if(schedStatus === 'loading' || schedStatus === 'idle' || schedStatus === 'cache')
-      return oneLine('loading', '불러오는 중…', '오늘·내일 일정을 캘린더에서 불러오는 중…');
-    return oneLine('error', '확인 안 됨',
+      return oneLine('loading', '불러오는 <br>중…', '불러오는 중…', '오늘·내일 일정을 캘린더에서 불러오는 중…');
+    return oneLine('error', '확인 <br>안 됨', '확인 안 됨',
       '일정을 받지 못했어요 — [💾 데이터·앱]의 [연결 테스트]로 확인해 주세요');
   }
   const tn = tEvs ? tEvs.length : null;
   const nn = nEvs ? nEvs.length : null;
+  const both0 = (tn === 0 && nn === 0);
+  /* v99 — 오늘·내일 둘 다 0건이면 두 줄짜리 '오늘 0개 / 내일 0개' 대신 한 줄 안내
+     ('일정이 / 없어요')로 좁은 칸을 아끼고, 첫 줄과 함께 세 줄로 읽힌다. */
+  if(both0){
+    put(tDay, ''); put(nDay, '');
+    putNote('일정이 <br>없어요');
+    paint('empty', '오늘·내일 모두 등록된 일정이 없어요 — 눌러서 설정 확인');
+    return;
+  }
   put(note, '');
   put(tDay, tn == null ? '' : `오늘 ${tn}개`);
   put(nDay, nn == null ? '' : `내일 ${nn}개`);
   const nTxt = (tn == null || nn == null)
     ? (tn == null ? `내일 ${nn}개` : `오늘 ${tn}개`)
     : `오늘 ${tn}개 · 내일 ${nn}개`;
-  const both0 = (tn === 0 && nn === 0);
-  paint(both0 ? 'empty' : 'ok',
-        both0 ? '오늘·내일 모두 등록된 일정이 없어요 — 눌러서 설정 확인'
-              : nTxt + ' — 눌러서 전체 보기');
+  paint('ok', nTxt + ' — 눌러서 전체 보기');
 }
 /* =========================================================
    v97 — 📅 오늘·내일 일정 팝업 (#schedPop)
@@ -7584,12 +7656,12 @@ function nxSkyWord(c){
        : c <= 57 ? '이슬비' : c <= 67 ? '비' : c <= 77 ? '눈' : c <= 82 ? '소나기'
        : c <= 86 ? '눈' : c >= 95 ? '천둥번개' : '구름 조금';
 }
-/* 내일 모드 배지 — 방학 중이면 방학, 주말이면 쉬는 날, 그 밖은 등교일 */
+/* 내일 모드 배지 — v99 부터는 내일의 요일 기본값을 그대로 (평일 등교 · 토요일 방과후 · 일요일 공휴일).
+   '오늘 모드'의 직접 선택은 그날 하루만이라 내일 배지에는 쓰지 않는다. */
+const NX_MODE_WORD = { school:'🏫 내일은 등교일', afterschool:'🎒 내일은 방과후', holiday:'🗓️ 내일은 공휴일' };
 function nxModeBadge(tmr){
-  const dow = (tmr || nxDayDate()).getDay();
-  if(modeId === 'vacation') return '🏖️ 내일은 방학';
-  if(dow === 0 || dow === 6) return '🏖️ 내일은 쉬는 날';
-  return '🏫 내일은 등교일';
+  const id = defaultModeForDate(tmr || nxDayDate());
+  return NX_MODE_WORD[id] || '🏫 내일은 등교일';
 }
 function nxSchedEvents(){
   const res = nxSched && nxSched.res;
@@ -9925,6 +9997,9 @@ function setMode(id, opts){
   opts = opts || {};
   modeId = id;
   state.mode = id;
+  /* v99 — 직접 고른 모드는 그날 하루만 (자정이 지나면 새 날의 요일 기본값으로 돌아간다).
+     요일 기본값으로 저절로 바뀔 때(auto)는 '직접 골랐다'로 남기지 않는다. */
+  if(!opts.auto) state.modeDay = todayKey();
   buildRoutineTable();
   save();
   curRKey = null;          // 모드가 바뀌면 지금 루틴을 다시 계산한다
@@ -9933,6 +10008,7 @@ function setMode(id, opts){
   timerStop();
   buildTasks();
   renderModePills();
+  try{ renderPanelMode(); renderPanelStatus(); }catch(e){}   // v99 — 설정 창이 열려 있으면 그 안의 모드 버튼도 함께
   renderProgress();
   renderTasks();
   if(!opts.silent) toast(`${MODE_DEFS[id].label} 모드로 바꿨어요!`);
@@ -12735,26 +12811,15 @@ function setPreview(v){
     const d = day();
     d.nightStarted = (h*60 + m + sec/60) >= NIGHT_START;
     save();
-    /* v98 — 옮긴 시각의 루틴을 오늘 이미 다 해 둔 날에는 휴식 화면이 뜬다. 그때는 왜 카드가 없는지와
-       다시 여는 법을 함께 알려 준다(방과후 모드 08:00 미리보기에서 '아침 루틴이 안 열린다'로 보이던 것). */
-    const hint = previewDoneHint();
-    toast(hint ? `⏰ 미리보기 ${v} · ${hint}` : `⏰ 미리보기 ${v}`);
+    /* v99 — 미리보기에서는 다 끝낸 루틴도 그 화면이 그대로 열리므로(체크된 카드 포함) v98 의
+       '이미 다 했어요' 안내는 필요 없어졌다. 옮긴 시각만 알린다. */
+    toast(`⏰ 미리보기 ${v}`);
   }
   tick();
   renderStudy();
   return true;
 }
-/* v98 — 미리보기 시각의 루틴을 오늘 이미 다 끝내 휴식 화면이 뜰 때 돌려주는 안내 */
-function previewDoneHint(){
-  const m = nowMinutes();
-  const M = MODE_DEFS[modeId] || MODE_DEFS.school;
-  const mEnd = (M.morningEnd != null) ? M.morningEnd : 16*60;
-  if(!earlyMorningOn() && m >= M.wake && m < mEnd && morningAllDone())
-    return '오늘 아침 루틴은 이미 다 했어요 · [☀️ 지금부터 아침 루틴 시작]으로 다시 열 수 있어요';
-  if(M.afterTasks && m >= (M.afterFrom || 16*60) && m < (M.afterTo || NIGHT_START) && afterAllDone())
-    return '오늘 오후 루틴은 이미 다 했어요 · [🕘 지난 모험 도전]으로 다시 볼 수 있어요';
-  return '';
-}
+/* v99 — 미리보기에서는 다 끝낸 루틴도 그 화면을 그대로 보여 주므로 previewDoneHint 는 없앴다(v98 안내). */
 document.getElementById('resetTasks').addEventListener('click', parentOnly(()=>{
   const d = day();
   /* v72 — 오늘 잡은 포켓몬·보상 상태·경험치까지 함께 0으로 되돌린다.
@@ -12929,7 +12994,8 @@ function restoreData(file){
       const s = (obj && obj.state) ? obj.state : obj;   // accept {state:...} or a bare state
       if(!s || typeof s !== 'object' || !s.days || typeof s.xp !== 'number') throw new Error('bad json');
       state = migrate(s);
-      modeId = (MODE_DEFS[state.mode] ? state.mode : 'school');
+      modeId = resolveTodayMode();   // v99 — 백업의 직접 선택이 오늘 것이 아니면 오늘 요일 기본값
+      modeDaySeen = todayKey();
       buildRoutineTable();
       renderModePills();
       save();
@@ -12962,7 +13028,8 @@ document.getElementById('resetAll').addEventListener('click', parentOnly(()=>{
   if(confirm('모든 기록(경험치·도감·오늘 할 일·공부 목록)을 지울까요?')){
     localStorage.removeItem(LS_KEY);
     state = load();
-    modeId = (MODE_DEFS[state.mode] ? state.mode : 'school');
+    modeId = resolveTodayMode();   // v99 — 기록을 지우면 오늘 요일 기본값
+    modeDaySeen = todayKey();
     buildRoutineTable();
     renderModePills();
     curRKey = null;
@@ -13210,6 +13277,13 @@ function tick(){
     if(document.getElementById('partnerOverlay').classList.contains('show')) ppSyncTalkBtn();
   }catch(e){}
   if(rollXpDay()) renderWild();      // 자정을 넘기면 경험치가 0으로
+  /* v99 — 자정을 넘기면 오늘 모드도 새 날의 요일 기본값으로 (어제 직접 고른 모드는 그날 하루만) */
+  if(modeDaySeen !== todayKey()){
+    modeDaySeen = todayKey();
+    const wantMode = resolveTodayMode();
+    if(wantMode !== modeId) setMode(wantMode, {silent:true, auto:true});
+    else renderModePills();
+  }
   if(curMissionDay !== todayKey()){  // 자정을 넘기면 오늘의 미션 체크도 새로 시작
     curMissionDay = todayKey();
     /* v72 — 지난 모험·v79 미리 하기를 열어 둔 채 날짜가 바뀌면(자정) 어제 루틴 대신 오늘 화면으로 돌린다 */
